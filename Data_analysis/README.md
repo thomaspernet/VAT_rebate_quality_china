@@ -16,3 +16,5 @@ The original files of the codes are the following:
 - [Dataset construction](https://drive.google.com/open?id=1fOOs1YHGlNnAHbk_B5bfdXBj35N8cuCJ)
 - [Regressions](https://drive.google.com/open?id=1V6klFoNaPL30YdFOAonPaQs_v9Tn5rPq)
 - [Figures](https://drive.google.com/open?id=1JZtUTfnMbpFfI25wK8WJXi_GCOA_kNps)
+
+The notebook replicating the results is named `VAT_rebate_quality_china_analysis.ipynb` and available [here](https://nbviewer.jupyter.org/github/thomaspernet/VAT_rebate_quality_china/blob/master/Data_analysis/VAT_rebate_quality_china_analysis.ipynb) for download
