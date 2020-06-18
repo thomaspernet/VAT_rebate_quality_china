@@ -1,0 +1,34 @@
+
+% Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Thu, Jun 18, 2020 - 13:02:11
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm's quality upgrading, characteristics of 
+the destination countries, products, and companies} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lcccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{6}{c}{Dependent variable: Quality of firm $i$ for product $k$ in city $c$ at year $t$} \\ 
+\cline{2-7} 
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\ 
+\hline \\[-1.8ex] 
+ herf\_com\_o & 0.338$^{**}$ & 0.043 & $-$0.112 & 0.071$^{*}$ & 0.027 & 0.101$^{*}$ \\ 
+  & (0.133) & (0.034) & (0.099) & (0.037) & (0.048) & (0.053) \\ 
+  eligibleNo:ln\_vat\_tax & $-$0.119 & $-$0.120 & 0.003 & $-$0.099 & $-$0.110 & $-$0.023 \\ 
+  & (0.373) & (0.124) & (0.800) & (0.114) & (0.181) & (0.143) \\ 
+  eligibleYes:ln\_vat\_tax & $-$0.612$^{***}$ & $-$0.133$^{***}$ & 0.794$^{**}$ & $-$0.161$^{***}$ & $-$0.123$^{**}$ & $-$0.149$^{***}$ \\ 
+  & (0.189) & (0.040) & (0.387) & (0.039) & (0.060) & (0.051) \\ 
+  eligibleNo:ln\_import\_tax & $-$0.566 & 0.160 & $-$0.551 & 0.070 & $-$0.511 & 0.210 \\ 
+  & (0.504) & (0.296) & (0.952) & (0.276) & (0.473) & (0.294) \\ 
+  eligibleYes:ln\_import\_tax & 0.192 & 0.025 & 0.256 & 0.042 & 0.057 & 0.083 \\ 
+  & (0.246) & (0.062) & (0.408) & (0.065) & (0.082) & (0.098) \\ 
+  imported\_variety:t\_0 & 0.0001 & $-$0.0001$^{***}$ & 0.00001 & $-$0.0001$^{*}$ & $-$0.00002 & $-$0.00002 \\ 
+  & (0.0001) & (0.00002) & (0.00005) & (0.00003) & (0.0001) & (0.00003) \\ 
+ \hline \\[-1.8ex] 
+ &  &  &  &  &  &  \\ 
+Observations & 731,296 & 3,972,667 & 176,035 & 4,527,928 & 2,456,138 & 2,247,825 \\ 
+R$^{2}$ & 0.726 & 0.687 & 0.668 & 0.660 & 0.717 & 0.593 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 

@@ -1,0 +1,44 @@
+
+\documentclass[preview]{standalone} 
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
+
+\begin{document}% Date and time: Thu, Jun 18, 2020 - 13:42:35
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm's quality upgrading, subsetting no-sensitive sectors} 
+\label{}
+\begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
+\begin{tabular}{@{\extracolsep{5pt}}lccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{5}{c}{Dependent variable: Quality of firm $i$ for product $k$ in city $c$ at year $t$} \\ 
+\cline{2-6} 
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5)\\
+ \\[-1.8ex]& No rare earth & No energy intensive & No High tech & No RD oriented & No High skill oriented\\
+ \hline \\[-1.8ex] 
+  Ln VAT export tax$_{k,t-1}$ x Density$_{ck} & 0.445 & 0.244 & 0.423 & 0.483 & 0.308 \\ 
+  & (0.469) & (0.399) & (0.476) & (0.486) & (0.442) \\ 
+  Ln VAT import tax$_{k,t-1}$ & 0.076 & $-$0.194 & 0.078 & 0.026 & 0.135 \\ 
+  & (0.274) & (0.176) & (0.283) & (0.284) & (0.252) \\ 
+  Ln VAT import tax$_{k,t-1}$ \times \text{ordinary}$_{i}$ & 0.046 & 0.063 & 0.045 & $-$0.013 & 0.046 \\ 
+  & (0.064) & (0.040) & (0.065) & (0.046) & (0.045) \\ 
+  Ln VAT export tax$_{k,t-1}$ x Ordinary$_{i}$ x Density$_{ck} & $-$1.036$^{**}$ & $-$0.973$^{**}$ & $-$1.083$^{**}$ & $-$1.186$^{**}$ & $-$1.110$^{**}$ \\ 
+  & (0.468) & (0.391) & (0.475) & (0.481) & (0.441) \\ 
+ Competition$_{s,t-1}$ & 0.063$^{*}$ & 0.129$^{**}$ & 0.065$^{*}$ & 0.091$^{***}$ & 0.096$^{***}$ \\ 
+  & (0.036) & (0.051) & (0.036) & (0.034) & (0.032) \\ 
+ \hline \\[-1.8ex] 
+ &  &  &  &  &  \\ 
+Observations & 4,700,116 & 2,512,001 & 4,688,073 & 4,227,693 & 4,406,991 \\ 
+R$^{2}$ & 0.660 & 0.593 & 0.660 & 0.637 & 0.633 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular}
+\end{adjustbox}
+\begin{tablenotes} 
+ \small 
+ \item \\ 
+All estimation include firm-hs6, origin city-year, destination-year,HS4-status-year fixed effect. Our regression adds initial firm size trend.Note that $ordinary$ refers to the firms entitle to VAT refund, our treatment group.Our control group is processing trade with supplied input, non eligible to VAT refund.All firms belong to one group only, in consequence, the dummy $ordinary_{i}$ does not varywithin firm over time and is drop from the regression. $i$ stands for the firm, $c$ for thecity, $k$ for the HS6 product, $t$ for the year and $s$ for the sector.Heteroskedasticity-robust standard errors clustered at the firm level appear in parentheses.\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%. 
+\end{tablenotes}
+\end{table}
+
+\end{document}

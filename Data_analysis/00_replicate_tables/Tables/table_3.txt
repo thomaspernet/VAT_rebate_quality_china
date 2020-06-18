@@ -1,0 +1,45 @@
+
+% Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Thu, Jun 18, 2020 - 13:31:05
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm's quality upgrading, Effect of density} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{5}{c}{Dependent variable: Quality of firm $i$ for product $k$ in city $c$ at year $t$} \\ 
+\cline{2-6} 
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5)\\ 
+\hline \\[-1.8ex] 
+ ln\_vat\_tax &  & 0.004 & $-$0.294 &  &  \\ 
+  &  & (0.053) & (0.260) &  &  \\ 
+  ln\_import\_tax &  & 0.043 & 0.100 &  &  \\ 
+  &  & (0.064) & (0.279) &  &  \\ 
+  herf\_com\_o & 0.064$^{*}$ & 0.051 & 0.360 & 0.064$^{*}$ & $-$0.210$^{**}$ \\ 
+  & (0.036) & (0.036) & (0.227) & (0.036) & (0.098) \\ 
+  ln\_vat\_tax:density\_china\_ville & 0.410 & $-$0.710$^{***}$ & 0.963 & 0.410 & 0.135 \\ 
+  & (0.473) & (0.158) & (1.404) & (0.473) & (0.440) \\ 
+  ln\_vat\_tax:balassa &  &  &  &  &  \\ 
+  &  &  &  & (0.000) &  \\ 
+  ln\_vat\_tax:herf\_com\_o &  &  &  &  & 0.456$^{**}$ \\ 
+  &  &  &  &  & (0.226) \\ 
+  eligibleNo:ln\_import\_tax & 0.075 &  &  & 0.075 & 0.087 \\ 
+  & (0.274) &  &  & (0.274) & (0.274) \\ 
+  eligibleYes:ln\_import\_tax & 0.046 &  &  & 0.046 & 0.045 \\ 
+  & (0.064) &  &  & (0.064) & (0.064) \\ 
+  imported\_variety:t\_0 & $-$0.00005$^{*}$ & $-$0.0001$^{**}$ & 0.00001 & $-$0.00005$^{*}$ & $-$0.00005$^{*}$ \\ 
+  & (0.00003) & (0.00002) & (0.0001) & (0.00003) & (0.00003) \\ 
+  ln\_vat\_tax:eligibleYes:density\_china\_ville & $-$1.066$^{**}$ &  &  & $-$1.066$^{**}$ & $-$0.975$^{**}$ \\ 
+  & (0.472) &  &  & (0.472) & (0.448) \\ 
+  ln\_vat\_tax:eligibleYes:balassa &  &  &  &  &  \\ 
+  &  &  &  & (0.000) &  \\ 
+  ln\_vat\_tax:eligibleYes:herf\_com\_o &  &  &  &  & $-$0.247 \\ 
+  &  &  &  &  & (0.210) \\ 
+ \hline \\[-1.8ex] 
+ &  &  &  &  &  \\ 
+Observations & 4,703,963 & 4,403,766 & 300,197 & 4,703,963 & 4,703,963 \\ 
+R$^{2}$ & 0.660 & 0.659 & 0.667 & 0.660 & 0.660 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 

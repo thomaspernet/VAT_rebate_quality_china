@@ -1,0 +1,56 @@
+
+\documentclass[preview]{standalone} 
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
+
+\begin{document}% Date and time: Thu, Jun 18, 2020 - 13:31:05
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm's quality upgrading, Effect of density} 
+\label{}
+\begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
+\begin{tabular}{@{\extracolsep{5pt}}lccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{5}{c}{Dependent variable: Quality of firm $i$ for product $k$ in city $c$ at year $t$} \\ 
+\cline{2-6} 
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5)\\
+ \\[-1.8ex] &  & Eligible & No Eligible & \\
+ \hline \\[-1.8ex] 
+ Ln VAT export tax$_{k,t-1}$ &  & 0.004 & $-$0.294 &  &  \\ 
+  &  & (0.053) & (0.260) &  &  \\ 
+  ln\_import\_tax &  & 0.043 & 0.100 &  &  \\ 
+  &  & (0.064) & (0.279) &  &  \\ 
+  Ln VAT export tax$_{k,t-1}$ x Density$_{ck} & 0.410 & $-$0.710$^{***}$ & 0.963 & 0.410 & 0.135 \\ 
+  & (0.473) & (0.158) & (1.404) & (0.473) & (0.440) \\ 
+  Ln VAT export tax$_{k,t-1}$ x Comp Adv$_{ck} &  &  &  &  &  \\ 
+  &  &  &  & (0.000) &  \\ 
+  Ln VAT export tax$_{k,t-1}$ x Competition$_{ck}$_{s,t-1}$ &  &  &  &  & 0.456$^{**}$ \\ 
+  &  &  &  &  & (0.226) \\ 
+  Ln VAT import tax$_{k,t-1}$ & 0.075 &  &  & 0.075 & 0.087 \\ 
+  & (0.274) &  &  & (0.274) & (0.274) \\ 
+  Ln VAT import tax$_{k,t-1}$ \times \text{ordinary}$_{i}$ & 0.046 &  &  & 0.046 & 0.045 \\ 
+  & (0.064) &  &  & (0.064) & (0.064) \\ 
+  Ln VAT export tax$_{k,t-1}$ x Ordinary$_{i}$ x Density$_{ck} & $-$1.066$^{**}$ &  &  & $-$1.066$^{**}$ & $-$0.975$^{**}$ \\ 
+  & (0.472) &  &  & (0.472) & (0.448) \\ 
+  Ln VAT export tax$_{k,t-1}$ x Ordinary$_{i}$ x Comp Adv$_{ck}$ &  &  &  &  &  \\ 
+  &  &  &  & (0.000) &  \\ 
+  Ln VAT export tax$_{k,t-1}$ x Ordinary$_{i}$ x Competition$_{ck}$$_{s,t-1}$ &  &  &  &  & $-$0.247 \\ 
+  &  &  &  &  & (0.210) \\ 
+  Competition$_{s,t-1}$ & 0.064$^{*}$ & 0.051 & 0.360 & 0.064$^{*}$ & $-$0.210$^{**}$ \\ 
+  & (0.036) & (0.036) & (0.227) & (0.036) & (0.098) \\ 
+ \hline \\[-1.8ex] 
+ &  &  &  &  &  \\ 
+Observations & 4,703,963 & 4,403,766 & 300,197 & 4,703,963 & 4,703,963 \\ 
+R$^{2}$ & 0.660 & 0.659 & 0.667 & 0.660 & 0.660 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular}
+\end{adjustbox}
+\begin{tablenotes} 
+ \small 
+ \item \\ 
+This table estimates eq(4). All estimation include firm-hs6, origin city-year,destination-year, HS4-status-year fixed effect. Our regression adds initial firm size trend.Note that $ordinary$ refers to the firms entitle to VAT refund, our treatment group.Our control group is processing trade with supplied input, non eligible to VAT refund.All firms belong to one group only, in consequence, the dummy $ordinary_{i}$ does not varywithin firm over time and is drop from the regression. $i$ stands for the firm, $c$ for the city,$k$ for the HS6 product, $t$ for the year and $s$ for the sector.Heteroskedasticity-robust standard errors clustered at the firm level appear in parentheses. \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%. 
+\end{tablenotes}
+\end{table}
+
+\end{document}
