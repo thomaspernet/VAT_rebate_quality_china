@@ -6,14 +6,14 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.0+dev
+      jupytext_version: 1.4.2
   kernelspec:
     display_name: SoS
     language: sos
     name: sos
 ---
 
-<!-- #region Collapsed="false" kernel="SoS" -->
+<!-- #region kernel="SoS" -->
 # Text SOS-kernel with Jupytext
 
 ## What is SOS kernel
@@ -47,7 +47,7 @@ cf the image below. It is a code cell. After saving the notebook and restart it,
 <img width="734" alt="Screenshot 2020-03-13 at 10 51 18" src="https://user-images.githubusercontent.com/33351426/76610049-9e704600-6518-11ea-861e-b4f691d1a478.png">
 <!-- #endregion -->
 
-<!-- #region Collapsed="false" kernel="SoS" -->
+<!-- #region kernel="SoS" -->
 ## Step 1
 
 Please, choose SOS Kernel and then, in the cell code, choose SOS (or any other kernel available), the outcome is the same.
@@ -55,7 +55,7 @@ Please, choose SOS Kernel and then, in the cell code, choose SOS (or any other k
 ![](https://drive.google.com/uc?export=view&id=1OtyxfwoRyVK23XHnmd9JR-crBgHBL5mt)
 <!-- #endregion -->
 
-```sos Collapsed="false" kernel="SoS"
+```sos kernel="SoS" jupyter={"outputs_hidden": true}
 import pandas as pd 
 import numpy as np
 
@@ -69,7 +69,7 @@ df = pd.DataFrame({
 df.head()
 ```
 
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region kernel="python3" -->
 ## Step 2
 
 Now, pair it with Jupytex
@@ -77,13 +77,13 @@ Now, pair it with Jupytex
 ![](https://drive.google.com/uc?export=view&id=1Wtx-YPAXY8HWHqzCcy4iIgHpzt_9emEn)
 <!-- #endregion -->
 
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region kernel="python3" -->
 ### Step 3
 
 Save the notebook, restart and clear all, **save**, then Shut down kernel. Close the notebook and reopen
 <!-- #endregion -->
 
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region kernel="python3" -->
 ### Step 4
 
 Reopen the notebook. Here is the outcome
