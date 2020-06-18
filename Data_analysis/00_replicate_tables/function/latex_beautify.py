@@ -1,7 +1,13 @@
-import re
+import re, tex2pix, os
+from PyPDF2 import PdfFileMerger
+from wand.image import Image as WImage
 
 
-def beautify(table_number, new_row = False, table_nte = None):
+def beautify(table_number,
+ new_row = False,
+  table_nte = None,
+  jupyter_preview = True,
+  resolution = 150):
     """
     """
     table_in = "table_{}.txt".format(table_number)
@@ -80,6 +86,25 @@ def beautify(table_number, new_row = False, table_nte = None):
             lines[x] = lines[x].strip() + new_row_[0]
             #lines[x+1] = lines[x].strip() + ''
 
+    ### Add header
+    len_line = len(lines)
+    for x, line in enumerate(lines):
+        if x ==1:
+            if jupyter_preview:
+                header= "\documentclass[preview]{standalone} \n\\usepackage[utf8]{inputenc}\n" \
+            "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
+            "\\begin{document}"
+            else:
+                header= "\documentclass[12pt]{article} \n\\usepackage[utf8]{inputenc}\n" \
+            "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
+            "\\begin{document}"
+
+            lines[x] =  header
+
+        if x == len_line- 1:
+            footer = "\n\n\\end{document}"
+            lines[x]  =  lines[x].strip() + footer
+
     with open(table_out, "w") as f:
         for line in lines:
             f.write(line)
@@ -150,5 +175,13 @@ def beautify(table_number, new_row = False, table_nte = None):
         with open(table_out, "w") as f:
             for line in lines:
                 f.write(line)
+
+    if jupyter_preview:
+        f = open('table_{}.tex'.format(table_number))
+        r = tex2pix.Renderer(f, runbibtex=False)
+        r.mkpdf('table_{}.pdf'.format(table_number))
+        img = WImage(filename='table_{}.pdf'.format(table_number),
+         resolution = resolution)
+        return display(img)
 
     ### Add Adjust box
