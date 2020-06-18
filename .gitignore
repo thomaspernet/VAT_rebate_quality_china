@@ -10,8 +10,8 @@ __pycache__/
 data
 *.csv
 *.gz
-*.txt
-*.tex
+#*.txt
+#*.tex
 
 *.pickle
 token_coda.json
