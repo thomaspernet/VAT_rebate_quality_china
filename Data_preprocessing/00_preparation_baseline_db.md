@@ -99,37 +99,43 @@ The data source to construct the dataset are the following:
 
 
 ```python inputHidden=false outputHidden=false jupyter={"outputs_hidden": false}
-from Fast_connectCloud import connector
-from GoogleDrivePy.google_drive import connect_drive
-from GoogleDrivePy.google_platform import connect_cloud_platform
-from app_creation import studio
 import pandas as pd 
 import numpy as np
-import pandas_profiling
 from pathlib import Path
 import os, re,  requests, json 
+from GoogleDrivePy.google_authorization import authorization_service
+from GoogleDrivePy.google_platform import connect_cloud_platform
 ```
 
 ```python inputHidden=false outputHidden=false jupyter={"outputs_hidden": false}
-gs = connector.open_connection(online_connection = False, 
-	path_credential = '/PATH_TOKEN/')
+path = os.getcwd()
+parent_path = str(Path(path).parent)
+project = 'valid-pagoda-132423'
 
-service_gd = gs.connect_remote(engine = 'GS')
-service_gcp = gs.connect_remote(engine = 'GCP')
 
-gdr = connect_drive.connect_drive(service_gd['GoogleDrive'])
+auth = authorization_service.get_authorization(
+    path_credential_gcp = "{}/creds/service.json".format(parent_path),
+    verbose = False#
+)
 
-project = 'PROJECTNAME'
-gcp = connect_cloud_platform.connect_console(project = project,
-											 service_account = service_gcp['GoogleCloudP'])
+gcp_auth = auth.authorization_gcp()
+gcp = connect_cloud_platform.connect_console(project = project, 
+                                             service_account = gcp_auth) 
 ```
 
 <!-- #region heading_collapsed=true -->
 ## Things to know (Steps, Attention points or new flow of information)
 
 ### Steps
-1.  
-2. 
+
+1. Filter export, trade type, business type and interemediaries  
+2. Append data 2003 to 2009
+3. Create regime
+4. Merge with VAT rebate -> Use lag
+5. Keep pair year, city, HS when both regime available
+6. Merge geocode
+7. Remove NULL vat rebate
+
 
 ### Consideration’s point for the developers/analyst
 
@@ -150,26 +156,254 @@ gcp = connect_cloud_platform.connect_console(project = project,
 <!-- #endregion -->
 
 ```python inputHidden=false outputHidden=false jupyter={"outputs_hidden": false}
-
+query = """
+WITH merge_data AS (
+  SELECT 
+    CAST(Date AS STRING) as year, 
+    ID, 
+    Trade_type, 
+    Business_type, 
+    CASE WHEN length(
+      CAST(HS AS STRING)
+    ) < 5 THEN CONCAT(
+      "0", 
+      CAST(HS AS STRING)
+    ) ELSE CAST(HS AS STRING) END as HS6, 
+    city_prod, 
+    Origin_or_destination, 
+    Quantity, 
+    value 
+  FROM 
+    `China.tradedata_*` 
+  WHERE 
+    (
+      _TABLE_SUFFIX BETWEEN '2002' 
+      AND '2006'
+    ) 
+    AND imp_exp = '出口' 
+    AND (
+      Trade_type = '进料加工贸易' 
+      OR Trade_type = '一般贸易' 
+      OR Trade_type = '来料加工装配贸易'
+    ) 
+    AND intermediate = 'No' 
+    AND (
+      Business_type = '国有企业' 
+      OR Business_type = '私营企业' 
+      OR Business_type = '集体企业'
+      OR Business_type = '国有'
+      OR Business_type = '私营'
+      OR Business_type = '集体'
+    ) 
+  UNION ALL 
+  SELECT 
+    CAST(Date AS STRING) as year, 
+    ID, 
+    Trade_type, 
+    Business_type, 
+    CASE WHEN length(
+      CAST(HS AS STRING)
+    ) < 5 THEN CONCAT(
+      "0", 
+      CAST(HS AS STRING)
+    ) ELSE CAST(HS AS STRING) END as HS6, 
+    city_prod, 
+    Origin_or_destination, 
+    Quantity, 
+    value 
+  FROM 
+    `China.tradedata_*` 
+  WHERE 
+    NOT(
+      _TABLE_SUFFIX BETWEEN '2000' 
+      AND '2006'
+    ) 
+    AND imp_exp = '出口' 
+    AND intermediate = 'No' 
+    AND (
+      Business_type = '国有企业' 
+      OR Business_type = '私营企业' 
+      OR Business_type = '集体企业'
+    )
+) 
+SELECT 
+  * 
+FROM 
+  (
+    WITH merged_data AS (
+      SELECT 
+        merge_data.year, 
+        ID, 
+        Trade_type, 
+        Business_type, 
+        merge_data.HS6, 
+        city_prod, 
+        Origin_or_destination, 
+        Quantity, 
+        value, 
+        lag_vat_m, 
+        lag_vat_reb_m, 
+        lag_tax_Rebate, 
+        CASE WHEN Trade_type = '进料加工贸易' 
+        OR Trade_type = '一般贸易' THEN 'Eligible' ELSE 'Not_Eligible' END as regime 
+      FROM 
+        merge_data 
+        LEFT JOIN (
+          SELECT 
+            HS6, 
+            year, 
+            tax_rebate, 
+            vat_m, 
+            vat_reb_m, 
+            LAG(vat_m, 1) OVER (
+              PARTITION BY HS6 
+              ORDER BY 
+                HS6, 
+                year
+            ) AS lag_vat_m,
+            LAG(vat_reb_m, 1) OVER (
+              PARTITION BY HS6 
+              ORDER BY 
+                HS6, 
+                year
+            ) AS lag_vat_reb_m,
+            LAG(tax_rebate, 1) OVER (
+              PARTITION BY HS6 
+              ORDER BY 
+                HS6, 
+                year
+            ) AS lag_tax_rebate,
+          FROM 
+            China.base_hs6_VAT_2002_2012 
+          WHERE 
+            vat_m IS NOT NULL
+        ) as vat ON merge_data.year = vat.year 
+        AND merge_data.HS6 = vat.HS6
+    ) 
+    SELECT 
+      * 
+    FROM 
+      (
+        WITh filtered_data AS (
+          SELECT 
+            year, 
+            merged_data.ID, 
+            regime, 
+            Trade_type, 
+            Business_type, 
+            HS6, 
+            city_prod, 
+            Origin_or_destination as destination, 
+            Quantity, 
+            value, 
+            lag_vat_m, 
+            lag_vat_reb_m, 
+            lag_tax_rebate, 
+            count_ 
+          FROM 
+            merged_data 
+            LEFT JOIN (
+              SELECT 
+                ID, 
+                COUNT(
+                  DISTINCT(regime)
+                ) as count_ 
+              FROM 
+                merged_data 
+              GROUP BY 
+                ID
+            ) as count_trade_Type ON merged_data.ID = count_trade_Type.ID 
+          WHERE 
+            count_ = 1 
+            -- AND tax_rebate IS NOT NULL
+        ) 
+        SELECT 
+        
+          DISTINCT(citycn) as citycn, 
+          geocode4_corr, 
+          cityen, 
+          year, 
+          ID, 
+          regime, 
+          Trade_type, 
+          Business_type, 
+          HS6, 
+          -- city_prod, 
+          destination, 
+          Quantity, 
+          value, 
+          lag_vat_m, 
+          lag_vat_reb_m, 
+          lag_tax_rebate,
+          ln(1 + lag_tax_rebate) as ln_lag_tax_rebate
+        FROM 
+          China.city_cn_en 
+          INNER JOIN (
+            SELECT 
+              filtered_data.year, 
+              ID, 
+              regime, 
+              Trade_type, 
+              Business_type, 
+              filtered_data.HS6, 
+              filtered_data.city_prod, 
+              destination, 
+              Quantity, 
+              value, 
+              lag_vat_m, 
+              lag_vat_reb_m, 
+              lag_tax_rebate, 
+              count_firms 
+            FROM 
+              filtered_data 
+              LEFT JOIN (
+                SELECT 
+                  year, 
+                  city_prod, 
+                  HS6, 
+                  COUNT(
+                    DISTINCT(regime)
+                  ) as count_firms 
+                FROM 
+                  filtered_data 
+                GROUP BY 
+                  year, 
+                  city_prod, 
+                  HS6
+              ) as count_multi ON filtered_data.year = count_multi.year 
+              AND filtered_data.city_prod = count_multi.city_prod 
+              AND filtered_data.HS6 = count_multi.HS6 
+            WHERE 
+            count_firms != 1
+          ) as final ON city_cn_en.citycn = final.city_prod
+          WHERE lag_tax_rebate IS NOT NULL
+          ORDER BY geocode4_corr, HS6, year, regime
+      )
+  ) 
+"""
 ```
 
-# Profiling
+```python
+query = (
+          "SELECT * "
+            "FROM China.VAT_export_2002_2010 "
 
-In order to get a quick summary statistic of the data, we generate an HTML file with the profiling of the dataset we've just created. 
-
-The profiling will be available at this URL after you commit a push to GitHub. 
-
-**You need to rename the final dataframe `df_final` in the previous section to generate the profiling.**
+        )
+df_final = gcp.upload_data_from_bigquery(query = query, location = 'US')
+df_final.head()
+```
 
 ```python
-#### make sure the final dataframe is stored as df_final
-### Overide the default value: 
-#https://github.com/pandas-profiling/pandas-profiling/blob/master/pandas_profiling/config_default.yaml
+df_final.shape
+```
 
-profile = pandas_profiling.ProfileReport(df_final,
-                                        check_correlation_pearson = False)
-name_html = "NAME.html"
-profile.to_file(output_file=name_html)
+```python
+import sidetable
+df_final.stb.freq(['year'])
+```
+
+```python
+df_final['year'].unique()
 ```
 
 # Upload to cloud
@@ -199,7 +433,7 @@ To generate a notebook ready to use in the studio, please fill in the variables 
 
 ```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
 labels = []
-date_var = ''
+date_var = 'year'
 ```
 
 ```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
@@ -228,8 +462,8 @@ dic_ = {
           'labels' : labels,
           'date_var' : date_var
 }
-create_studio = studio.connector_notebook(dic_)
-create_studio.generate_notebook_studio()
+#create_studio = studio.connector_notebook(dic_)
+#create_studio.generate_notebook_studio()
 ```
 
 <!-- #region nteract={"transient": {"deleting": false}} -->
@@ -274,13 +508,9 @@ Remember to commit in GitHub to activate the URL link for the profiling and Stud
 Storage = 'GBQ'
 Theme = 'Trade' 
 Database = 'China'
-Description = "The table is related to"
-Filename = 'PROJECTNAME'
+Description = "The table is related to the paper that studies the effect of industrial policy in China, the VAT export tax, on the quality upgrading. We use Chinese transaction data for 2002-2006 to isolate the causal impact of the exogenous variation of VAT refund tax and within firm-product change in HS6 exported quality products."
+Filename = 'VAT_export_2002_2010'
 Status = 'Active'
-```
-
-```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
-
 ```
 
 <!-- #region nteract={"transient": {"deleting": false}} -->
@@ -294,6 +524,7 @@ parent_path = Path(path).parent
 test_str = str(parent_path)
 matches = re.search(regex, test_str)
 github_repo = matches.group(2)
+Source_data = ['tradedata_*', 'base_hs6_VAT_2002_2012', 'city_cn_en']
 
 Profiling = True
 if Profiling:
@@ -349,6 +580,7 @@ with open('token_coda.json') as json_file:
 token = data[0]['token'] 
 
 uri = f'https://coda.io/apis/v1beta1/docs/vfMWDBnHh8/tables/grid-HgpAnIEhpP/rows'
+headers = {'Authorization': 'Bearer {}'.format(token)}
 payload = {
   'rows': [
     {
@@ -362,5 +594,5 @@ res = req.json()
 ```
 
 ```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
-
+req.raise_for_status() 
 ```
