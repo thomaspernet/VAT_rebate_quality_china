@@ -17,9 +17,36 @@ jupyter:
 
 # Baseline dataset paper Quality data preprocessing
 
-This notebook has been generated on XX
+This notebook has been generated on 08/13/2020
 
-The objective of this notebook is to YYY
+The objective of this notebook is:
+
+*  Create a dataset with year 2002 to 2010, including the following variables:
+
+  * Date:
+    * Date 
+  * Firm id:
+    * ID 
+  * Export price:
+    * value 
+  * Quantity:
+    * Quantity 
+  * VAT:
+    *  
+  * Province
+    * province 
+  * City:
+    *  city_prod 
+  * Destination:
+    * Origin_or_destination 
+  * HS6:
+    * HS 
+  * HS4:
+    * 
+  * Trade status:
+    * Trade_type 
+  * Business type
+    * Business_type 
 
 ## Global steps 
 
@@ -29,21 +56,43 @@ The global steps to construct the dataset are the following:
 - Lorem ipsum dolor sit amet
 - Lorem ipsum dolor sit amet
 
-## Data source 
+## Input Cloud Storage [AWS/GCP]: If link from the internet, save it to the cloud first
 
 The data source to construct the dataset are the following:
+
+* BigQuery 
+  *  Table: 
+    * tradedata_* 
+    * Notebook construction file (data lineage) 
+      * md :
+      * github: https://github.com/thomaspernet/Chinese-Trade-Data
+  *  Table: 
+    * base_hs6_VAT_2002_2012 
+    * Notebook construction file (data lineage) 
+      * md :
+      * github:
+    * Spreadsheet: 
+        * base_hs6_VAT_2002_2012 
+          * https://docs.google.com/spreadsheets/d/1Sl_8jh1gMKHWBRCjQDRBHyB26IQU2tIAioHdxaqdJqM/edit#gid=620969611
+        * Source: 
+          * Google Drive: base_hs6_VAT_2002_2012.dta
+        * Notebook construction file (data lineage) 
+          * md :
 
 
 
 
 <!-- #region heading_collapsed=true -->
-## Destination
+## Destination Output/Delivery
 
-The new dataset is available from XXX
-
-- GS: None
-- GCS: None
-- BG: None
+* Jupyter Notebook (Github Link):
+  * md : [00_preparation_baseline_db.md](https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/Data_preprocessing/00_preparation_baseline_db.md)
+  * ipynb: [00_preparation_baseline_db.ipynb](https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/Data_preprocessing/00_preparation_baseline_db.ipynb)
+  
+* GCP:
+  * Project: valid-pagoda-132423 
+  * Database: China 
+  * Table: VAT_export_2002_2010 
 <!-- #endregion -->
 
 # Load Dataset
@@ -76,18 +125,28 @@ gcp = connect_cloud_platform.connect_console(project = project,
 ```
 
 <!-- #region heading_collapsed=true -->
-# Workflow
+## Things to know (Steps, Attention points or new flow of information)
 
-In this section, we will construct the dataset, and document each step of the workflow.
+### Steps
+1.  
+2. 
 
-Please use the following format for the documentation:
+### Consideration’s point for the developers/analyst
 
-- `##` Step 1: XXX
-- `###` (optional) Underlying process description
-- `##` Step 2: YYY
-- `###` (optional) Underlying process description
-
-Note: **You need to rename the last dataframe `df_final`**
+* Here is the list of trade type needed: Trade_type 
+  * Processing with imported materials => 进料加工贸易 : eligible to vat refund
+  * Ordinary trade 一般贸易: eligible to vat refund
+  * Processing with supplied materials => 来料加工装配贸易 : no eligible to vat refund
+* Keep the following business type Business_type :
+  * 国有企业
+  * 私营企业
+  * 集体企业
+* Remove intermediate: intermediate 
+  * keep No 
+* Make sure there is at least one firm per: City-HS6-Destination
+* Computation VAT rebate:
+  * rebate: (vat_m-vat_reb_m)
+  * ln_vat_tax = log(1+(vat_m-vat_reb_m))
 <!-- #endregion -->
 
 ```python inputHidden=false outputHidden=false jupyter={"outputs_hidden": false}
