@@ -337,7 +337,7 @@ reindex = [
     'lag_tax_rebate', 'ln_lag_tax_rebate',
     'y', 'prediction','residual',
     'price_adjusted_quality', 'kandhelwal_quality',
-    'FE_ct', 'FE_fpr', 'FE_str', 'FE_ct','FE_dt', 'FE_pt']
+    'FE_ct', 'FE_fpr', 'FE_str','FE_dt', 'FE_pt']
 
 df_quality = df_quality.reindex(columns = reindex)
 ```
