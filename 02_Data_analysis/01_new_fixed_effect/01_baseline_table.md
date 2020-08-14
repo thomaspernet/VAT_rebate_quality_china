@@ -344,7 +344,7 @@ gcp = connect_cloud_platform.connect_console(project = project,
 
 ```
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 import function.latex_beautify as lb
 
 %load_ext autoreload
@@ -362,11 +362,44 @@ source(path)
 ```
 
 ```sos kernel="R"
+df_final <- read_csv('../temporary_local_data/vat_rebate_china.gz') %>% mutate(
+    FE_fp = group_indices(., id_group, hs6),
+    FE_fpe = group_indices(., id_group, hs6, eligible),
+    FE_set = group_indices(., hs4, eligible, t_0),
+    FE_pet = group_indices(., hs6, eligible, t_0),
+    FE_pt = group_indices(., hs6, t_0),
+    FE_pc = group_indices(., hs6, c),
+    FE_ct = group_indices(., c, t_0),
+    FE_it = group_indices(., geocode4_corr, t_0),
+)
+```
 
-df_final <- read_csv('../temporary_local_data/vat_rebate_china.gz')
-
+```sos kernel="R"
 table(df_final$eligible)
+```
 
+```sos kernel="R"
+length(unique(df_final$FE_fpe))
+```
+
+```sos kernel="R"
+length(unique(df_final$FE_set))
+```
+
+```sos kernel="R"
+length(unique(df_final$FE_pt))
+```
+
+```sos kernel="R"
+length(unique(df_final$FE_ct))
+```
+
+```sos kernel="R"
+length(unique(df_final$FE_it))
+```
+
+```sos kernel="R"
+unique(df_final$ln_vat_tax)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -382,6 +415,18 @@ egen g3 = group(c t_0)
 egen g4 = group(hs4 eligible t_0)
 egen g5 = group(hs6 i t_0)
 ```
+
+In this notebook, we are improving the baseline regression by trying with the following fixed effect:
+
+| Benchmark | Origin    | Name                     | Description                                                                                                                                                                                                                                                                                                                                    | Math_notebook     |
+|-----------|-----------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|
+| Yes       | Current   | firm-product-eligibility | captures all the factors that affect firms regardless of the time and type of regime. This firm‒product pair eliminates the demand shocks that firms face and that are not correlated with the types of status. The fixed effects are also responsible for potential correlations between subsidies, R&D, or trade policies and VAT rebates.   | $\alpha^{E}_{it}$ |
+| Yes       | Current   | HS4-year-eligibility     |                                                                                                                                                                                                                                                                                                                                                | $\alpha^{E}_{st}$ |
+| Yes       | Current   | city-year                | captures the differences in demand, capital intensity, or labor supply that prevail between cities each year                                                                                                                                                                                                                                   | $\alpha_{ct}$     |
+| Yes       | Current   | destination-year         | Captures additional level of control, encompassing all the shocks and developments in the economies to which China exports.                                                                                                                                                                                                                    | $\alpha_{dt}$     |
+|           | Candidate | Product-year             | account for all factors that affect product-level export irrespective of the trade regime in a given year                                                                                                                                                                                                                                      | $\alpha_{pt}$     |
+|           | Candidate | product-destination      |                                                                                                                                                                                                                                                                                                                                                | $\alpha_{pd}$     |
+|           | Candidate | Product-destination-year |                                                                                                                                                                                                                                                                                                                                                | $\alpha_{pdt}$    |
 <!-- #endregion -->
 
 <!-- #region kernel="SoS" -->
@@ -394,6 +439,21 @@ Output latex table available here
 
 ![](https://drive.google.com/uc?export=view&id=1xrybwVOlhUL_76jB8lg0-CcrxsXA0hxk)
 <!-- #endregion -->
+
+```sos kernel="R"
+FE_fpe +
+    FE_set +
+    FE_pt +
+    FE_ct +
+    FE_it
+```
+
+```sos kernel="R"
+t_1 <- felm(quality ~eligible*ln_vat_tax + imported_variety*t_0
+            | FE_fpe + FE_set|0 | id_group, df_final,
+            exactDOF = TRUE)
+summary(t_1)
+```
 
 ```sos kernel="R"
 #1    
