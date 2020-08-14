@@ -1,113 +1,11 @@
----
-jupyter:
-  jupytext:
-    formats: ipynb,md
-    text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: '1.2'
-      jupytext_version: 1.4.2
-  kernel_info:
-    name: python3
-  kernelspec:
-    display_name: Python 3
-    language: python
-    name: python3
----
-
-# Baseline dataset paper Quality data preprocessing
-
-This notebook has been generated on 08/13/2020
-
-The objective of this notebook is:
-
-*  Create a dataset with year 2002 to 2010, including the following variables:
-
-  * Date:
-    * Date 
-  * Firm id:
-    * ID 
-  * Export price:
-    * value 
-  * Quantity:
-    * Quantity 
-  * VAT:
-    *  
-  * Province
-    * province 
-  * City:
-    *  city_prod 
-  * Destination:
-    * Origin_or_destination 
-  * HS6:
-    * HS 
-  * HS4:
-    * 
-  * Trade status:
-    * Trade_type 
-  * Business type
-    * Business_type 
-
-## Global steps 
-
-The global steps to construct the dataset are the following:
-
-- Lorem ipsum dolor sit amet
-- Lorem ipsum dolor sit amet
-- Lorem ipsum dolor sit amet
-
-## Input Cloud Storage [AWS/GCP]: If link from the internet, save it to the cloud first
-
-The data source to construct the dataset are the following:
-
-* BigQuery 
-  *  Table: 
-    * tradedata_* 
-    * Notebook construction file (data lineage) 
-      * md :
-      * github: https://github.com/thomaspernet/Chinese-Trade-Data
-  *  Table: 
-    * base_hs6_VAT_2002_2012 
-    * Notebook construction file (data lineage) 
-      * md :
-      * github:
-    * Spreadsheet: 
-        * base_hs6_VAT_2002_2012 
-          * https://docs.google.com/spreadsheets/d/1Sl_8jh1gMKHWBRCjQDRBHyB26IQU2tIAioHdxaqdJqM/edit#gid=620969611
-        * Source: 
-          * Google Drive: base_hs6_VAT_2002_2012.dta
-        * Notebook construction file (data lineage) 
-          * md :
-
-
-
-
-<!-- #region heading_collapsed=true -->
-## Destination Output/Delivery
-
-* Jupyter Notebook (Github Link):
-  * md : [00_preparation_baseline_db.md](https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/Data_preprocessing/00_preparation_baseline_db.md)
-  * ipynb: [00_preparation_baseline_db.ipynb](https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/Data_preprocessing/00_preparation_baseline_db.ipynb)
-  
-* GCP:
-  * Project: valid-pagoda-132423 
-  * Database: China 
-  * Table: VAT_export_2002_2010 
-<!-- #endregion -->
-
-# Load Dataset
-
-
-```python inputHidden=false outputHidden=false jupyter={"outputs_hidden": false}
 import pandas as pd 
 import numpy as np
 from pathlib import Path
 import os, re,  requests, json 
 from GoogleDrivePy.google_authorization import authorization_service
 from GoogleDrivePy.google_platform import connect_cloud_platform
-```
 
-```python inputHidden=false outputHidden=false jupyter={"outputs_hidden": false}
+
 path = os.getcwd()
 parent_path = str(Path(path).parent)
 project = 'valid-pagoda-132423'
@@ -121,41 +19,8 @@ auth = authorization_service.get_authorization(
 gcp_auth = auth.authorization_gcp()
 gcp = connect_cloud_platform.connect_console(project = project, 
                                              service_account = gcp_auth) 
-```
-
-<!-- #region heading_collapsed=true -->
-## Things to know (Steps, Attention points or new flow of information)
-
-### Steps
-
-1. Filter export, trade type, business type and interemediaries  
-2. Append data 2003 to 2009
-3. Create regime
-4. Merge with VAT rebate -> Use lag
-5. Keep pair year, city, HS when both regime available
-6. Merge geocode
-7. Remove NULL vat rebate
 
 
-### Consideration’s point for the developers/analyst
-
-* Here is the list of trade type needed: Trade_type 
-  * Processing with imported materials => 进料加工贸易 : eligible to vat refund
-  * Ordinary trade 一般贸易: eligible to vat refund
-  * Processing with supplied materials => 来料加工装配贸易 : no eligible to vat refund
-* Keep the following business type Business_type :
-  * 国有企业
-  * 私营企业
-  * 集体企业
-* Remove intermediate: intermediate 
-  * keep No 
-* Make sure there is at least one firm per: City-HS6-Destination
-* Computation VAT rebate:
-  * rebate: (vat_m-vat_reb_m)
-  * ln_vat_tax = log(1+(vat_m-vat_reb_m))
-<!-- #endregion -->
-
-```python inputHidden=false outputHidden=false jupyter={"outputs_hidden": false}
 query = """
 WITH merge_data AS (
   SELECT 
@@ -377,7 +242,7 @@ FROM
               AND filtered_data.city_prod = count_multi.city_prod 
               AND filtered_data.HS6 = count_multi.HS6
             WHERE 
-            count_firms != 1
+            count_firms get_ipython().getoutput("= 1")
           ) as final 
           ON city_cn_en.citycn = final.city_prod
           
@@ -390,9 +255,8 @@ FROM
   
 --- 2,419,620  
 """
-```
 
-```python
+
 query = (
           "SELECT * "
             "FROM China.VAT_export_2002_2010 "
@@ -400,52 +264,22 @@ query = (
         )
 df_final = gcp.upload_data_from_bigquery(query = query, location = 'US')
 df_final.head()
-```
 
-```python
+
 df_final.shape
-```
 
-```python
+
 import sidetable
 df_final.stb.freq(['year'])
-```
 
-```python
+
 df_final['year'].unique()
-```
-
-# Upload to cloud
-
-The dataset is ready to be shared with your colleagues. 
 
 
-
-<!-- #region nteract={"transient": {"deleting": false}} -->
-# Generate Studio
-
-To generate a notebook ready to use in the studio, please fill in the variables below:
-
-- 'project_name' : Name of the repository
-- 'input_datasets' : name of the table
-- 'sheetnames' : Name of the sheet, if table saved in Google Spreadsheet
-- 'bigquery_dataset' : Dataset name
-- 'destination_engine' : 'GCP' or 'GS,
-- 'path_destination_studio' : path to `Notebooks_Ready_to_use_studio`
-- 'project' : 'valid-pagoda-132423',
-- 'username' : "thomas",
-- 'pathtoken' : Path to GCP token,
-- 'connector' : 'GBQ', ## change to GS if spreadsheet
-- 'labels' : Add any labels to the variables,
-- 'date_var' : Date variable
-<!-- #endregion -->
-
-```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
 labels = []
 date_var = 'year'
-```
 
-```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
+
 regex = r"(.*)/(.*)"
 path = os.getcwd()
 parent_path = Path(path).parent
@@ -473,60 +307,16 @@ dic_ = {
 }
 #create_studio = studio.connector_notebook(dic_)
 #create_studio.generate_notebook_studio()
-```
 
-<!-- #region nteract={"transient": {"deleting": false}} -->
-# Add data to catalogue
 
-Now that the dataset is ready, you need to add the underlying information to the data catalogue. The data catalogue is stored in [Coda](https://coda.io/d/MasterFile-Database_dvfMWDBnHh8/MetaDatabase_suYFO#_ludIZ), more precisely, in the table named `DataSource`. 
-
-The cells below helps you to push the information directly to the table using Coda API.
-
-The columns are as follow:
-
-- `Storage`: Define the location of the table
-    - GBQ, GS, MongoDB
-- `Theme`: Define a theme attached to the table
-    - Accountancy, Complexity, Correspondance, Customer_prediction, Distance, Environment, Finance, Macro, Production, Productivity, Survey, Trade
-- `Database`: Name of the dataset. Use only for GBQ or MongoDB (collection)
-    - Business, China, Steamforged, Trade
-- `Path`:A URL with the path of the location of the dataset
-- `Filename`: Name of the table
-- `Description`: Description of the table. Be very specific. 
-- `Source_data`: A list of the data sources used to construct the table.
-- `Link_methodology`: URL linked to the notebook
-- `Dataset_documentation`: Github repository attached to the table
-- `Status`: Status of the table. 
-    - `Closed` if the table won't be altered in the future
-    - `Active` if the table will be altered in the future
-- `Profiling`: Specify if the user created a Pandas profiling
-    - `True` if the profiling has been created
-    - `False` otherwise
-- `Profiling_URL`: Profiling URL (link to Github). Always located in `Data_catalogue/table_profiling`
-- `JupyterStudio`: Specify if the user created a notebook to open the studio
-    - `True` if the notebook has been created
-    - `False` otherwise
-- `JupyterStudio_launcher`: Notebook URL (link to Github). Always located in `Notebooks_Ready_to_use_studio`
-- `Nb_projects`: Number of projects using this dataset. A Coda formula. Do not update this row
-- `Created on`: Date of creation. A Coda formula. Do not update this row
-
-Remember to commit in GitHub to activate the URL link for the profiling and Studio
-<!-- #endregion -->
-
-```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
 Storage = 'GBQ'
 Theme = 'Trade' 
 Database = 'China'
 Description = "The table is related to the paper that studies the effect of industrial policy in China, the VAT export tax, on the quality upgrading. We use Chinese transaction data for 2002-2006 to isolate the causal impact of the exogenous variation of VAT refund tax and within firm-product change in HS6 exported quality products."
 Filename = 'VAT_export_2002_2010'
 Status = 'Active'
-```
 
-<!-- #region nteract={"transient": {"deleting": false}} -->
-The next cell pushes the information to [Coda](https://coda.io/d/MasterFile-Database_dvfMWDBnHh8/Test-API_suDBp#API_tuDK4)
-<!-- #endregion -->
 
-```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
 regex = r"(.*)/(.*)"
 path = os.getcwd()
 parent_path = Path(path).parent
@@ -545,7 +335,7 @@ else:
 JupyterStudio = False
 if JupyterStudio:
     JupyterStudio_URL = '"https://mybinder.org/v2/gh/thomaspernet/{0}/' \
-    'master?filepath=Notebooks_Ready_to_use_studio%2F{1}_studio.ipynb'.format(github_repo, Filename)
+    'master?filepath=Notebooks_Ready_to_use_studioget_ipython().run_line_magic("2F{1}_studio.ipynb'.format(github_repo,", " Filename)")
 else:
     JupyterStudio_URL = ''
 ### BigQuery only 
@@ -600,8 +390,6 @@ payload = {
 req = requests.post(uri, headers=headers, json=payload)
 req.raise_for_status() # Throw if there was an error.
 res = req.json()
-```
 
-```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
+
 req.raise_for_status() 
-```
