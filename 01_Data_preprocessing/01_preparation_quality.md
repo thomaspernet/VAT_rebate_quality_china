@@ -21,6 +21,14 @@ This notebook has been generated on 08/14/2020
 
 *  Compute Kandhelwal quality for the table created in the US 1, US 1 Prepare baseline dataset. The quality is computed at the firm product-destination-level for each year in our sample. 
 
+* Add the following Fixed effect variables:
+  * Name
+  * firm-product-eligibility
+  * HS4-year-eligibility
+  * city-year 
+  * destination-year
+  * Product-year
+
 ## Metadata
 
 * Task type:
@@ -147,6 +155,13 @@ df_vat.to_csv('../00_Data_catalogue/temporary_local_data/VAT_export_2003_2010.cs
 4. Compute quality:
     - Adjusted: log(unit price) - residual
     - Kandhelwal : residual /(sigma - 1)
+5. Add Fixed effect
+    * Name
+    * firm-product-eligibility
+    * HS4-year-eligibility
+    * city-year 
+    * destination-year
+    * Product-year
 
 <!-- #region -->
 ## Consideration’s point for the developers/analyst
@@ -201,7 +216,9 @@ We also compute the following variables:
 ```python
 df_quality = (
     df_vat.assign(
-    HS3 = lambda x: x['HS6'].str[:3]
+    HS3 = lambda x: x['HS6'].str[:3],
+    HS4 = lambda x: x['HS6'].str[:4],
+        
 )
     .merge(sigmas, how = 'inner')
     .assign(
@@ -247,8 +264,10 @@ clf = make_pipeline(preprocessor,
                     LinearRegression(fit_intercept=True, normalize=False))
 ```
 
+It takes about 50s to compute the weights
+
 ```python
-%time
+%%time
 MODEL = clf.fit(df_quality[['HS6', 'FE_ct']], df_quality['y']) 
 ```
 
@@ -265,6 +284,64 @@ df_quality = df_quality.assign(
 )    
 ```
 
+Create the following fixed effect for the baseline regression:
+
+* firm-product-regime
+* HS4-year-regime
+* city-year 
+* destination-year
+* Product-year
+
+```python
+df_quality.columns
+```
+
+```python
+df_quality["FE_fpr"] = pd.factorize(df_quality["ID"].astype('str') + 
+                                    df_quality["HS6"].astype('str') +
+                                    df_quality["regime"].astype('str')
+                                   )[0]
+df_quality["FE_str"] = pd.factorize(df_quality["HS4"].astype('str') + 
+                                    df_quality["year"].astype('str') +
+                                    df_quality["regime"].astype('str')
+                                   )[0]
+df_quality["FE_ct"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
+                                    df_quality["year"].astype('str')
+                                   )[0]
+df_quality["FE_dt"] = pd.factorize(df_quality["destination"].astype('str') + 
+                                    df_quality["year"].astype('str')
+                                   )[0]
+df_quality["FE_pt"] = pd.factorize(df_quality["HS6"].astype('str') + 
+                                    df_quality["year"].astype('str')
+                                   )[0]
+```
+
+```python
+pd.set_option('display.max_columns', None)
+```
+
+```python
+df_quality.head()
+```
+
+```python
+reindex = [
+    'ID','year','regime',
+    'Trade_type', 'Business_type',
+    'HS6', 'HS4','HS3',
+    'citycn', 'geocode4_corr', 'cityen',
+    'destination', 'Country_en','ISO_alpha',
+    'Quantity', 'value',  'unit_price', 
+    'sigma', 'sigma_price',
+    'lag_vat_m', 'lag_vat_reb_m',
+    'lag_tax_rebate', 'ln_lag_tax_rebate',
+    'y', 'prediction','residual',
+    'price_adjusted_quality', 'kandhelwal_quality',
+    'FE_ct', 'FE_fpr', 'FE_str', 'FE_ct','FE_dt', 'FE_pt']
+
+df_quality = df_quality.reindex(columns = reindex)
+```
+
 # Upload to cloud
 
 The dataset is ready to be shared with your colleagues. 
@@ -277,21 +354,27 @@ The dataset is ready to be shared with your colleagues.
 
 
 ```python
-df_quality.to_csv('../00_Data_catalogue/temporary_local_data/quality_vat_export_2003_2010.csv', index = False)
+df_quality.to_csv('quality_vat_export_2003_2010.csv', index = False)
 ```
 
 ```python
 bucket_name = 'chinese_data'
 destination_blob_name = 'paper_project/Processed'
-source_file_name = '../00_Data_catalogue/temporary_local_data/quality_vat_export_2003_2010.csv'
+source_file_name = 'quality_vat_export_2003_2010.csv'
 gcp.upload_blob(bucket_name, destination_blob_name, source_file_name)
 ```
 
 ```python
-bucket_gcs ='chinese_data/paper_project/Processed/temporary_local_data/quality_vat_export_2003_2010.csv'
+bucket_gcs ='chinese_data/paper_project/Processed/quality_vat_export_2003_2010.csv'
 gcp.move_to_bq_autodetect(dataset_name= 'China',
 							 name_table= 'quality_vat_export_2003_2010',
 							 bucket_gcs=bucket_gcs)
+```
+
+```python
+import shutil
+shutil.move('quality_vat_export_2003_2010.csv',
+            '../00_Data_catalogue/temporary_local_data/quality_vat_export_2003_2010.csv')
 ```
 
 ### Dashboad Data studio
