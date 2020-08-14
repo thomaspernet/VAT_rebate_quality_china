@@ -141,7 +141,7 @@ df_vat.head()
 ```
 
 ```python
-df_vat.to_csv('../00_Data_catalogue/temporary_local_data/VAT_export_2003_2010.csv', index = False)
+#df_vat.to_csv('../00_Data_catalogue/temporary_local_data/VAT_export_2003_2010.csv', index = False)
 ```
 
 # Steps
