@@ -390,14 +390,14 @@ FROM
           ON country_cn_en.Country_cn = final.destination
           
           INNER JOIN (
-          SELECT year, HS02, LAG(import_taxe, 1) OVER (
+          SELECT year, HS02, LAG(import_tax, 1) OVER (
               PARTITION BY HS02
               ORDER BY 
                 HS02, 
                 year
             ) AS lag_import_tax
             FROM `China.applied_MFN_Tariffs_hs02_china_2002_2010` 
-          WHERE import_taxe IS NOT NULL) as import_tarrif
+          WHERE import_tax IS NOT NULL) as import_tarrif
           ON import_tarrif.year = final.year AND
           import_tarrif.HS02 = final.HS6
           
@@ -405,7 +405,7 @@ FROM
           ORDER BY geocode4_corr, HS6, year, regime
       )
   ) 
-  --  2 385 609
+  --  2 366 738
 """
 ```
 
