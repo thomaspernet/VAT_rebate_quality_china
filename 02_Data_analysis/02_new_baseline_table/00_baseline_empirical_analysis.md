@@ -152,39 +152,37 @@ Variables:
 
 |       Variables        | Type    |
 |:-----------------------|:--------|
-| ID                     | int64   |
+| cityen                 | object  |
+| geocode4_corr          | int64   |
 | year                   | int64   |
 | regime                 | object  |
-| Trade_type             | object  |
-| Business_type          | object  |
 | HS6                    | int64   |
 | HS4                    | int64   |
 | HS3                    | int64   |
-| citycn                 | object  |
-| geocode4_corr          | int64   |
-| cityen                 | object  |
-| destination            | object  |
 | Country_en             | object  |
 | ISO_alpha              | object  |
 | Quantity               | int64   |
 | value                  | int64   |
 | unit_price             | float64 |
-| sigma                  | float64 |
-| sigma_price            | float64 |
-| lag_vat_m              | int64   |
-| lag_vat_reb_m          | int64   |
+| kandhelwal_quality     | float64 |
+| price_adjusted_quality | float64 |
 | lag_tax_rebate         | float64 |
 | ln_lag_tax_rebate      | float64 |
+| lag_import_tax         | float64 |
+| ln_lag_import_tax      | float64 |
+| sigma                  | float64 |
+| sigma_price            | float64 |
 | y                      | float64 |
 | prediction             | float64 |
 | residual               | float64 |
-| price_adjusted_quality | float64 |
-| kandhelwal_quality     | float64 |
-| FE_ct                  | int64   |
-| FE_fpr                 | int64   |
-| FE_str                 | int64   |
-| FE_dt                  | int64   |
+| FE_cp                  | int64   |
+| FE_cst                 | int64   |
+| FE_cpr                 | int64   |
+| FE_csrt                | int64   |
 | FE_pt                  | int64   |
+| FE_pd                  | int64   |
+| FE_dt                  | int64   |
+| FE_ct                  | int64   |
 <!-- #endregion -->
 
 <!-- #region kernel="SoS" -->
@@ -202,19 +200,42 @@ Variables:
 <!-- #endregion -->
 
 <!-- #region kernel="SoS" -->
-## Table XX
+## Table 01
 
 Equation to estimate:
+
+$$ $$
 
 
 - Overleaf:
 <!-- #endregion -->
 
 ```sos kernel="R"
-#t_1 <- felm(log(unit_price) ~ln_lag_tax_rebate* regime
-#            | FE_fpr + FE_str + FE_pt + FE_dt|0 | HS3 + geocode4_corr, df_final,
-#            exactDOF = TRUE)
-#summary(t_1)
+t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate+ ln_lag_import_tax 
+            | FE_cp + FE_cst+FE_pd|0 | HS6, df_final %>% filter(regime == 'Eligible'),
+            exactDOF = TRUE)
+summary(t_0)
+```
+
+```sos kernel="R"
+t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate + ln_lag_import_tax
+            | FE_cp + FE_cst + FE_pd|0 | HS6, df_final %>% filter(regime != 'Eligible'),
+            exactDOF = TRUE)
+summary(t_1)
+```
+
+```sos kernel="R"
+t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime
+            | FE_cpr + FE_csrt + FE_pd|0 | HS6, df_final,
+            exactDOF = TRUE)
+summary(t_2)
+```
+
+```sos kernel="R"
+t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime
+            | FE_cpr + FE_csrt+FE_pt|0 | HS6, df_final,
+            exactDOF = TRUE)
+summary(t_3)
 ```
 
 ```sos kernel="SoS"
@@ -229,11 +250,11 @@ except:
 ```
 
 ```sos kernel="SoS"
-dep <- "Dependent variable: XX"
+dep <- "Dependent variable: Quality of city $c$ for product $k$ exported to countr $c$ at year $t$"
 table_1 <- go_latex(list(
     t_1
 ),
-    title="TITLE",
+    title="VAT export tax and product's quality upgrading, baseline regression",
     dep_var = dep,
     addFE='',
     save=TRUE,
@@ -252,6 +273,29 @@ lb.beautify(table_number = 1,
            table_nte = tbe1,
            jupyter_preview = True,
             resolution = 150)
+```
+
+<!-- #region kernel="SoS" -->
+Test Log Export value
+<!-- #endregion -->
+
+```sos kernel="SoS"
+t_0 <- felm(log(value) ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime
+            | FE_cpr + FE_csrt+FE_pt+ FE_pd|0 | HS6, df_final,
+            exactDOF = TRUE)
+summary(t_0)
+t_1 <- felm(log(value) ~ln_lag_tax_rebate+ ln_lag_import_tax 
+            | FE_cp + FE_cst+FE_pd|0 | HS6, df_final %>% filter(regime == 'Eligible'),
+            exactDOF = TRUE)
+summary(t_1)
+t_2 <- felm(log(value) ~ln_lag_tax_rebate + ln_lag_import_tax
+            | FE_cp + FE_cst + FE_pd|0 | HS6, df_final %>% filter(regime != 'Eligible'),
+            exactDOF = TRUE)
+summary(t_2)
+t_3 <- felm(log(value) ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime
+            | FE_cpr + FE_csrt + FE_pd|0 | HS6, df_final,
+            exactDOF = TRUE)
+summary(t_3)
 ```
 
 <!-- #region kernel="SoS" -->
