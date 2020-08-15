@@ -98,7 +98,7 @@ import function.latex_beautify as lb
 options(warn=-1)
 library(tidyverse)
 library(lfe)
-library(lazyeval)
+#library(lazyeval)
 library('progress')
 path = "function/table_golatex.R"
 source(path)
@@ -118,9 +118,6 @@ auth = authorization_service.get_authorization(
 gcp_auth = auth.authorization_gcp()
 gcp = connect_cloud_platform.connect_console(project = project, 
                                              service_account = gcp_auth) 
-```
-
-```sos kernel="SoS"
 query = (
           "SELECT * "
             "FROM China.quality_vat_export_2003_2010 "
@@ -238,7 +235,8 @@ t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * 
 summary(t_3)
 ```
 
-```sos kernel="SoS"
+```sos kernel="Python 3"
+import os
 try:
     os.remove("table_1.txt")
 except:
@@ -249,25 +247,37 @@ except:
     pass
 ```
 
-```sos kernel="SoS"
+```sos kernel="R"
 dep <- "Dependent variable: Quality of city $c$ for product $k$ exported to countr $c$ at year $t$"
+#FE_cp + FE_cst+FE_pd
+#FE_cpr + FE_csrt+FE_pt
+fe1 <- list(c("City-product fixed effects", "Yes", "Yes", "Yes", "No"),
+            
+             c("City-sector-year fixed effects", "Yes", "Yes", "Yes", "No"),
+            
+             c("Product-destination fixed effect","Yes", "Yes", "Yes", "No"),
+            
+             c("City-product-regime fixed effects","No", "No", "No", "Yes"),
+            
+             c("City-sector-regime-year fixed effects","No", "No", "No", "Yes"),
+             
+            c("product-year fixed effects", "No", "No", "No", "Yes")
+             )
+
 table_1 <- go_latex(list(
-    t_1
+    t_0,t_1, t_2, t_3
 ),
     title="VAT export tax and product's quality upgrading, baseline regression",
     dep_var = dep,
-    addFE='',
+    addFE=fe1,
     save=TRUE,
     note = FALSE,
     name="table_1.txt"
 )
 ```
 
-```sos kernel="SoS"
+```sos kernel="Python 3"
 tbe1 = ""
-```
-
-```sos kernel="SoS"
 lb.beautify(table_number = 1,
             new_row= False,
            table_nte = tbe1,
