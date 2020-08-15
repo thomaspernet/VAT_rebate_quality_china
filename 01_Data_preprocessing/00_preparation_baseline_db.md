@@ -173,9 +173,11 @@ WITH merge_data AS (
       CAST(HS AS STRING)
     ) ELSE CAST(HS AS STRING) END as HS6, 
     city_prod, 
-    Origin_or_destination, 
+    Origin_or_destination as destination, 
     Quantity, 
-    value 
+    value,
+    CASE WHEN Trade_type = '进料加工贸易' 
+    OR Trade_type = '一般贸易' THEN 'Eligible' ELSE 'Not_Eligible' END as regime 
   FROM 
     `China.tradedata_*` 
   WHERE 
@@ -193,10 +195,11 @@ WITH merge_data AS (
     AND (
       Business_type = '国有企业' 
       OR Business_type = '私营企业' 
-      OR Business_type = '集体企业'
-      OR Business_type = '国有'
-      OR Business_type = '私营'
+      OR Business_type = '集体企业' 
+      OR Business_type = '国有' 
+      OR Business_type = '私营' 
       OR Business_type = '集体'
+      
     ) 
   UNION ALL 
   SELECT 
@@ -211,9 +214,11 @@ WITH merge_data AS (
       CAST(HS AS STRING)
     ) ELSE CAST(HS AS STRING) END as HS6, 
     city_prod, 
-    Origin_or_destination, 
+    Origin_or_destination as destination, 
     Quantity, 
-    value 
+    value,
+    CASE WHEN Trade_type = '进料加工贸易' 
+    OR Trade_type = '一般贸易' THEN 'Eligible' ELSE 'Not_Eligible' END as regime 
   FROM 
     `China.tradedata_*` 
   WHERE 
@@ -230,182 +235,103 @@ WITH merge_data AS (
     )
 ) 
 SELECT 
-  * 
-FROM 
-  (
-    WITH merged_data AS (
-      SELECT 
-        merge_data.year, 
-        ID, 
-        Trade_type, 
-        Business_type, 
-        merge_data.HS6, 
-        city_prod, 
-        Origin_or_destination, 
-        Quantity, 
-        value, 
-        lag_vat_m, 
-        lag_vat_reb_m, 
-        lag_tax_Rebate, 
-        CASE WHEN Trade_type = '进料加工贸易' 
-        OR Trade_type = '一般贸易' THEN 'Eligible' ELSE 'Not_Eligible' END as regime 
-      FROM 
-        merge_data 
-        LEFT JOIN (
-          SELECT 
-            HS6, 
-            year, 
-            tax_rebate, 
-            vat_m, 
-            vat_reb_m, 
-            LAG(vat_m, 1) OVER (
-              PARTITION BY HS6 
-              ORDER BY 
-                HS6, 
-                year
-            ) AS lag_vat_m,
-            LAG(vat_reb_m, 1) OVER (
-              PARTITION BY HS6 
-              ORDER BY 
-                HS6, 
-                year
-            ) AS lag_vat_reb_m,
-            LAG(tax_rebate, 1) OVER (
-              PARTITION BY HS6 
-              ORDER BY 
-                HS6, 
-                year
-            ) AS lag_tax_rebate,
-          FROM 
-            China.base_hs6_VAT_2002_2012 
-          WHERE 
-            vat_m IS NOT NULL
-        ) as vat ON merge_data.year = vat.year 
-        AND merge_data.HS6 = vat.HS6
-    ) 
-    SELECT 
       * 
     FROM 
       (
-        WITh filtered_data AS (
-          SELECT 
+        WITH aggregate AS (
+          SELECT  
+            city_prod, 
             year, 
-            merged_data.ID, 
+            regime,
+            HS6, 
+            destination, 
+            SUM(Quantity) as Quantity, 
+            SUM(value) as value 
+          FROM 
+            merge_data 
+          GROUP BY 
+            year, 
             regime, 
-            Trade_type, 
-            Business_type, 
             HS6, 
             city_prod, 
-            Origin_or_destination as destination, 
-            Quantity, 
-            value, 
-            lag_vat_m, 
-            lag_vat_reb_m, 
-            lag_tax_rebate, 
-            count_ 
-          FROM 
-            merged_data 
-            LEFT JOIN (
-              SELECT 
-                ID, 
-                COUNT(
-                  DISTINCT(regime)
-                ) as count_ 
-              FROM 
-                merged_data 
-              GROUP BY 
-                ID
-            ) as count_trade_Type ON merged_data.ID = count_trade_Type.ID 
-          WHERE 
-            count_ = 1 
-            -- AND tax_rebate IS NOT NULL
+            destination
         ) 
-        SELECT 
-        
-          DISTINCT(citycn) as citycn, 
+        SELECT
+          cityen,
           geocode4_corr, 
-          cityen, 
-          final.year, 
-          ID, 
+          aggregate.year, 
           regime, 
-          Trade_type, 
-          Business_type, 
-          HS6, 
-          -- city_prod, 
-          destination, 
-          Country_en,
-          ISO_alpha,
+          aggregate.HS6, 
+          Country_en, 
+          ISO_alpha, 
           Quantity, 
           value, 
-          lag_vat_m, 
-          lag_vat_reb_m, 
-          lag_tax_rebate,
-          ln(1 + lag_tax_rebate) as ln_lag_tax_rebate,
-          lag_import_tax,
-          ln( 1+ lag_import_tax) AS ln_lag_import_tax,
-          SAFE_DIVIDE(value, Quantity) AS unit_price
+          SAFE_DIVIDE(value, Quantity) AS unit_price ,
+          lag_tax_rebate, 
+          ln(1 + lag_tax_rebate) as ln_lag_tax_rebate, 
+          lag_import_tax, 
+          ln(1 + lag_import_tax) AS ln_lag_import_tax
         FROM 
-          China.city_cn_en 
-          INNER JOIN (
+          aggregate 
+        INNER JOIN (SELECT DISTINCT(citycn) as citycn, cityen,geocode4_corr FROM China.city_cn_en )AS city_cn_en
+        ON city_cn_en.citycn = aggregate.city_prod   
+        LEFT JOIN China.country_cn_en ON country_cn_en.Country_cn = aggregate.destination
+        INNER JOIN (
             SELECT 
-              filtered_data.year, 
-              ID, 
-              regime, 
-              Trade_type, 
-              Business_type, 
-              filtered_data.HS6, 
-              filtered_data.city_prod, 
-              destination, 
-              Quantity, 
-              value, 
-              lag_vat_m, 
-              lag_vat_reb_m, 
-              lag_tax_rebate, 
-              count_firms 
+              year, 
+              HS02, 
+              LAG(import_tax, 1) OVER (
+                PARTITION BY HS02 
+                ORDER BY 
+                  HS02, 
+                  year
+              ) AS lag_import_tax 
             FROM 
-              filtered_data 
-              LEFT JOIN (
-                SELECT 
-                  year, 
-                  city_prod, 
-                  HS6, 
-                  COUNT(
-                    DISTINCT(regime)
-                  ) as count_firms 
-                FROM 
-                  filtered_data 
-                GROUP BY 
-                  year, 
-                  city_prod, 
-                  HS6
-              ) as count_multi ON filtered_data.year = count_multi.year 
-              AND filtered_data.city_prod = count_multi.city_prod 
-              AND filtered_data.HS6 = count_multi.HS6
+              China.applied_MFN_Tariffs_hs02_china_2002_2010 
             WHERE 
-            count_firms != 1
-          ) as final 
-          ON city_cn_en.citycn = final.city_prod
-          
-          LEFT JOIN China.country_cn_en
-          ON country_cn_en.Country_cn = final.destination
-          
-          INNER JOIN (
-          SELECT year, HS02, LAG(import_tax, 1) OVER (
-              PARTITION BY HS02
-              ORDER BY 
-                HS02, 
-                year
-            ) AS lag_import_tax
-            FROM `China.applied_MFN_Tariffs_hs02_china_2002_2010` 
-          WHERE import_tax IS NOT NULL) as import_tarrif
-          ON import_tarrif.year = final.year AND
-          import_tarrif.HS02 = final.HS6
-          
+              import_tax IS NOT NULL
+          ) as import_tarrif ON import_tarrif.year = aggregate.year 
+          AND import_tarrif.HS02 = aggregate.HS6
+          LEFT JOIN (
+            SELECT 
+              HS6, 
+              year, 
+              tax_rebate, 
+              vat_m, 
+              vat_reb_m, 
+              LAG(vat_m, 1) OVER (
+                PARTITION BY HS6 
+                ORDER BY 
+                  HS6, 
+                  year
+              ) AS lag_vat_m, 
+              LAG(vat_reb_m, 1) OVER (
+                PARTITION BY HS6 
+                ORDER BY 
+                  HS6, 
+                  year
+              ) AS lag_vat_reb_m, 
+              LAG(tax_rebate, 1) OVER (
+                PARTITION BY HS6 
+                ORDER BY 
+                  HS6, 
+                  year
+              ) AS lag_tax_rebate, 
+            FROM 
+              China.base_hs6_VAT_2002_2012 
+            WHERE 
+              vat_m IS NOT NULL
+          ) as vat 
+          ON aggregate.year = vat.year 
+          AND aggregate.HS6 = vat.HS6
           WHERE lag_tax_rebate IS NOT NULL AND lag_import_tax IS NOT NULL
           ORDER BY geocode4_corr, HS6, year, regime
-      )
-  ) 
-  --  2 366 738
+        )
+-- 7 587 818
+-- 6 455 025
+-- 6 455 025
+-- 6 241 309
+-- 5 848 017
 """
 ```
 
