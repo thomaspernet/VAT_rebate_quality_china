@@ -78,6 +78,9 @@ The data source to construct the dataset are the following:
           * Google Drive: base_hs6_VAT_2002_2012.dta
         * Notebook construction file (data lineage) 
           * md :
+          
+    * Table: applied_MFN_Tariffs_hs02_china_2002_2010 
+        * From https://console.cloud.google.com/storage/browser/chinese_data
 
 
 
@@ -322,7 +325,7 @@ FROM
           DISTINCT(citycn) as citycn, 
           geocode4_corr, 
           cityen, 
-          year, 
+          final.year, 
           ID, 
           regime, 
           Trade_type, 
@@ -338,6 +341,8 @@ FROM
           lag_vat_reb_m, 
           lag_tax_rebate,
           ln(1 + lag_tax_rebate) as ln_lag_tax_rebate,
+          lag_import_tax,
+          ln( 1+ lag_import_tax) AS ln_lag_import_tax,
           SAFE_DIVIDE(value, Quantity) AS unit_price
         FROM 
           China.city_cn_en 
@@ -383,12 +388,24 @@ FROM
           
           LEFT JOIN China.country_cn_en
           ON country_cn_en.Country_cn = final.destination
-          WHERE lag_tax_rebate IS NOT NULL
+          
+          INNER JOIN (
+          SELECT year, HS02, LAG(import_taxe, 1) OVER (
+              PARTITION BY HS02
+              ORDER BY 
+                HS02, 
+                year
+            ) AS lag_import_tax
+            FROM `China.applied_MFN_Tariffs_hs02_china_2002_2010` 
+          WHERE import_taxe IS NOT NULL) as import_tarrif
+          ON import_tarrif.year = final.year AND
+          import_tarrif.HS02 = final.HS6
+          
+          WHERE lag_tax_rebate IS NOT NULL AND lag_import_tax IS NOT NULL
           ORDER BY geocode4_corr, HS6, year, regime
       )
   ) 
-  
---- 2,419,620  
+  --  2 385 609
 """
 ```
 
