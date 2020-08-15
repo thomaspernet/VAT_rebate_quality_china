@@ -264,7 +264,7 @@ clf = make_pipeline(preprocessor,
                     LinearRegression(fit_intercept=True, normalize=False))
 ```
 
-It takes about 50s to compute the weights
+It takes about 6m to compute the weights
 
 ```python
 %%time
@@ -297,21 +297,59 @@ df_quality.columns
 ```
 
 ```python
-df_quality["FE_fpr"] = pd.factorize(df_quality["ID"].astype('str') + 
+### city-product
+df_quality["FE_cp"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
+                                    df_quality["HS6"].astype('str')
+                                   )[0]
+
+### City-sector-year
+df_quality["FE_cst"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
+                                    df_quality["HS4"].astype('str') +
+                                    df_quality["year"].astype('str')
+                                   )[0]
+
+### City-product-regime
+df_quality["FE_cpr"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
                                     df_quality["HS6"].astype('str') +
                                     df_quality["regime"].astype('str')
                                    )[0]
-df_quality["FE_str"] = pd.factorize(df_quality["HS4"].astype('str') + 
-                                    df_quality["year"].astype('str') +
-                                    df_quality["regime"].astype('str')
-                                   )[0]
-df_quality["FE_ct"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
+
+### City-sector-regime-year
+df_quality["FE_csrt"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
+                                    df_quality["HS4"].astype('str') +
+                                    df_quality["regime"].astype('str') +
                                     df_quality["year"].astype('str')
                                    )[0]
-df_quality["FE_dt"] = pd.factorize(df_quality["destination"].astype('str') + 
-                                    df_quality["year"].astype('str')
-                                   )[0]
+
+## Product-year
 df_quality["FE_pt"] = pd.factorize(df_quality["HS6"].astype('str') + 
+                                    df_quality["year"].astype('str')
+                                   )[0]
+
+## Product-destination
+df_quality["FE_pd"] = pd.factorize(df_quality["HS6"].astype('str') + 
+                                    df_quality["Country_en"].astype('str')
+                                   )[0]
+
+## Destination-year
+df_quality["FE_dt"] = pd.factorize(df_quality["Country_en"].astype('str') + 
+                                    df_quality["year"].astype('str')
+                                   )[0]
+
+#df_quality["FE_ct"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
+#                                    df_quality["year"].astype('str')
+#                                   )[0]
+
+
+```
+
+```python
+df_quality["FE_pd"] = pd.factorize(df_quality["HS6"].astype('str') + 
+                                    df_quality["Country_en"].astype('str')
+                                   )[0]
+
+## Destination-year
+df_quality["FE_dt"] = pd.factorize(df_quality["Country_en"].astype('str') + 
                                     df_quality["year"].astype('str')
                                    )[0]
 ```
@@ -326,21 +364,22 @@ df_quality.head()
 
 ```python
 reindex = [
-    'ID','year','regime',
-    'Trade_type', 'Business_type',
-    'HS6', 'HS4','HS3',
-    'citycn', 'geocode4_corr', 'cityen',
-    'destination', 'Country_en','ISO_alpha',
-    'Quantity', 'value',  'unit_price', 
-    'sigma', 'sigma_price',
-    'lag_vat_m', 'lag_vat_reb_m',
-    'lag_tax_rebate', 'ln_lag_tax_rebate',
-    'lag_import_tax', 'ln_lag_import_tax',
-    'y', 'prediction','residual',
-    'price_adjusted_quality', 'kandhelwal_quality',
-    'FE_ct', 'FE_fpr', 'FE_str','FE_dt', 'FE_pt']
+    'cityen', 'geocode4_corr', 'year', 'regime',
+    'HS6','HS4','HS3',
+    'Country_en','ISO_alpha',
+    'Quantity', 'value', 'unit_price', 
+    'kandhelwal_quality','price_adjusted_quality',
+    'lag_tax_rebate', 'ln_lag_tax_rebate', 'lag_import_tax', 'ln_lag_import_tax', 
+    'sigma', 'sigma_price', 'y', 'prediction', 'residual', 
+    'FE_cp','FE_cst', 'FE_cpr', 'FE_csrt', 'FE_pt', 'FE_pd', 'FE_dt', 'FE_ct',
+    #'FE_ct', 'FE_fpr', 'FE_str','FE_dt', 'FE_pt'
+]
 
 df_quality = df_quality.reindex(columns = reindex)
+```
+
+```python
+df_quality.shape
 ```
 
 # Upload to cloud
