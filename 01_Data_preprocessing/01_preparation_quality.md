@@ -335,6 +335,7 @@ reindex = [
     'sigma', 'sigma_price',
     'lag_vat_m', 'lag_vat_reb_m',
     'lag_tax_rebate', 'ln_lag_tax_rebate',
+    'lag_import_tax', 'ln_lag_import_tax',
     'y', 'prediction','residual',
     'price_adjusted_quality', 'kandhelwal_quality',
     'FE_ct', 'FE_fpr', 'FE_str','FE_dt', 'FE_pt']
@@ -350,6 +351,7 @@ The dataset is ready to be shared with your colleagues.
 
 - Filename: quality_vat_export_2003_2010
 - Link: https://console.cloud.google.com/bigquery?project=valid-pagoda-132423&p=valid-pagoda-132423&d=China&t=quality_vat_export_2003_2010&page=table
+- Cloud Storage: 
 - Type:  Table
 
 
@@ -361,7 +363,18 @@ df_quality.to_csv('quality_vat_export_2003_2010.csv', index = False)
 bucket_name = 'chinese_data'
 destination_blob_name = 'paper_project/Processed'
 source_file_name = 'quality_vat_export_2003_2010.csv'
+```
+
+```python
+gcp.delete_blob(bucket_name, 'paper_project/Processed/quality_vat_export_2003_2010.csv')
+```
+
+```python
 gcp.upload_blob(bucket_name, destination_blob_name, source_file_name)
+```
+
+```python
+gcp.delete_table(dataset_name = 'China', name_table = 'quality_vat_export_2003_2010')
 ```
 
 ```python
