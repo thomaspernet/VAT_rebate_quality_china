@@ -52,5 +52,10 @@ save, name, note = FALSE){
   if (save == TRUE){
 
       lapply(latex, write, name, append=TRUE, ncolumns=1000)
+
+      print(name)
+
+      file.copy(from = name,
+      to  = paste("Tables", name, sep="/"))
   }
 }
