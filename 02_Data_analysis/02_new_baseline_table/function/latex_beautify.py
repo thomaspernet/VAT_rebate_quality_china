@@ -1,22 +1,27 @@
-import re, tex2pix, os
+import re, os, tex2pix
 from PyPDF2 import PdfFileMerger
 from wand.image import Image as WImage
 
 
-def beautify(table_number,
- new_row = False,
-  table_nte = None,
-  jupyter_preview = True,
-  resolution = 150):
+def beautify(
+table_number,
+multi_lines_dep = None,
+new_row = False,
+multicolumn = None,
+table_nte = None,
+jupyter_preview = True,
+resolution = 150):
     """
     """
-    table_in = "table_{}.txt".format(table_number)
-    table_out = "table_{}.tex".format(table_number)
+    #table_number = 1
+    table_in = "Tables/table_{}.txt".format(table_number)
+    table_out = "Tables/table_{}.tex".format(table_number)
 
-    regex = \
-    r"\s\simported\\_variety\:t\\_0"
+    regex_to_remove = \
+    r"\s\sregimeEligible\s"
+    #r"\s\simported\\_variety\:t\\_0"
 
-    comp = r"\sherf\\_com\\_o"
+    #comp = r"\sherf\\_com\\_o"
 
     with open(table_in, "r") as f:
         lines = f.readlines()
@@ -30,20 +35,21 @@ def beautify(table_number,
     else:
         max_ =  8
         max_1 = 12
+
     for x, line in enumerate(lines[13:-max_]):
-        test = bool(re.search(regex, line))
-        test_1 = bool(re.search(comp, line))
+        test = bool(re.search(regex_to_remove, line))
+        #test_1 = bool(re.search(comp, line))
 
         if test == True:
             line_to_remove.append(x + 13)
             line_to_remove.append((x + 13) + 1)
 
         ### Move down competition
-        if test_1 == True:
-            line_to_remove.append(x + 13)
-            line_to_remove.append((x + 13) + 1)
-            comp_coef = lines[13+x] + lines[13+x+1]
-            comp_sd = lines[13+x+1]
+        #if test_1 == True:
+        #    line_to_remove.append(x + 13)
+        #    line_to_remove.append((x + 13) + 1)
+        #    comp_coef = lines[13+x] + lines[13+x+1]
+        #    comp_sd = lines[13+x+1]
 
     with open(table_out, "w") as f:
         for x, line in enumerate(lines):
@@ -52,8 +58,8 @@ def beautify(table_number,
                 f.write(line)
 
             ### move competition
-            if x == len(lines) - max_1:
-                f.write(comp_coef)
+            #if x == len(lines) - max_1:
+            #    f.write(comp_coef)
             #if x == len(lines) - 11:
             #    f.write(comp_sd)
 
@@ -69,7 +75,6 @@ def beautify(table_number,
         new_row_ = [temp[1] + temp[0] + temp[2] #+ temp[3]
         ]
 
-
     for x, line in enumerate(lines):
         label = bool(re.search(r"label",
                               line))
@@ -81,10 +86,48 @@ def beautify(table_number,
         if tabluar:
             lines[x] = lines[x].strip() + '\n\\end{adjustbox}\n'
 
-    for x, line in enumerate(lines):
-        if x == 11:
-            lines[x] = lines[x].strip() + new_row_[0]
-            #lines[x+1] = lines[x].strip() + ''
+    if multi_lines_dep != None:
+
+        for x, line in enumerate(lines):
+            if x == 6:
+                regex = r"(?<=\}}l).+?(?=\})" ### count number of c
+                matches = re.search(regex, lines[x])
+
+                nb_col = len(matches.group())
+            if x == 9:
+                to_add = "\n&\multicolumn{%s}{c}{%s} \\\ \n" %(nb_col,multi_lines_dep)
+                lines[x] = lines[x].strip() + to_add
+
+    if new_row != False and multicolumn == None:
+        for x, line in enumerate(lines):
+            if x == 11:
+                lines[x] = lines[x].strip() + new_row_[0]
+
+    if new_row == False and multicolumn != None:
+        for x, line in enumerate(lines):
+            multi = """
+            \n\\\[-1.8ex]
+            """
+            for key, value in multicolumn.items():
+                to_add = "&\multicolumn{%s}{c}{%s}" %(value, key)
+                multi+= to_add
+            multi+="\\\\\n"
+            if x == 10:
+                lines[x] = lines[x].strip() + multi
+
+    if new_row != False and multicolumn != None:
+        for x, line in enumerate(lines):
+            multi = """
+            \n\\\[-1.8ex]
+            """
+            for key, value in multicolumn.items():
+                to_add = "&\multicolumn{%s}{c}{%s}" %(value, key)
+                multi+= to_add
+            multi+="\\\\\n"
+            if x == 10:
+                lines[x] = lines[x].strip() + multi
+            if x == 11:
+                lines[x] = lines[x].strip() + new_row_[0]
 
     ### Add header
     len_line = len(lines)
@@ -109,47 +152,76 @@ def beautify(table_number,
         for line in lines:
             f.write(line)
 
+    #### rename variables
+
                 # Read in the file
     with open(table_out, 'r') as file:
         lines = file.read()
 
-        #
-        lines = lines.replace('eligibleNo:ln\\_vat\\_tax',
-                              'Ln VAT export tax$_{k,t-1}$')
-
-        lines = lines.replace('eligibleYes:ln\\_vat\\_tax',
-                              'Ln VAT export tax$_{k,t-1}$ \\times \\text{ordinary}$_{i}$')
-        lines = lines.replace('eligibleNo:ln\\_import\\_tax',
-                              'Ln VAT import tax$_{k,t-1}$')
-        lines = lines.replace('eligibleYes:ln\\_import\\_tax',
-                              'Ln VAT import tax$_{k,t-1}$ \\times \\text{ordinary}$_{i}$')
-        lines = lines.replace('herf\\_com\\_o',
-                              'Competition$_{s,t-1}$')
-        lines = lines.replace('ln\\_vat\\_tax:distance',
-                              'Ln VAT export tax$_{k,t-1}$  x Density$_{ck}$')
-        lines = lines.replace('ln\\_vat\\_tax:eligibleYes:distance',
-                              'Ln VAT export tax$_{k,t-1}$ x Ordinary$_{i}$ x Density$_{ck}$')
-        lines = lines.replace('ln\\_vat\\_tax:density\\_china\\_ville',
-                      'Ln VAT export tax$_{k,t-1}$ x Density$_{ck}')
-
-        lines = lines.replace('ln\\_vat\\_tax:balassa',
-                      'Ln VAT export tax$_{k,t-1}$ x Comp Adv$_{ck}')
-
-        lines = lines.replace('ln\\_vat\\_tax:Competition',
-                      'Ln VAT export tax$_{k,t-1}$ x Competition$_{ck}')
-
-        lines = lines.replace('ln\\_vat\\_tax:eligibleYes:density\\_china\\_ville',
-                      'Ln VAT export tax$_{k,t-1}$ x Ordinary$_{i}$ x Density$_{ck}')
+        # Reorder
+        lines = lines.replace('regimeEligible:ln\_lag\_import\_tax',
+                              'ln\_lag\_import\_tax:regimeEligible')
 
 
-        lines = lines.replace('ln\\_vat\\_tax:eligibleYes:Competition',
-                      'Ln VAT export tax$_{k,t-1}$ x Ordinary$_{i}$ x Competition$_{ck}$')
+        lines = lines.replace('ln\\_lag\\_tax\\_rebate',
+                              'Ln VAT export tax_{k,t-1}')
 
-        lines = lines.replace('ln\\_vat\\_tax:eligibleYes:balassa',
-                      'Ln VAT export tax$_{k,t-1}$ x Ordinary$_{i}$ x Comp Adv$_{ck}$')
+        lines = lines.replace('ln\\_lag\\_import\\_tax',
+                              'Ln VAT import tax_{k,t-1}')
 
-        lines = lines.replace('ln\\_vat\\_tax',
-                              'Ln VAT export tax$_{k,t-1}$')
+        lines = lines.replace('regimeEligible',
+                              '\\text{Eligible}^R')
+
+        #### very risky
+        lines = lines.replace('(0.000)',
+                              '')
+
+
+
+        ### Should be at the end of the regex
+        ### Convert : to time, but not for the title
+        lines = lines.replace(':', ' \\times ')
+        lines = lines.replace('variable \\times ',
+         'variable:')
+
+        #print(matches.group())
+
+
+
+
+        #lines = lines.replace('eligibleYes:ln\\_vat\\_tax',
+        #                      'Ln VAT export tax$_{k,t-1}$ \\times \\text{ordinary}$_{i}$')
+        #lines = lines.replace('eligibleNo:ln\\_import\\_tax',
+        #                      'Ln VAT import tax$_{k,t-1}$')
+        #lines = lines.replace('eligibleYes:ln\\_import\\_tax',
+        #                      'Ln VAT import tax$_{k,t-1}$ \\times \\text{ordinary}$_{i}$')
+        #lines = lines.replace('herf\\_com\\_o',
+        #                      'Competition$_{s,t-1}$')
+        #lines = lines.replace('ln\\_vat\\_tax:distance',
+        #                      'Ln VAT export tax$_{k,t-1}$  x Density$_{ck}$')
+        #lines = lines.replace('ln\\_vat\\_tax:eligibleYes:distance',
+        #                      'Ln VAT export tax$_{k,t-1}$ x Ordinary$_{i}$ x Density$_{ck}$')
+        #lines = lines.replace('ln\\_vat\\_tax:density\\_china\\_ville',
+        #              'Ln VAT export tax$_{k,t-1}$ x Density$_{ck}')
+
+        #lines = lines.replace('ln\\_vat\\_tax:balassa',
+        #              'Ln VAT export tax$_{k,t-1}$ x Comp Adv$_{ck}')
+
+        #lines = lines.replace('ln\\_vat\\_tax:Competition',
+        #              'Ln VAT export tax$_{k,t-1}$ x Competition$_{ck}')
+
+        #lines = lines.replace('ln\\_vat\\_tax:eligibleYes:density\\_china\\_ville',
+        #              'Ln VAT export tax$_{k,t-1}$ x Ordinary$_{i}$ x Density$_{ck}')
+
+
+        #lines = lines.replace('ln\\_vat\\_tax:eligibleYes:Competition',
+        #              'Ln VAT export tax$_{k,t-1}$ x Ordinary$_{i}$ x Competition$_{ck}$')
+
+        #lines = lines.replace('ln\\_vat\\_tax:eligibleYes:balassa',
+        #              'Ln VAT export tax$_{k,t-1}$ x Ordinary$_{i}$ x Comp Adv$_{ck}$')
+
+        #lines = lines.replace('ln\\_vat\\_tax',
+        #                      'Ln VAT export tax$_{k,t-1}$')
 
 
     # Write the file out again
@@ -177,10 +249,10 @@ def beautify(table_number,
                 f.write(line)
 
     if jupyter_preview:
-        f = open('table_{}.tex'.format(table_number))
+        f = open('Tables/table_{}.tex'.format(table_number))
         r = tex2pix.Renderer(f, runbibtex=False)
-        r.mkpdf('table_{}.pdf'.format(table_number))
-        img = WImage(filename='table_{}.pdf'.format(table_number),
+        r.mkpdf('Tables/table_{}.pdf'.format(table_number))
+        img = WImage(filename='Tables/table_{}.pdf'.format(table_number),
          resolution = resolution)
         return display(img)
 
