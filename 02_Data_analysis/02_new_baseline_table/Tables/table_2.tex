@@ -1,0 +1,50 @@
+
+\documentclass[preview]{standalone} 
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
+
+\begin{document}% Date and time \times  Sun, Aug 16, 2020 - 11 \times 44 \times 07
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and product's quality upgrading, baseline regression} 
+\label{}
+\begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
+\begin{tabular}{@{\extracolsep{5pt}}lcccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+& \multicolumn{4}{c}{Dependent variable: Ln Unit Price} \\
+&\multicolumn{4}{c}{(city/product/trade regime/year)} \\ 
+\cline{2-5}
+            
+\\[-1.8ex]
+            &\multicolumn{1}{c}{Eligible}&\multicolumn{1}{c}{Non-Eligible}&\multicolumn{1}{c}{All}&\multicolumn{1}{c}{All benchmark}\\
+\\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
+\hline \\[-1.8ex] 
+ Ln VAT export tax_{k,t-1} & $-$0.056$^{**}$ & $-$0.092$^{**}$ & $-$0.089$^{**}$ &  \\ 
+  & (0.027) & (0.039) & (0.041) &  \\ 
+  Ln VAT import tax_{k,t-1} & $-$0.043 & $-$0.014 & $-$0.038 &  \\ 
+  & (0.027) & (0.037) & (0.041) &  \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Eligible}^R &  &  & 0.030 & 0.006 \\ 
+  &  &  & (0.043) & (0.057) \\ 
+  Ln VAT import tax_{k,t-1} \times \text{Eligible}^R &  &  & $-$0.001 & 0.007 \\ 
+  &  &  & (0.041) & (0.052) \\ 
+ \hline \\[-1.8ex] 
+City-product fixed effects & Yes & Yes & Yes & No \\ 
+City-sector-year fixed effects & Yes & Yes & Yes & No \\ 
+Product-destination fixed effect & Yes & Yes & Yes & No \\ 
+City-product-regime fixed effects & No & No & No & Yes \\ 
+City-sector-regime-year fixed effects & No & No & No & Yes \\ 
+product-year fixed effects & No & No & No & Yes \\ 
+Observations & 4,906,923 & 909,515 & 5,816,438 & 5,816,438 \\ 
+R$^{2}$ & 0.843 & 0.894 & 0.844 & 0.818 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular}
+\end{adjustbox}
+\begin{tablenotes} 
+ \small 
+ \item \\ 
+This table estimates eq(3). Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.Sectors are defined following the Chinese 4-digit GB/T industryclassification and regroup several products.Heteroskedasticity-robust standard errorsclustered at the product level appear inparentheses.\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%. 
+\end{tablenotes}
+\end{table}
+
+\end{document}
