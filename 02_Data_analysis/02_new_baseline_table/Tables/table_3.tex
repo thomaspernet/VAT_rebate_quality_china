@@ -3,7 +3,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
 
-\begin{document}% Date and time \times  Sun, Aug 16, 2020 - 18 \times 40 \times 58
+\begin{document}% Date and time \times  Sun, Aug 16, 2020 - 19 \times 43 \times 55
 \begin{table}[!htbp] \centering 
   \caption{VAT export tax and product's quality upgrading, baseline regression} 
 \label{}
@@ -11,7 +11,7 @@
 \begin{tabular}{@{\extracolsep{5pt}}lcccc} 
 \\[-1.8ex]\hline 
 \hline \\[-1.8ex] 
-& \multicolumn{4}{c}{Dependent variable: Product quality} \\
+& \multicolumn{4}{c}{Dependent variable: Ln Unit Price} \\
 &\multicolumn{4}{c}{(city/product/trade regime/year)} \\ 
 \cline{2-5}
             
@@ -19,20 +19,20 @@
             &\multicolumn{1}{c}{Eligible}&\multicolumn{1}{c}{Non-Eligible}&\multicolumn{1}{c}{All}&\multicolumn{1}{c}{All benchmark}\\
 \\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
 \hline \\[-1.8ex] 
- Ln VAT export tax_{k,t-1} & $-$0.265$^{***}$ & $-$0.088 & $-$0.117$^{*}$ &  \\ 
-  & (0.048) & (0.064) & (0.062) &  \\ 
-  Ln VAT import tax_{k,t-1} & 0.009 & $-$0.112 & $-$0.075 &  \\ 
-  & (0.043) & (0.092) & (0.082) &  \\ 
-  growth\_export\_ckjt\_1 & 0.00000 & 0.00000 & 0.00000 & 0.00000$^{**}$ \\ 
-  & (0.00000) & (0.00000) & (0.00000) & (0.00000) \\ 
-  lag\_foreign\_export\_share\_ckjr & 0.094$^{***}$ & 0.024$^{*}$ & 0.084$^{***}$ & 0.306$^{***}$ \\ 
-  & (0.008) & (0.014) & (0.008) & (0.024) \\ 
-  lag\_soe\_export\_share\_ckjr & 0.362$^{***}$ & 0.190$^{***}$ & 0.352$^{***}$ & 0.481$^{***}$ \\ 
-  & (0.015) & (0.013) & (0.014) & (0.019) \\ 
-  Ln VAT export tax_{k,t-1} \times \text{Eligible}^R &  &  & $-$0.150$^{**}$ & $-$0.148$^{*}$ \\ 
-  &  &  & (0.072) & (0.084) \\ 
-  Ln VAT import tax_{k,t-1} \times \text{Eligible}^R &  &  & 0.083 & 0.061 \\ 
-  &  &  & (0.087) & (0.104) \\ 
+ Ln VAT export tax_{k,t-1} & $-$0.056$^{**}$ & $-$0.093$^{**}$ & $-$0.089$^{**}$ &  \\ 
+  & (0.027) & (0.039) & (0.041) &  \\ 
+  Ln VAT import tax_{k,t-1} & $-$0.043 & $-$0.014 & $-$0.038 &  \\ 
+  & (0.027) & (0.037) & (0.041) &  \\ 
+  growth\_export\_ckjt\_1 & $-$0.000 & 0.00000 & 0.000 & $-$0.000 \\ 
+  &  & (0.00000) &  &  \\ 
+  lag\_foreign\_export\_share\_ckjr & $-$0.026$^{***}$ & $-$0.012 & $-$0.024$^{***}$ & $-$0.036$^{***}$ \\ 
+  & (0.003) & (0.007) & (0.003) & (0.011) \\ 
+  lag\_soe\_export\_share\_ckjr & $-$0.002 & $-$0.020$^{***}$ & $-$0.002 & 0.008 \\ 
+  & (0.004) & (0.006) & (0.003) & (0.005) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Eligible}^R &  &  & 0.030 & 0.006 \\ 
+  &  &  & (0.043) & (0.057) \\ 
+  Ln VAT import tax_{k,t-1} \times \text{Eligible}^R &  &  & $-$0.001 & 0.006 \\ 
+  &  &  & (0.041) & (0.052) \\ 
  \hline \\[-1.8ex] 
 City-product fixed effects & Yes & Yes & Yes & No \\ 
 City-sector-year fixed effects & Yes & Yes & Yes & No \\ 
@@ -41,7 +41,7 @@ City-product-regime fixed effects & No & No & No & Yes \\
 City-sector-regime-year fixed effects & No & No & No & Yes \\ 
 product-year fixed effects & No & No & No & Yes \\ 
 Observations & 4,906,923 & 909,515 & 5,816,438 & 5,816,438 \\ 
-R$^{2}$ & 0.442 & 0.639 & 0.453 & 0.323 \\ 
+R$^{2}$ & 0.843 & 0.894 & 0.844 & 0.818 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular}

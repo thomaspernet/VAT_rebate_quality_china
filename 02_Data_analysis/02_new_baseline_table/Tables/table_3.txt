@@ -1,0 +1,42 @@
+
+% Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Sun, Aug 16, 2020 - 19:43:55
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and product's quality upgrading, baseline regression} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lcccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{4}{c}{Dependent variable: Ln Unit Price} \\ 
+\cline{2-5} 
+\\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
+\hline \\[-1.8ex] 
+ ln\_lag\_tax\_rebate & $-$0.056$^{**}$ & $-$0.093$^{**}$ & $-$0.089$^{**}$ &  \\ 
+  & (0.027) & (0.039) & (0.041) & (0.000) \\ 
+  regimeEligible &  &  &  &  \\ 
+  &  &  & (0.000) & (0.000) \\ 
+  ln\_lag\_import\_tax & $-$0.043 & $-$0.014 & $-$0.038 &  \\ 
+  & (0.027) & (0.037) & (0.041) & (0.000) \\ 
+  growth\_export\_ckjt\_1 & $-$0.000 & 0.00000 & 0.000 & $-$0.000 \\ 
+  & (0.000) & (0.00000) & (0.000) & (0.000) \\ 
+  lag\_foreign\_export\_share\_ckjr & $-$0.026$^{***}$ & $-$0.012 & $-$0.024$^{***}$ & $-$0.036$^{***}$ \\ 
+  & (0.003) & (0.007) & (0.003) & (0.011) \\ 
+  lag\_soe\_export\_share\_ckjr & $-$0.002 & $-$0.020$^{***}$ & $-$0.002 & 0.008 \\ 
+  & (0.004) & (0.006) & (0.003) & (0.005) \\ 
+  ln\_lag\_tax\_rebate:regimeEligible &  &  & 0.030 & 0.006 \\ 
+  &  &  & (0.043) & (0.057) \\ 
+  regimeEligible:ln\_lag\_import\_tax &  &  & $-$0.001 & 0.006 \\ 
+  &  &  & (0.041) & (0.052) \\ 
+ \hline \\[-1.8ex] 
+City-product fixed effects & Yes & Yes & Yes & No \\ 
+City-sector-year fixed effects & Yes & Yes & Yes & No \\ 
+Product-destination fixed effect & Yes & Yes & Yes & No \\ 
+City-product-regime fixed effects & No & No & No & Yes \\ 
+City-sector-regime-year fixed effects & No & No & No & Yes \\ 
+product-year fixed effects & No & No & No & Yes \\ 
+Observations & 4,906,923 & 909,515 & 5,816,438 & 5,816,438 \\ 
+R$^{2}$ & 0.843 & 0.894 & 0.844 & 0.818 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
