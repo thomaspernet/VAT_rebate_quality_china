@@ -298,7 +298,7 @@ df_quality.columns
 
 ```python
 ### city-product
-df_quality["FE_cp"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
+df_quality["FE_ck"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
                                     df_quality["HS6"].astype('str')
                                    )[0]
 
@@ -309,7 +309,7 @@ df_quality["FE_cst"] = pd.factorize(df_quality["geocode4_corr"].astype('str') +
                                    )[0]
 
 ### City-product-regime
-df_quality["FE_cpr"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
+df_quality["FE_ckr"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
                                     df_quality["HS6"].astype('str') +
                                     df_quality["regime"].astype('str')
                                    )[0]
@@ -322,17 +322,17 @@ df_quality["FE_csrt"] = pd.factorize(df_quality["geocode4_corr"].astype('str') +
                                    )[0]
 
 ## Product-year
-df_quality["FE_pt"] = pd.factorize(df_quality["HS6"].astype('str') + 
+df_quality["FE_kt"] = pd.factorize(df_quality["HS6"].astype('str') + 
                                     df_quality["year"].astype('str')
                                    )[0]
 
 ## Product-destination
-df_quality["FE_pd"] = pd.factorize(df_quality["HS6"].astype('str') + 
+df_quality["FE_pj"] = pd.factorize(df_quality["HS6"].astype('str') + 
                                     df_quality["Country_en"].astype('str')
                                    )[0]
 
 ## Destination-year
-df_quality["FE_dt"] = pd.factorize(df_quality["Country_en"].astype('str') + 
+df_quality["FE_jt"] = pd.factorize(df_quality["Country_en"].astype('str') + 
                                     df_quality["year"].astype('str')
                                    )[0]
 
@@ -341,17 +341,6 @@ df_quality["FE_dt"] = pd.factorize(df_quality["Country_en"].astype('str') +
 #                                   )[0]
 
 
-```
-
-```python
-df_quality["FE_pd"] = pd.factorize(df_quality["HS6"].astype('str') + 
-                                    df_quality["Country_en"].astype('str')
-                                   )[0]
-
-## Destination-year
-df_quality["FE_dt"] = pd.factorize(df_quality["Country_en"].astype('str') + 
-                                    df_quality["year"].astype('str')
-                                   )[0]
 ```
 
 ```python
@@ -371,7 +360,7 @@ reindex = [
     'kandhelwal_quality','price_adjusted_quality',
     'lag_tax_rebate', 'ln_lag_tax_rebate', 'lag_import_tax', 'ln_lag_import_tax', 
     'sigma', 'sigma_price', 'y', 'prediction', 'residual', 
-    'FE_cp','FE_cst', 'FE_cpr', 'FE_csrt', 'FE_pt', 'FE_pd', 'FE_dt', 'FE_ct',
+    'FE_ck','FE_cst','FE_ckr', 'FE_csrt', 'FE_kt', 'FE_pj', 'FE_jt', 'FE_ct',
     #'FE_ct', 'FE_fpr', 'FE_str','FE_dt', 'FE_pt'
 ]
 
