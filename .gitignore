@@ -142,3 +142,8 @@ dmypy.json
 creds/credentials.json
 creds/service.json
 01_Data_preprocessing/.virtual_documents/01_preparation_quality.ipynb.py
+01_Data_preprocessing/.virtual_documents/00_preparation_baseline_db.ipynb.py
+01_Data_preprocessing/.virtual_documents/02_preparation_covariates_export.ipynb.py
+01_Data_preprocessing/.virtual_documents/00_preparation_baseline_db.ipynb.py
+02_Data_analysis/02_new_baseline_table/.virtual_documents/00_baseline_empirical_analysis.ipynb.py
+02_Data_analysis/02_new_baseline_table/.virtual_documents/XX_template_empiracal_analysis.ipynb.py
