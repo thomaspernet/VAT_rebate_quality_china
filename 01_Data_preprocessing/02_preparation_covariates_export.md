@@ -799,7 +799,7 @@ FROM
 ### Step 4: Lag foreign export share by city, product, regime
 
 - Table name: lag_foreign_export_ckr
-- Observation: 759,982
+- Observation: 377,516
 
 
 
@@ -823,7 +823,8 @@ WITH merge_data AS (
     value, 
     CASE WHEN Trade_type = '进料加工贸易' 
     OR Trade_type = '一般贸易' THEN 'Eligible' ELSE 'Not_Eligible' END as regime, 
-    --CASE WHEN Business_type = '国有企业' OR Business_type = '国有' THEN 'SOE' ELSE 'NO_SOE' END as SOE_ownership,
+    --CASE WHEN Business_type = '国有企业' 
+    --OR Business_type = '国有' THEN 'SOE' ELSE 'NO_SOE' END as SOE_ownership, 
     CASE WHEN Business_type = '外商独资企业' 
     OR Business_type = '独资' THEN 'FOREIGN' ELSE 'NO_FOREIGN' END as foreign_ownership 
   FROM 
@@ -868,7 +869,7 @@ WITH merge_data AS (
     value, 
     CASE WHEN Trade_type = '进料加工贸易' 
     OR Trade_type = '一般贸易' THEN 'Eligible' ELSE 'Not_Eligible' END as regime, 
-    --CASE WHEN Business_type = '国有企业' THEN 'SOE' ELSE 'NO_SOE' END as SOE_ownership,
+    --CASE WHEN Business_type = '国有企业' THEN 'SOE' ELSE 'NO_SOE' END as SOE_ownership, 
     CASE WHEN Business_type = '外商独资企业' THEN 'FOREIGN' ELSE 'NO_FOREIGN' END as foreign_ownership 
   FROM 
     `China.tradedata_*` 
@@ -890,185 +891,116 @@ SELECT
   * 
 FROM 
   (
-    WITH aggregate AS (
+    WITH share_foreign_quantity AS(
       SELECT 
-        city_prod, 
-        year, 
-        regime, 
-        foreign_ownership, 
-        HS6, 
-        --destination, 
-        SUM(Quantity) as quantity
-        --SUM(value) as value 
+        foreign_total.city_prod, 
+        foreign_total.year, 
+        CAST(
+          CAST(foreign_total.year AS int64) -1 AS string
+        ) as year_lag, 
+        foreign_total.regime, 
+        foreign_total.foreign_ownership, 
+        foreign_total.HS6, 
+        quantity, 
+        total_quantity, 
+        SAFE_DIVIDE(quantity, total_quantity) as share_foreign 
       FROM 
-        merge_data 
-      WHERE 
-        foreign_ownership = 'FOREIGN' 
-      GROUP BY 
-        year, 
-        regime, 
-        foreign_ownership, 
-        HS6, 
-        city_prod 
-       -- destination
+        (
+          SELECT 
+            city_prod, 
+            year, 
+            regime, 
+            foreign_ownership, 
+            HS6, 
+            --destination, 
+            SUM(Quantity) as quantity 
+          FROM 
+            merge_data 
+          WHERE 
+            foreign_ownership = 'FOREIGN' 
+          GROUP BY 
+            year, 
+            regime, 
+            foreign_ownership, 
+            HS6, 
+            city_prod
+        ) as foreign_total 
+        INNER JOIN (
+          SELECT 
+            city_prod, 
+            year, 
+            regime, 
+            HS6, 
+            --destination, 
+            SUM(Quantity) as total_quantity 
+          FROM 
+            merge_data 
+          GROUP BY 
+            year, 
+            regime, 
+            HS6, 
+            city_prod
+        ) as total ON foreign_total.city_prod = total.city_prod 
+        AND foreign_total.year = total.year 
+        AND foreign_total.regime = total.regime 
+        AND foreign_total.HS6 = total.HS6
     ) 
     SELECT 
-      * 
+      cityen, 
+      geocode4_corr,
+      share_foreign_quantity.year, 
+      share_foreign_quantity.regime, 
+      share_foreign_quantity.HS6, 
+      share_foreign_quantity.share_foreign as foreign_export_share_ckr, 
+      share_foreign_quantity_lag.share_foreign as lag_foreign_export_share_ckr 
     FROM 
-      (
-        WITH add_var AS (
-          SELECT 
-            aggregate.year, 
-            geocode4_corr, 
-            aggregate.regime, 
-            aggregate.HS6, 
-            --ISO_alpha, 
-            foreign_ownership, 
-            LAG(quantity, 1) OVER (
-              PARTITION BY geocode4_corr, 
-                aggregate.HS6, 
-                --ISO_alpha, 
-                aggregate.regime 
-                ORDER BY 
-                  geocode4_corr, 
-                  aggregate.HS6, 
-                  --ISO_alpha,
-                  aggregate.regime,
-                  aggregate.year
-            ) as lag_quantity, 
-            LAG(total_quantity, 1) OVER (
-              PARTITION BY geocode4_corr, 
-                aggregate.HS6, 
-                --ISO_alpha, 
-                aggregate.regime 
-                ORDER BY 
-                  geocode4_corr, 
-                  aggregate.HS6, 
-                  --ISO_alpha,
-                  aggregate.regime,
-                  aggregate.year
-            ) as lag_total_quantity, 
-            CASE WHEN SAFE_DIVIDE(
-              LAG(quantity, 1) OVER (
-                PARTITION BY geocode4_corr, 
-                aggregate.HS6, 
-                --ISO_alpha, 
-                aggregate.regime 
-                ORDER BY 
-                  geocode4_corr, 
-                  aggregate.HS6, 
-                  --ISO_alpha,
-                  aggregate.regime,
-                  aggregate.year
-              ), 
-              LAG(total_quantity, 1) OVER (
-                PARTITION BY geocode4_corr, 
-                aggregate.HS6, 
-                --ISO_alpha, 
-                aggregate.regime 
-                ORDER BY 
-                  geocode4_corr, 
-                  aggregate.HS6, 
-                  --ISO_alpha,
-                  aggregate.regime,
-                  aggregate.year
-              )
-            ) IS NULL THEN 0 ELSE SAFE_DIVIDE(
-              LAG(quantity, 1) OVER (
-                PARTITION BY geocode4_corr, 
-                aggregate.HS6, 
-                --ISO_alpha, 
-                aggregate.regime 
-                ORDER BY 
-                  geocode4_corr, 
-                  aggregate.HS6, 
-                  --ISO_alpha,
-                  aggregate.regime,
-                  aggregate.year
-              ), 
-              LAG(total_quantity, 1) OVER (
-                PARTITION BY geocode4_corr, 
-                aggregate.HS6, 
-                --ISO_alpha, 
-                aggregate.regime 
-                ORDER BY 
-                  geocode4_corr, 
-                  aggregate.HS6, 
-                  --ISO_alpha,
-                  aggregate.regime,
-                  aggregate.year
-              )
-            ) END as lag_foreign_export_share_ckr 
-          FROM 
-            aggregate 
-            INNER JOIN (
-              SELECT 
-                city_prod, 
-                year, 
-                regime, 
-                HS6, 
-                --destination, 
-                SUM(quantity) as total_quantity
-              FROM 
-                merge_data 
-              GROUP BY 
-                year, 
-                regime, 
-                HS6, 
-                city_prod 
-                --destination
-            ) as total ON aggregate.city_prod = total.city_prod 
-            AND aggregate.year = total.year 
-            AND aggregate.regime = total.regime 
-            AND aggregate.HS6 = total.HS6 
-            --AND aggregate.destination = total.destination 
-            INNER JOIN (
+      share_foreign_quantity 
+      INNER JOIN (
+        SELECT 
+          city_prod, 
+          year, 
+          regime, 
+          foreign_ownership, 
+          HS6, 
+          share_foreign
+        FROM 
+          share_foreign_quantity
+      ) as share_foreign_quantity_lag ON 
+      share_foreign_quantity_lag.city_prod = share_foreign_quantity.city_prod 
+      AND share_foreign_quantity_lag.year = share_foreign_quantity.year_lag 
+      AND share_foreign_quantity_lag.regime = share_foreign_quantity.regime 
+      AND share_foreign_quantity_lag.foreign_ownership = share_foreign_quantity.foreign_ownership 
+      AND share_foreign_quantity_lag.HS6 = share_foreign_quantity.HS6
+      INNER JOIN (
               SELECT 
                 DISTINCT(citycn) as citycn, 
                 cityen, 
                 geocode4_corr 
               FROM 
                 China.city_cn_en
-            ) AS city_cn_en ON city_cn_en.citycn = aggregate.city_prod 
-            --INNER JOIN China.country_cn_en ON country_cn_en.Country_cn = aggregate.destination
-        ) 
-        SELECT -- Remove duplicates
-          add_var.year, 
-          add_var.geocode4_corr, 
-          add_var.regime, 
-          add_var.HS6, 
-          --add_var.ISO_alpha, 
-          lag_foreign_export_share_ckr 
-        FROM 
-          add_var 
-          INNER JOIN (
-            SELECT 
-              year, 
-              geocode4_corr, 
-              regime, 
-              HS6, 
-              --ISO_alpha, 
-              COUNT(*) as cnt 
-            FROM 
-              add_var 
-            GROUP BY 
-              year, 
-              geocode4_corr, 
-              regime, 
-              HS6
-              --ISO_alpha 
-            HAVING 
-              COUNT(*) = 1 
-             -- AND ISO_alpha IS NOT NULL
-          ) as no_dup ON add_var.year = no_dup.year 
-          AND add_var.geocode4_corr = no_dup.geocode4_corr 
-          AND add_var.regime = no_dup.regime 
-          AND add_var.HS6 = no_dup.HS6 
-          --AND add_var.ISO_alpha = no_dup.ISO_alpha
-      )
-  )
+            ) AS city_cn_en ON city_cn_en.citycn = share_foreign_quantity.city_prod 
+  ) -- 377516
 
+"""
+```
 
+Distribution
+
+```python
+query = """
+select
+  percentiles[offset(10)] as p10,
+  percentiles[offset(25)] as p25,
+  percentiles[offset(50)] as p50,
+  percentiles[offset(60)] as p60,
+  percentiles[offset(70)] as p70,
+  percentiles[offset(80)] as p80,
+  percentiles[offset(90)] as p90,
+  percentiles[offset(95)] as p95
+from (
+  select approx_quantiles(lag_foreign_export_share_ckr, 100) percentiles
+ FROM `temporary.lag_foreign_export_ckr`
+)
 """
 ```
 
@@ -1351,7 +1283,7 @@ FROM
 ### Step 6: Lag SOE export share by city, product, regime
 
 - Table name: lag_soe_export_ckr
-- Observation: 784,608
+- Observation: 364,314
 
 ```python
 query = """
@@ -1373,7 +1305,8 @@ WITH merge_data AS (
     value, 
     CASE WHEN Trade_type = '进料加工贸易' 
     OR Trade_type = '一般贸易' THEN 'Eligible' ELSE 'Not_Eligible' END as regime, 
-    CASE WHEN Business_type = '国有企业' OR Business_type = '国有' THEN 'SOE' ELSE 'NO_SOE' END as SOE_ownership,
+    CASE WHEN Business_type = '国有企业' 
+    OR Business_type = '国有' THEN 'SOE' ELSE 'NO_SOE' END as SOE_ownership, 
     --CASE WHEN Business_type = '外商独资企业' 
     --OR Business_type = '独资' THEN 'FOREIGN' ELSE 'NO_FOREIGN' END as foreign_ownership 
   FROM 
@@ -1418,7 +1351,7 @@ WITH merge_data AS (
     value, 
     CASE WHEN Trade_type = '进料加工贸易' 
     OR Trade_type = '一般贸易' THEN 'Eligible' ELSE 'Not_Eligible' END as regime, 
-    CASE WHEN Business_type = '国有企业' THEN 'SOE' ELSE 'NO_SOE' END as SOE_ownership,
+    CASE WHEN Business_type = '国有企业' THEN 'SOE' ELSE 'NO_SOE' END as SOE_ownership, 
     --CASE WHEN Business_type = '外商独资企业' THEN 'FOREIGN' ELSE 'NO_FOREIGN' END as foreign_ownership 
   FROM 
     `China.tradedata_*` 
@@ -1440,185 +1373,115 @@ SELECT
   * 
 FROM 
   (
-    WITH aggregate AS (
+    WITH share_soe_quantity AS(
       SELECT 
-        city_prod, 
-        year, 
-        regime, 
-        soe_ownership, 
-        HS6, 
-        --destination, 
-        SUM(Quantity) as quantity
-        --SUM(value) as value 
+        soe_total.city_prod, 
+        soe_total.year, 
+        CAST(
+          CAST(soe_total.year AS int64) -1 AS string
+        ) as year_lag, 
+        soe_total.regime, 
+        soe_total.soe_ownership, 
+        soe_total.HS6, 
+        quantity, 
+        total_quantity, 
+        SAFE_DIVIDE(quantity, total_quantity) as share_soe 
       FROM 
-        merge_data 
-      WHERE 
-        soe_ownership = 'SOE' 
-      GROUP BY 
-        year, 
-        regime, 
-        soe_ownership, 
-        HS6, 
-        city_prod 
-       -- destination
+        (
+          SELECT 
+            city_prod, 
+            year, 
+            regime, 
+            soe_ownership, 
+            HS6, 
+            --destination, 
+            SUM(Quantity) as quantity 
+          FROM 
+            merge_data 
+          WHERE 
+            soe_ownership = 'SOE' 
+          GROUP BY 
+            year, 
+            regime, 
+            soe_ownership, 
+            HS6, 
+            city_prod
+        ) as soe_total 
+        INNER JOIN (
+          SELECT 
+            city_prod, 
+            year, 
+            regime, 
+            HS6, 
+            --destination, 
+            SUM(Quantity) as total_quantity 
+          FROM 
+            merge_data 
+          GROUP BY 
+            year, 
+            regime, 
+            HS6, 
+            city_prod
+        ) as total ON soe_total.city_prod = total.city_prod 
+        AND soe_total.year = total.year 
+        AND soe_total.regime = total.regime 
+        AND soe_total.HS6 = total.HS6
     ) 
     SELECT 
-      * 
+      cityen, 
+      geocode4_corr,
+      share_soe_quantity.year, 
+      share_soe_quantity.regime, 
+      share_soe_quantity.HS6, 
+      share_soe_quantity.share_soe as soe_export_share_ckr, 
+      share_soe_quantity_lag.share_soe as lag_soe_export_share_ckr 
     FROM 
-      (
-        WITH add_var AS (
-          SELECT 
-            aggregate.year, 
-            geocode4_corr, 
-            aggregate.regime, 
-            aggregate.HS6, 
-            --ISO_alpha, 
-            soe_ownership, 
-            LAG(quantity, 1) OVER (
-              PARTITION BY geocode4_corr, 
-                aggregate.HS6, 
-                --ISO_alpha, 
-                aggregate.regime 
-                ORDER BY 
-                  geocode4_corr, 
-                  aggregate.HS6, 
-                  --ISO_alpha,
-                  aggregate.regime,
-                  aggregate.year
-            ) as lag_quantity, 
-            LAG(total_quantity, 1) OVER (
-              PARTITION BY geocode4_corr, 
-                aggregate.HS6, 
-                --ISO_alpha, 
-                aggregate.regime 
-                ORDER BY 
-                  geocode4_corr, 
-                  aggregate.HS6, 
-                  --ISO_alpha,
-                  aggregate.regime,
-                  aggregate.year
-            ) as lag_total_quantity, 
-            CASE WHEN SAFE_DIVIDE(
-              LAG(quantity, 1) OVER (
-                PARTITION BY geocode4_corr, 
-                aggregate.HS6, 
-                --ISO_alpha, 
-                aggregate.regime 
-                ORDER BY 
-                  geocode4_corr, 
-                  aggregate.HS6, 
-                  --ISO_alpha,
-                  aggregate.regime,
-                  aggregate.year
-              ), 
-              LAG(total_quantity, 1) OVER (
-                PARTITION BY geocode4_corr, 
-                aggregate.HS6, 
-                --ISO_alpha, 
-                aggregate.regime 
-                ORDER BY 
-                  geocode4_corr, 
-                  aggregate.HS6, 
-                  --ISO_alpha,
-                  aggregate.regime,
-                  aggregate.year
-              )
-            ) IS NULL THEN 0 ELSE SAFE_DIVIDE(
-              LAG(quantity, 1) OVER (
-                PARTITION BY geocode4_corr, 
-                aggregate.HS6, 
-                --ISO_alpha, 
-                aggregate.regime 
-                ORDER BY 
-                  geocode4_corr, 
-                  aggregate.HS6, 
-                  --ISO_alpha,
-                  aggregate.regime,
-                  aggregate.year
-              ), 
-              LAG(total_quantity, 1) OVER (
-                PARTITION BY geocode4_corr, 
-                aggregate.HS6, 
-                --ISO_alpha, 
-                aggregate.regime 
-                ORDER BY 
-                  geocode4_corr, 
-                  aggregate.HS6, 
-                  --ISO_alpha,
-                  aggregate.regime,
-                  aggregate.year
-              )
-            ) END as lag_soe_export_share_ckr 
-          FROM 
-            aggregate 
-            INNER JOIN (
-              SELECT 
-                city_prod, 
-                year, 
-                regime, 
-                HS6, 
-                --destination, 
-                SUM(quantity) as total_quantity
-              FROM 
-                merge_data 
-              GROUP BY 
-                year, 
-                regime, 
-                HS6, 
-                city_prod 
-                --destination
-            ) as total ON aggregate.city_prod = total.city_prod 
-            AND aggregate.year = total.year 
-            AND aggregate.regime = total.regime 
-            AND aggregate.HS6 = total.HS6 
-            --AND aggregate.destination = total.destination 
-            INNER JOIN (
+      share_soe_quantity 
+      INNER JOIN (
+        SELECT 
+          city_prod, 
+          year, 
+          regime, 
+          soe_ownership, 
+          HS6, 
+          share_soe 
+        FROM 
+          share_soe_quantity
+      ) as share_soe_quantity_lag ON share_soe_quantity_lag.city_prod = share_soe_quantity.city_prod 
+      AND share_soe_quantity_lag.year = share_soe_quantity.year_lag 
+      AND share_soe_quantity_lag.regime = share_soe_quantity.regime 
+      AND share_soe_quantity_lag.soe_ownership = share_soe_quantity.soe_ownership 
+      AND share_soe_quantity_lag.HS6 = share_soe_quantity.HS6
+      INNER JOIN (
               SELECT 
                 DISTINCT(citycn) as citycn, 
                 cityen, 
                 geocode4_corr 
               FROM 
                 China.city_cn_en
-            ) AS city_cn_en ON city_cn_en.citycn = aggregate.city_prod 
-            --INNER JOIN China.country_cn_en ON country_cn_en.Country_cn = aggregate.destination
-        ) 
-        SELECT -- Remove duplicates
-          add_var.year, 
-          add_var.geocode4_corr, 
-          add_var.regime, 
-          add_var.HS6, 
-          --add_var.ISO_alpha, 
-          lag_soe_export_share_ckr 
-        FROM 
-          add_var 
-          INNER JOIN (
-            SELECT 
-              year, 
-              geocode4_corr, 
-              regime, 
-              HS6, 
-              --ISO_alpha, 
-              COUNT(*) as cnt 
-            FROM 
-              add_var 
-            GROUP BY 
-              year, 
-              geocode4_corr, 
-              regime, 
-              HS6
-              --ISO_alpha 
-            HAVING 
-              COUNT(*) = 1 
-             -- AND ISO_alpha IS NOT NULL
-          ) as no_dup ON add_var.year = no_dup.year 
-          AND add_var.geocode4_corr = no_dup.geocode4_corr 
-          AND add_var.regime = no_dup.regime 
-          AND add_var.HS6 = no_dup.HS6 
-          --AND add_var.ISO_alpha = no_dup.ISO_alpha
-      )
-  )
+            ) AS city_cn_en ON city_cn_en.citycn = share_soe_quantity.city_prod 
+  ) -- 944951, 413965, 364314
 
+"""
+```
 
+Distribution
+
+```python
+query = """
+select
+  percentiles[offset(10)] as p10,
+  percentiles[offset(25)] as p25,
+  percentiles[offset(50)] as p50,
+  percentiles[offset(60)] as p60,
+  percentiles[offset(70)] as p70,
+  percentiles[offset(80)] as p80,
+  percentiles[offset(90)] as p90,
+  percentiles[offset(95)] as p95
+from (
+  select approx_quantiles(lag_soe_export_share_ckr, 100) percentiles
+ FROM `temporary.lag_soe_export_ckr`
+)
 """
 ```
 
@@ -1631,6 +1494,8 @@ Not, we need to cast the following variables because it's int in `quality_vat_ex
 - geocode4_corr
 - year
 - HS6
+
+- the new table name is `quality_vat_export_covariate_2003_2010`
 
 ```python
 query = """
@@ -1709,7 +1574,25 @@ select
   percentiles[offset(90)] as p90,
   percentiles[offset(95)] as p95
 from (
-  select approx_quantiles(lag_soe_export_share_ckjr, 100) percentiles
+  select approx_quantiles(lag_foreign_export_share_ckr, 100) percentiles
+ FROM `China.quality_vat_export_covariate_2003_2010`
+)
+"""
+```
+
+```python
+query = """
+select
+  percentiles[offset(10)] as p10,
+  percentiles[offset(25)] as p25,
+  percentiles[offset(50)] as p50,
+  percentiles[offset(60)] as p60,
+  percentiles[offset(70)] as p70,
+  percentiles[offset(80)] as p80,
+  percentiles[offset(90)] as p90,
+  percentiles[offset(95)] as p95
+from (
+  select approx_quantiles(lag_soe_export_share_ckr, 100) percentiles
  FROM `China.quality_vat_export_covariate_2003_2010`
 )
 """
