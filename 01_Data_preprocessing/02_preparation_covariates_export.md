@@ -1690,6 +1690,31 @@ change_format.ISO_alpha = `temporary.lag_soe_export_ckjr`.ISO_alpha
 df_quality.shape
 ```
 
+## Brief Description
+
+In the query below, we compute the distribution of the SOE and foreign share
+
+- https://popsql.com/learn-sql/bigquery/how-to-calculate-percentiles-in-bigquery
+- https://cloud.google.com/dataprep/docs/html/PERCENTILE-Function_156863254
+
+```python
+query = """
+select
+  percentiles[offset(10)] as p10,
+  percentiles[offset(25)] as p25,
+  percentiles[offset(50)] as p50,
+  percentiles[offset(60)] as p60,
+  percentiles[offset(70)] as p70,
+  percentiles[offset(80)] as p80,
+  percentiles[offset(90)] as p90,
+  percentiles[offset(95)] as p95
+from (
+  select approx_quantiles(lag_soe_export_share_ckjr, 100) percentiles
+ FROM `China.quality_vat_export_covariate_2003_2010`
+)
+"""
+```
+
 # Upload to cloud
 
 The dataset is ready to be shared with your colleagues. 
