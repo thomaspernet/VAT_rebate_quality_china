@@ -138,8 +138,8 @@ if download_data:
             )
     df_final = gcp.upload_data_from_bigquery(query = query, location = 'US')
     df_final.to_csv('quality_vat_export_covariate_2003_2010.csv', index= False)
-    #shutil.move('quality_vat_export_covariate_2003_2010.csv', 
-    #'../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010.csv')
+    shutil.move('quality_vat_export_covariate_2003_2010.csv', 
+    '../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010.csv')
 ```
 
 ```sos kernel="R"
@@ -194,7 +194,7 @@ Variables:
 | FE_ckr                        | int64   |
 | FE_csrt                       | int64   |
 | FE_kt                         | int64   |
-| FE_pj                         | int64   |
+| FE_kj                         | int64   |
 | FE_jt                         | int64   |
 | FE_ct                         | int64   |
 | growth_export_ckt_1           | float64 |
@@ -260,21 +260,25 @@ Sector is defined as the GBT 4 digits
 
 ```sos kernel="R"
 t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate+ ln_lag_import_tax  + 
-            growth_export_ckjt_1 + lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | FE_ck + FE_cst+FE_pj|0 | HS6, df_final %>% filter(regime == 'Eligible'),
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | FE_ck + FE_cst+FE_kj|0 | HS6, df_final %>% filter(regime == 'Eligible'),
             exactDOF = TRUE)
 t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate + ln_lag_import_tax+ ln_lag_import_tax  + 
-            growth_export_ckjt_1 + lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | FE_ck + FE_cst+FE_pj|0 | HS6, df_final %>% filter(regime != 'Eligible'),
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | FE_ck + FE_cst+FE_kj|0 | HS6, df_final %>% filter(regime != 'Eligible'),
             exactDOF = TRUE)
 t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax  + 
-            growth_export_ckjt_1 + lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | FE_ckr + FE_csrt + FE_pj|0 | HS6, df_final,
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | FE_ckr + FE_csrt + FE_kj|0 | HS6, df_final,
             exactDOF = TRUE)
 t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax  + 
-            growth_export_ckjt_1 + lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | FE_ckr + FE_csrt+FE_kt|0 | HS6, df_final,
             exactDOF = TRUE)
+```
+
+```sos kernel="R"
+glimpse(df_final)
 ```
 
 ```sos kernel="Python 3"
@@ -316,7 +320,7 @@ table_1 <- go_latex(list(
     addFE=fe1,
     save=TRUE,
     note = FALSE,
-    name="table_0.txt"
+    name="Tables/table_0.txt"
 )
 ```
 
@@ -386,19 +390,19 @@ Sector is defined as the GBT 4 digits
 
 ```sos kernel="R"
 t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate+ ln_lag_import_tax  + 
-            growth_export_ckt_1 + lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | FE_ck + FE_cst+FE_pj|0 | HS6, df_final %>% filter(regime == 'Eligible'),
             exactDOF = TRUE)
 t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate + ln_lag_import_tax+ ln_lag_import_tax  + 
-            growth_export_ckt_1 + lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | FE_ck + FE_cst+FE_pj|0 | HS6, df_final %>% filter(regime != 'Eligible'),
             exactDOF = TRUE)
 t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax  + 
-            growth_export_ckt_1 + lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | FE_ckr + FE_csrt + FE_pj|0 | HS6, df_final,
             exactDOF = TRUE)
 t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax  + 
-            growth_export_ckt_1 + lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | FE_ckr + FE_csrt+FE_kt|0 | HS6, df_final,
             exactDOF = TRUE)
 ```
@@ -442,7 +446,7 @@ table_1 <- go_latex(list(
     addFE=fe1,
     save=TRUE,
     note = FALSE,
-    name="table_1.txt"
+    name="Tables/table_1.txt"
 )
 ```
 
@@ -528,19 +532,19 @@ except:
 
 ```sos kernel="R"
 t_0 <- felm(log(value) ~ln_lag_tax_rebate+ ln_lag_import_tax +
-            growth_export_ckjt_1 + lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | FE_ck + FE_cst+FE_pj|0 | HS6, df_final %>% filter(regime == 'Eligible'),
             exactDOF = TRUE)
 t_1 <- felm(log(value) ~ln_lag_tax_rebate + ln_lag_import_tax+
-            growth_export_ckjt_1 + lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | FE_ck + FE_cst+FE_pj|0 | HS6, df_final %>% filter(regime != 'Eligible'),
             exactDOF = TRUE)
 t_2 <- felm(log(value) ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+
-            growth_export_ckjt_1 + lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | FE_ckr + FE_csrt + FE_pj|0 | HS6, df_final,
             exactDOF = TRUE)
 t_3 <- felm(log(value) ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+
-            growth_export_ckjt_1 + lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | FE_ckr + FE_csrt+FE_kt|0 | HS6, df_final,
             exactDOF = TRUE)
 ```
@@ -570,7 +574,7 @@ table_1 <- go_latex(list(
     addFE=fe1,
     save=TRUE,
     note = FALSE,
-    name="table_2.txt"
+    name="Tables/table_2.txt"
 )
 ```
 
@@ -698,7 +702,7 @@ table_1 <- go_latex(list(
     addFE=fe1,
     save=TRUE,
     note = FALSE,
-    name="table_3.txt"
+    name="Tables/table_3.txt"
 )
 ```
 

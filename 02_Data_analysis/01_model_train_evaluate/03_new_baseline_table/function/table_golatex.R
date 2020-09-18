@@ -1,4 +1,5 @@
 library(stargazer)
+#library(filesstrings)
 
 go_latex <- function(
 results,
@@ -53,9 +54,10 @@ save, name, note = FALSE){
 
       lapply(latex, write, name, append=TRUE, ncolumns=1000)
 
-      print(name)
+      #print(name)
 
-      file.copy(from = name,
-      to  = paste("Tables", name, sep="/"))
+      #file.move(from = name,
+      #to  = paste("Tables", name, sep="/"))
+      #unlink(name)
   }
 }
