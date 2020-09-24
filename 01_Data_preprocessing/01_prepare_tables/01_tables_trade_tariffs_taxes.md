@@ -59,9 +59,11 @@ Select the US you just created →Create Athena tables for the project trade, ta
     * TRADE_DATA/TRANSFORMED
     * TAX_DATA/TRANSFORMED/VAT_REBATE
     * TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS
+    * ADDITIONAL_DATA/SIGMAS_HS3
 * Github: 
 * https://github.com/thomaspernet/Chinese-Trade-Data
 - https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_Data_preprocessing/00_download_data_from_/APPLIED_MFN_TARIFFS
+- https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/00_download_data_from_/Sigma/sigma.py
 
 # Destination Output/Delivery
 
@@ -156,6 +158,7 @@ If the file is empty, add information and send it to the S3.
 1. Create Chinese trade data from 2000 to 2010
 2. Create Chinese VAT rebate tax
 3. Create Chinese tariff
+4. Create Chinese sigma
 
 ```python
 parameters = {
@@ -264,7 +267,25 @@ parameters = {
                      
                   ]
                }
-            }
+            },
+             {
+               "database":"chinese_trade",
+               "name":"sigma_industry",
+               "output_id":"",
+               "separator":",",
+               "s3URI":"s3://chinese-data/ADDITIONAL_DATA/SIGMAS_HS3/",
+               "schema":{
+                  "variables":[
+                      "ccode", "cname", "sigma", "HS3"
+                  ],
+                  "format":[
+                      "string", "string", "float", "string"
+                  ],
+                  "comments":[
+                     'Country code', 'countr name', 'sigma', 'industry code'
+                  ]
+               }
+          } 
          ]
       },
       "PREPARATION":[
@@ -314,10 +335,6 @@ print(parameters)
 ```python
 s3_output = parameters['GLOBAL']['QUERIES_OUTPUT']
 bd = parameters['GLOBAL']['DATABASE']
-```
-
-```python
-table_info
 ```
 
 ```python
@@ -431,6 +448,23 @@ s3.run_query(
             database=bd,
             s3_output=s3_output,
             filename='chinese_applied_mfn_tariffs_hs02_china_2002_2010',  ## Add filename to print dataframe
+            destination_key=None,  ### Add destination key if need to copy output
+        )
+```
+
+Sigma
+
+```python
+query = """
+SELECT *
+FROM sigma_industry
+LIMIT 10
+"""
+s3.run_query(
+            query=query,
+            database=bd,
+            s3_output=s3_output,
+            filename='chinese_sigma_industry',  ## Add filename to print dataframe
             destination_key=None,  ### Add destination key if need to copy output
         )
 ```
