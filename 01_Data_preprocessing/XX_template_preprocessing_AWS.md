@@ -13,7 +13,6 @@ jupyter:
     name: python3
 ---
 
-<!-- #region -->
 # NOTEBOOK NAME FROM CODA TASK
 
 Copy paste from Coda to fill the information
@@ -21,57 +20,6 @@ Copy paste from Coda to fill the information
 ## Objective(s)
 
 
-
-## Metadata 
-
-* Metadata parameters are available here: 
-* Task type:
-  * 
-* Users: :
-  * 
-* Watchers:
-  * 
-* Estimated Log points:
-  * One being a simple task, 15 a very difficult one
-  *  
-* Task tag
-  *  
-* Toggl Tag
-  * 
-* Instance [AWS]
-  *   
-  
-## Input Cloud Storage [AWS]
-
-If link from the internet, save it to the cloud first
-
-### Tables [AWS]
-
-1. Batch 1:
-  * Select Provider: 
-  * Select table(s): 
-    * Select only tables created from the same notebook, else copy/paste selection to add new input tables
-    * If table(s) does not exist, add them: Add New Table
-    * Information:
-      * Region: 
-        * Name: 
-        * Code: 
-      * Database: 
-      * Notebook construction file: 
-    
-## Destination Output/Delivery
-
-* AWS
-  1. Athena: 
-      * Region: 
-      * Database: 
-      * Tables (Add name new table): 
-
-## Things to know (Steps, Attention points or new flow of information)
-
-### Sources of information  (meeting notes, Documentation, Query, URL)
-
-<!-- #endregion -->
 
 ## Connexion serveur
 
