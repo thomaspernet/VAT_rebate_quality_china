@@ -126,9 +126,36 @@ Note that the template skips the header. If the files does not have a header, re
 
 If the file is empty, add information and send it to the S3.
 
+## Template create table
+
+```
+{
+               "database":"",
+               "name":"",
+               "output_id":"",
+               "separator":",",
+               "s3URI":"",
+               "schema":{
+                  "variables":[
+
+                     
+                  ],
+                  "format":[
+
+                     
+                  ],
+                  "comments":[
+                     
+                  ]
+               }
+          }     
+```
+
 ## Steps
 
 1. Create Chinese trade data from 2000 to 2010
+2. Create Chinese VAT rebate tax
+3. Create Chinese tariff
 
 ```python
 parameters = {
@@ -152,16 +179,86 @@ parameters = {
                "s3URI":"s3://chinese-data/TRADE_DATA/TRANSFORMED/",
                "schema":{
                   "variables":[
-                      'date','ID','business_type','intermediate','trade_type',
-                      'province','city_prod','matching_city','imp_exp',	'hs',
-                      'origin_or_destination','values','quantities'
-                     
+                     "date",
+                     "ID",
+                     "business_type",
+                     "intermediate",
+                     "trade_type",
+                     "province",
+                     "city_prod",
+                     "matching_city",
+                     "imp_exp",
+                     "hs",
+                     "origin_or_destination",
+                     "values",
+                     "quantities"
                   ],
                   "format":[
-                      'string','string','string','string','string',
-                      'string','string','string','string',	'string',
-                      'string','int','int'
+                     "string",
+                     "string",
+                     "string",
+                     "string",
+                     "string",
+                     "string",
+                     "string",
+                     "string",
+                     "string",
+                     "string",
+                     "string",
+                     "int",
+                     "int"
+                  ],
+                  "comments":[
                      
+                  ]
+               }
+            },
+            {
+               "database":"chinese_trade",
+               "name":"base_hs6_VAT_2002_2012",
+               "output_id":"",
+               "separator":",",
+               "s3URI":"s3://chinese-data/TAX_DATA/TRANSFORMED/VAT_REBATE/",
+               "schema":{
+                  "variables":[
+                     "hs6",
+                     "year",
+                     "tax_rebate",
+                     "ln_vat_rebate",
+                     "vat_m",
+                     "vat_reb_m"
+                  ],
+                  "format":[
+                     "string",
+                     "string",
+                     "float",
+                     "float",
+                     "float",
+                     "float"
+                  ],
+                  "comments":[
+                     
+                  ]
+               }
+            },
+            {
+               "database":"chinese_trade",
+               "name":"applied_mfn_tariffs_hs02_china_2002_2010",
+               "output_id":"",
+               "separator":",",
+               "s3URI":"s3://chinese-data/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS/",
+               "schema":{
+                  "variables":[
+                     "reporter",
+                     "year",
+                     "import_tax",
+                     "HS02"
+                  ],
+                  "format":[
+                     "string",
+                     "string",
+                     "float",
+                     "string"
                   ],
                   "comments":[
                      
@@ -169,28 +266,28 @@ parameters = {
                }
             }
          ]
-      }
-   },
-   "PREPARATION":[
-      {
-         "STEPS_XX":{
-            "query":{
-               "top":{
-                  
-               },
-               "middle":{
-                  
-               },
-               "bottom":{
-                  
+      },
+      "PREPARATION":[
+         {
+            "STEPS_XX":{
+               "query":{
+                  "top":{
+                     
+                  },
+                  "middle":{
+                     
+                  },
+                  "bottom":{
+                     
+                  }
                }
-            }
-         },
-         "output_id":[
-            
-         ]
-      }
-   ]
+            },
+            "output_id":[
+               
+            ]
+         }
+      ]
+   }
 }
 ```
 
@@ -220,18 +317,14 @@ bd = parameters['GLOBAL']['DATABASE']
 ```
 
 ```python
+table_info
+```
+
+```python
 for key, value in parameters["TABLES"]["CREATION"].items():
     if key == "ALL_SCHEMA":
         for table_info in value:
-            
-            ## Drop if Exist
-            
-            s3.run_query(
-                query="DROP TABLE {}".format(table_info["name"]),
-                database=bd,
-                s3_output=s3_output
-        )
-            
+
             ## CREATE QUERY
 
             ### Create top/bottom query
@@ -253,22 +346,26 @@ for key, value in parameters["TABLES"]["CREATION"].items():
                     table_middle += parameters["TABLES"]["CREATION"]["template"][
                         "middle"
                     ].format(val, table_info["schema"]["format"][i], ",")
-        query = table_top + table_middle + table_bottom
+            query = table_top + table_middle + table_bottom
+            ## DROP IF EXIST
         
-        ## RUN QUERY
-        output = s3.run_query(
-            query=query,
-            database=bd,
-            s3_output=s3_output,
-            filename=None,  ## Add filename to print dataframe
-            destination_key=None,  ### Add destination key if need to copy output
-        )
-        ## SAVE QUERY ID
-        table_info['output_id'] = output['QueryID']
-```
+            s3.run_query(
+                    query="DROP TABLE {}".format(table_info["name"]),
+                    database=bd,
+                    s3_output=s3_output
+            )
 
-```python
-output
+            ## RUN QUERY
+            output = s3.run_query(
+                query=query,
+                database=bd,
+                s3_output=s3_output,
+                filename=None,  ## Add filename to print dataframe
+                destination_key=None,  ### Add destination key if need to copy output
+            )
+            ## SAVE QUERY ID
+            table_info['output_id'] = output['QueryID']
+            print(output)
 ```
 
 ## Show first rows
@@ -300,6 +397,40 @@ s3.run_query(
             database=bd,
             s3_output=s3_output,
             filename='count_chinese_import_export',  ## Add filename to print dataframe
+            destination_key=None,  ### Add destination key if need to copy output
+        )
+```
+
+VAT Tax
+
+```python
+query = """
+SELECT *
+FROM base_hs6_VAT_2002_2012
+LIMIT 10
+"""
+s3.run_query(
+            query=query,
+            database=bd,
+            s3_output=s3_output,
+            filename='chinese_base_hs6_VAT_2002_2012',  ## Add filename to print dataframe
+            destination_key=None,  ### Add destination key if need to copy output
+        )
+```
+
+Tariff
+
+```python
+query = """
+SELECT *
+FROM applied_mfn_tariffs_hs02_china_2002_2010
+LIMIT 10
+"""
+s3.run_query(
+            query=query,
+            database=bd,
+            s3_output=s3_output,
+            filename='chinese_applied_mfn_tariffs_hs02_china_2002_2010',  ## Add filename to print dataframe
             destination_key=None,  ### Add destination key if need to copy output
         )
 ```
