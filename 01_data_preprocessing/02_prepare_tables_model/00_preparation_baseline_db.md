@@ -65,7 +65,7 @@ If link from the internet, save it to the cloud first
 * Origin: 
 * Athena
 * Name:
-* VAT_export_2002_2010
+* VAT_export_2003_2010
 * GitHub:
   *  00_preparation_baseline_db
 <!-- #region heading_collapsed=true -->
@@ -85,28 +85,174 @@ If link from the internet, save it to the cloud first
 
 
 ```python inputHidden=false outputHidden=false jupyter={"outputs_hidden": false}
-import pandas as pd 
-import numpy as np
+from awsPy.aws_authorization import aws_connector
+from awsPy.aws_s3 import service_s3
+from awsPy.aws_glue import service_glue
 from pathlib import Path
-import os, re,  requests, json 
-from GoogleDrivePy.google_authorization import authorization_service
-from GoogleDrivePy.google_platform import connect_cloud_platform
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import os, shutil, json
+
+path = os.getcwd()
+parent_path = str(Path(path).parent.parent)
+
+
+name_credential = 'thomas_vat_credentials.csv'
+region = 'eu-west-3'
+bucket = 'chinese-data'
+path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 ```
 
 ```python inputHidden=false outputHidden=false jupyter={"outputs_hidden": false}
-path = os.getcwd()
-parent_path = str(Path(path).parent)
-project = 'valid-pagoda-132423'
+con = aws_connector.aws_instantiate(credential = path_cred,
+                                       region = region)
+client= con.client_boto()
+s3 = service_s3.connect_S3(client = client,
+                      bucket = bucket, verbose = True) 
+glue = service_glue.connect_glue(client = client) 
+```
 
+```python
+pandas_setting = True
+if pandas_setting:
+    cm = sns.light_palette("green", as_cmap=True)
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_colwidth', None)
+```
 
-auth = authorization_service.get_authorization(
-    path_credential_gcp = "{}/creds/service.json".format(parent_path),
-    verbose = False#
-)
+# Creation tables
 
-gcp_auth = auth.authorization_gcp()
-gcp = connect_cloud_platform.connect_console(project = project, 
-                                             service_account = gcp_auth) 
+The data creation, and transformation are done through a JSON file. The JSON file is available in the S3, and version in Github.
+
+- [DATA/ETS]
+
+Note that the template skips the header. If the files does not have a header, remove 'skip.header.line.count'='1'
+
+If the file is empty, add information and send it to the S3.
+
+The table schema is automatically modifidied based on the parameter logs
+
+## Template create table
+
+```
+{
+               "database":"",
+               "name":"",
+               "output_id":"",
+               "separator":",",
+               "s3URI":"",
+               "schema":{
+                  "variables":[
+
+                     
+                  ],
+                  "format":[
+
+                     
+                  ],
+                  "comments":[
+                     
+                  ]
+               }
+          }
+```
+
+## Templare prepare table
+
+To prepare a table from existing table, you can use the following schema. The list `ALL_SCHAME` accepts one or more steps. Each steps, `STEPS_X` can be a sequence of queries execution. 
+
+```
+"PREPARATION": {
+        "ALL_SCHEMA": [
+                {"STEPS_0": {
+                    'name':'Join export, tariff and tax',
+                    'execution':
+                    [{
+                        "database": "chinese_trade",
+                        "name": "VAT_export_2003_2010",
+                        "output_id": "",
+                        "query": {
+                            "top": "",
+                            "middle": "",
+                            "bottom": ""
+                    }
+                    }
+                    ],
+                    "schema":[
+                         {'Name': 'geocode4_corr', 'Type': '', 'Comment': 'Official chinese city ID'}
+                    ]
+                }
+                }],
+                "template":{
+                    "top": "CREATE TABLE {}.{} WITH (format = 'PARQUET') AS "
+                }
+            }
+``` 
+
+To add a query execution with a within, use the following template:
+
+```
+{
+                        "database": "chinese_trade",
+                        "name": "VAT_export_2003_2010",
+                        "output_id": "",
+                        "query": {
+                            "top": "",
+                            "middle": "",
+                            "bottom": ""
+                    }
+                    }
+``` 
+
+To add a step, use this template:
+
+```
+{"STEPS_X": {
+                    'name':'Join export, tariff and tax',
+                    'execution':
+                    [{
+                        "database": "chinese_trade",
+                        "name": "VAT_export_2003_2010",
+                        "output_id": "",
+                        "query": {
+                            "top": "",
+                            "middle": "",
+                            "bottom": ""
+                    }
+                    }
+                    ]
+                }
+                }
+```
+
+Each step name should follow this format `STEPS_0`, `STEPS_1`, `STEPS_2`, etc
+
+If you need to add comments to a specific field, use this template:
+
+```
+[
+{'Name': '', 'Type': '', 'Comment': ''}
+]
+```
+
+and add it to `"schema"`. The schema is related to a table, and will be modified by Glue API.
+
+```python
+### If chinese characters, set  ensure_ascii=False
+s3.download_file(key = 'DATA/ETL/parameters_ETL.json')
+with open('parameters_ETL.json', 'r') as fp:
+    parameters = json.load(fp)
+print(json.dumps(parameters, indent=4, sort_keys=False, ensure_ascii=False))
+```
+
+```python
+#json_filename ='parameters_ETL.json'
+#json_file = json.dumps(parameters)
+#f = open(json_filename,"w")
+#f.write(json_file)
+#f.close()
+#s3.upload_file(json_filename, 'DATA/ETL')
 ```
 
 <!-- #region heading_collapsed=true -->
@@ -141,393 +287,497 @@ gcp = connect_cloud_platform.connect_console(project = project,
   * ln_vat_tax = log(1+(vat_m-vat_reb_m))
 <!-- #endregion -->
 
-```python inputHidden=false outputHidden=false jupyter={"outputs_hidden": false}
-query = """
-WITH merge_data AS (
-  SELECT 
-    CAST(Date AS STRING) as year, 
-    ID, 
-    Trade_type, 
-    Business_type, 
-    CASE WHEN length(
-      CAST(HS AS STRING)
-    ) < 5 THEN CONCAT(
-      "0", 
-      CAST(HS AS STRING)
-    ) ELSE CAST(HS AS STRING) END as HS6, 
-    city_prod, 
-    Origin_or_destination as destination, 
-    Quantity, 
-    value,
-    CASE WHEN Trade_type = '进料加工贸易' 
-    OR Trade_type = '一般贸易' THEN 'Eligible' ELSE 'Not_Eligible' END as regime 
-  FROM 
-    `China.tradedata_*` 
-  WHERE 
-    (
-      _TABLE_SUFFIX BETWEEN '2002' 
-      AND '2006'
-    ) 
-    AND imp_exp = '出口' 
-    AND (
-      Trade_type = '进料加工贸易' 
-      OR Trade_type = '一般贸易' 
-      OR Trade_type = '来料加工装配贸易'
-    ) 
-    AND intermediate = 'No' 
-    AND (
-      Business_type = '国有企业' 
-      OR Business_type = '私营企业' 
-      OR Business_type = '集体企业' 
-      OR Business_type = '国有' 
-      OR Business_type = '私营' 
-      OR Business_type = '集体'
-      
-    ) 
-  UNION ALL 
-  SELECT 
-    CAST(Date AS STRING) as year, 
-    ID, 
-    Trade_type, 
-    Business_type, 
-    CASE WHEN length(
-      CAST(HS AS STRING)
-    ) < 5 THEN CONCAT(
-      "0", 
-      CAST(HS AS STRING)
-    ) ELSE CAST(HS AS STRING) END as HS6, 
-    city_prod, 
-    Origin_or_destination as destination, 
-    Quantity, 
-    value,
-    CASE WHEN Trade_type = '进料加工贸易' 
-    OR Trade_type = '一般贸易' THEN 'Eligible' ELSE 'Not_Eligible' END as regime 
-  FROM 
-    `China.tradedata_*` 
-  WHERE 
-    NOT(
-      _TABLE_SUFFIX BETWEEN '2000' 
-      AND '2006'
-    ) 
-    AND imp_exp = '出口' 
-    AND intermediate = 'No' 
-    AND (
-      Business_type = '国有企业' 
-      OR Business_type = '私营企业' 
-      OR Business_type = '集体企业'
+```python
+s3_output = parameters['GLOBAL']['QUERIES_OUTPUT']
+db = parameters['GLOBAL']['DATABASE']
+```
+
+```python
+for key, value in parameters["TABLES"]["PREPARATION"].items():
+    if key == "ALL_SCHEMA":
+        ### LOOP STEPS
+        for i, steps in enumerate(value):
+            step_name = 'STEPS_{}'.format(i)
+            
+            ### LOOP EXECUTION WITHIN STEP
+            for j, step_n in enumerate(steps[step_name]['execution']):
+
+                ### DROP IF EXIST
+                s3.run_query(
+                    query="DROP TABLE {}.{}".format(
+                        step_n['database'],
+                        step_n['name']),
+                    database=db,
+                    s3_output=s3_output )
+                
+                
+                ### CREATE TOP
+                table_top = parameters["TABLES"]["PREPARATION"]['template']['top'].format(
+                step_n['database'],
+                step_n['name'],    
+                )
+                
+                ### COMPILE QUERY
+                query = table_top + step_n['query']['top']  + step_n['query']['middle'] + step_n['query']['bottom']
+                output = s3.run_query(
+                query=query,
+                database=db,
+                s3_output=s3_output,
+                filename=None,  ## Add filename to print dataframe
+                destination_key=None,  ### Add destination key if need to copy output
+            )
+                
+                ## SAVE QUERY ID
+                step_n['output_id'] = output['QueryID']
+
+                ### UPDATE CATALOG
+                glue.update_schema_table(
+                    database = step_n['database'],
+                    table = step_n['name'],
+                    schema= steps[step_name]['schema'])
+
+                print(output)
+                
+                  
+```
+
+Get the schema of the lattest job
+
+```python
+schema = glue.get_table_information(
+    database = step_n['database'],
+    table = step_n['name'])['Table']
+schema
+```
+
+# Get information from Glue
+
+We need to communicate with Glue API to:
+
+- Get the type to run the analysis
+
+
+# Count missing values
+
+```python
+from datetime import date
+today = date.today().strftime('%Y%M%d')
+```
+
+```python
+table_top = parameters['ANALYSIS']['COUNT_MISSING']['top']
+table_middle = ""
+table_bottom = parameters['ANALYSIS']['COUNT_MISSING']['bottom'].format(
+    step_n['database'], step_n['name'])
+
+for key, value in enumerate(schema['StorageDescriptor']['Columns']):
+    if key == len(schema['StorageDescriptor']['Columns']) - 1:
+        
+        table_middle += '{} '.format(parameters['ANALYSIS']['COUNT_MISSING']['middle'].format(value['Name']))
+    else: 
+        table_middle += '{} ,'.format(parameters['ANALYSIS']['COUNT_MISSING']['middle'].format(value['Name']))
+query = table_top + table_middle + table_bottom
+output = s3.run_query(
+            query=query,
+            database=db,
+            s3_output=s3_output,
+  filename = 'count_missing', ## Add filename to print dataframe
+  destination_key = None ### Add destination key if need to copy output
+        )
+display(
+    output
+    .T
+    .rename(columns={0:'total_missing'})
+    .assign(
+    total_missing_pct = lambda x: x['total_missing']/x.iloc[0,0]
     )
-) 
-SELECT 
-      * 
-    FROM 
-      (
-        WITH aggregate AS (
-          SELECT  
-            city_prod, 
-            year, 
-            regime,
-            HS6, 
-            destination, 
-            SUM(Quantity) as Quantity, 
-            SUM(value) as value 
-          FROM 
-            merge_data 
-          GROUP BY 
-            year, 
-            regime, 
-            HS6, 
-            city_prod, 
-            destination
-        ) 
-        SELECT
-          cityen,
-          geocode4_corr, 
-          aggregate.year, 
-          regime, 
-          aggregate.HS6, 
-          Country_en, 
-          ISO_alpha, 
-          Quantity, 
-          value, 
-          SAFE_DIVIDE(value, Quantity) AS unit_price ,
-          lag_tax_rebate, 
-          ln(1 + lag_tax_rebate) as ln_lag_tax_rebate, 
-          lag_import_tax, 
-          ln(1 + lag_import_tax) AS ln_lag_import_tax
-        FROM 
-          aggregate 
-        INNER JOIN (SELECT DISTINCT(citycn) as citycn, cityen,geocode4_corr FROM China.city_cn_en )AS city_cn_en
-        ON city_cn_en.citycn = aggregate.city_prod   
-        LEFT JOIN China.country_cn_en ON country_cn_en.Country_cn = aggregate.destination
-        INNER JOIN (
-            SELECT 
-              year, 
-              HS02, 
-              LAG(import_tax, 1) OVER (
-                PARTITION BY HS02 
-                ORDER BY 
-                  HS02, 
-                  year
-              ) AS lag_import_tax 
-            FROM 
-              China.applied_MFN_Tariffs_hs02_china_2002_2010 
-            WHERE 
-              import_tax IS NOT NULL
-          ) as import_tarrif ON import_tarrif.year = aggregate.year 
-          AND import_tarrif.HS02 = aggregate.HS6
-          LEFT JOIN (
-            SELECT 
-              HS6, 
-              year, 
-              tax_rebate, 
-              vat_m, 
-              vat_reb_m, 
-              LAG(vat_m, 1) OVER (
-                PARTITION BY HS6 
-                ORDER BY 
-                  HS6, 
-                  year
-              ) AS lag_vat_m, 
-              LAG(vat_reb_m, 1) OVER (
-                PARTITION BY HS6 
-                ORDER BY 
-                  HS6, 
-                  year
-              ) AS lag_vat_reb_m, 
-              LAG(tax_rebate, 1) OVER (
-                PARTITION BY HS6 
-                ORDER BY 
-                  HS6, 
-                  year
-              ) AS lag_tax_rebate, 
-            FROM 
-              China.base_hs6_VAT_2002_2012 
-            WHERE 
-              vat_m IS NOT NULL
-          ) as vat 
-          ON aggregate.year = vat.year 
-          AND aggregate.HS6 = vat.HS6
-          WHERE lag_tax_rebate IS NOT NULL AND lag_import_tax IS NOT NULL
-          ORDER BY geocode4_corr, HS6, year, regime
+    .sort_values(by = ['total_missing'], ascending= False)
+    .style
+    .format("{0:,.2%}", subset=["total_missing_pct"])
+    .bar(
+         subset='total_missing_pct',
+         color=['#d65f5f']
+    )
+    
+)
+```
+
+# Brief description table
+
+In this part, we provide a brief summary statistic from the lattest jobs. For the continuous analysis with a primary/secondary key, please add the relevant variables you want to know the count and distribution
+
+
+## Categorical Description
+
+During the categorical analysis, we wil count the number of observations for a given group and for a pair.
+
+### Count obs by group
+
+```python
+for field in schema["StorageDescriptor"]["Columns"]:
+    if field["Type"] in ["string", "object", 'varchar']:
+        
+        print("Nb of obs for {}".format(field["Name"]))
+        
+        query = parameters["ANALYSIS"]["CATEGORICAL"]["PAIR"].format(
+            step_n["database"], step_n["name"], field["Name"]
         )
--- 7 587 818
--- 6 455 025
--- 6 455 025
--- 6 241 309
--- 5 848 017
-"""
-```
-
-```python
-query = (
-          "SELECT * "
-            "FROM China.VAT_export_2002_2010 "
-
+        output = s3.run_query(
+            query=query,
+            database=db,
+            s3_output=s3_output,
+            filename="count_categorical_{}".format(
+                field["Name"]
+            ),  ## Add filename to print dataframe
+            destination_key=None,  ### Add destination key if need to copy output
         )
-df_final = gcp.upload_data_from_bigquery(query = query, location = 'US')
-df_final.head()
+
+        ### Print top 10
+
+        display(
+            (
+                output.set_index([field["Name"]])
+                .assign(percentage=lambda x: x["nb_obs"] / x["nb_obs"].sum())
+                .sort_values("percentage", ascending=False)
+                .head(10)
+                .style.format("{0:.2%}", subset=["percentage"])
+                .bar(subset=["percentage"], color="#d65f5f")
+            )
+        )
+```
+
+### Count obs by two pair
+
+You need to pass the primary group in the cell below
+
+```python
+primary_key = "year"
 ```
 
 ```python
-df_final.shape
+for field in schema["StorageDescriptor"]["Columns"]:
+    if field["Type"] in ["string", "object", "varchar"]:
+        if field["Name"] != primary_key:
+            print(
+                "Nb of obs for the primary group {} and {}".format(
+                    primary_key, field["Name"]
+                )
+            )
+            query = parameters["ANALYSIS"]["CATEGORICAL"]["MULTI_PAIR"].format(
+                step_n["database"], step_n["name"], primary_key, field["Name"]
+            )
+
+            output = s3.run_query(
+                query=query,
+                database=db,
+                s3_output=s3_output,
+                filename="count_categorical_{}_{}".format(
+                    primary_key, field["Name"]
+                ),  # Add filename to print dataframe
+                destination_key=None,  # Add destination key if need to copy output
+            )
+
+            display(
+                (
+                output.loc[
+                    lambda x: x[field["Name"]].isin(
+                        (
+                            output.assign(
+                                total_secondary=lambda x: x['nb_obs']
+                                .groupby([x[field["Name"]]])
+                                .transform("sum")
+                            )
+                            .drop_duplicates(subset="total_secondary", keep="last")
+                            .sort_values(by=["total_secondary"], ascending=False)
+                            .iloc[:10, 1]
+                            .to_list()
+                        )
+                    )
+                ]
+                .set_index([primary_key, field["Name"]])
+                .unstack([0])
+                .fillna(0)
+                .sort_index(axis=1, level=1)
+                .style.format("{0:,.2f}")
+                .background_gradient(cmap=sns.light_palette("green", as_cmap=True))
+            )
+            )
+```
+
+## Continuous description
+
+There are three possibilities to show the ditribution of a continuous variables:
+
+1. Display the percentile
+2. Display the percentile, with one primary key
+3. Display the percentile, with one primary key, and a secondary key
+
+
+### 1. Display the percentile
+
+```python
+table_top = ""
+table_top_var = ""
+table_middle = ""
+table_bottom = ""
+
+var_index = 0
+for key, value in enumerate(schema["StorageDescriptor"]["Columns"]):
+    if value['Type'] in ['float', 'double', 'bigint']:
+        
+        if var_index == 0:
+            table_top_var += "{} ,".format(value['Name'])
+            table_top = parameters['ANALYSIS']['CONTINUOUS']['DISTRIBUTION']['bottom'].format(
+                step_n["database"],
+                step_n["name"],
+                value['Name'],
+                key
+            )
+        else:
+            temp_middle_1= '{} {}'.format(
+                parameters['ANALYSIS']['CONTINUOUS']['DISTRIBUTION']['middle_1'],
+                parameters['ANALYSIS']['CONTINUOUS']['DISTRIBUTION']['bottom'].format(
+                step_n["database"],
+                step_n["name"],
+                value['Name'],
+                key
+            )
+            )
+            temp_middle_2 = parameters['ANALYSIS']['CONTINUOUS']['DISTRIBUTION']['middle_2'].format(value['Name'])
+            
+            if key == len(schema['StorageDescriptor']['Columns']) - 1:
+
+                table_top_var += "{} {}".format(value['Name'],
+                                               parameters['ANALYSIS']['CONTINUOUS']['DISTRIBUTION']['top_3'])
+                table_bottom += '{} {})'.format(temp_middle_1,temp_middle_2) 
+            else:
+                table_top_var += "{} ,".format(value['Name'])
+                table_bottom += '{} {}'.format(temp_middle_1,temp_middle_2) 
+        var_index += 1
+        
+query = (parameters['ANALYSIS']['CONTINUOUS']['DISTRIBUTION']['top_1'] + 
+             table_top + 
+             parameters['ANALYSIS']['CONTINUOUS']['DISTRIBUTION']['top_2'] +
+             table_top_var +
+             table_bottom
+            )
+output = s3.run_query(
+            query=query,
+            database=db,
+            s3_output=s3_output,
+  filename = 'count_distribution', ## Add filename to print dataframe
+  destination_key = None ### Add destination key if need to copy output
+        )
+(output
+ .set_index(['pct'])
+ .style
+ .format('{0:.2f}')
+)
+```
+
+### 2. Display the percentile, with one primary key
+
+The primary key will be passed to all the continuous variables
+
+```python
+primary_key = 'year'
+table_top = ""
+table_top_var = ""
+table_middle = ""
+table_bottom = ""
+var_index = 0
+for key, value in enumerate(schema["StorageDescriptor"]["Columns"]):
+    
+    if value['Type'] in ['float', 'double', 'bigint']:
+        
+        if var_index == 0:
+            table_top_var += "{} ,".format(value['Name'])
+            table_top = parameters['ANALYSIS']['CONTINUOUS']['ONE_PAIR_DISTRIBUTION']['bottom'].format(
+                step_n["database"],
+                step_n["name"],
+                value['Name'],
+                key,
+                primary_key
+            )
+        else:
+            temp_middle_1= '{} {}'.format(
+                parameters['ANALYSIS']['CONTINUOUS']['ONE_PAIR_DISTRIBUTION']['middle_1'],
+                parameters['ANALYSIS']['CONTINUOUS']['ONE_PAIR_DISTRIBUTION']['bottom'].format(
+                step_n["database"],
+                step_n["name"],
+                value['Name'],
+                key,
+                primary_key
+            )
+            )
+            temp_middle_2 = parameters['ANALYSIS']['CONTINUOUS']['ONE_PAIR_DISTRIBUTION']['middle_2'].format(value['Name'], primary_key)
+            
+            if key == len(schema['StorageDescriptor']['Columns']) - 1:
+
+                table_top_var += "{} {}".format(value['Name'],
+                                               parameters['ANALYSIS']['CONTINUOUS']['ONE_PAIR_DISTRIBUTION']['top_3'])
+                table_bottom += '{} {})'.format(temp_middle_1,temp_middle_2) 
+            else:
+                table_top_var += "{} ,".format(value['Name'])
+                table_bottom += '{} {}'.format(temp_middle_1,temp_middle_2) 
+        var_index += 1
+        
+query = (parameters['ANALYSIS']['CONTINUOUS']['ONE_PAIR_DISTRIBUTION']['top_1'] + 
+             table_top + 
+             parameters['ANALYSIS']['CONTINUOUS']['ONE_PAIR_DISTRIBUTION']['top_2'].format(primary_key) +
+             table_top_var +
+             table_bottom
+            )
+output = s3.run_query(
+            query=query,
+            database=db,
+            s3_output=s3_output,
+  filename = 'count_distribution_primary_key', ## Add filename to print dataframe
+  destination_key = None ### Add destination key if need to copy output
+        )
+(output
+ .set_index([primary_key, 'pct'])
+ .unstack(1)
+ .T
+ .style
+ .format('{0:.2f}'
+        )
+ .background_gradient(cmap='viridis')
+)
+```
+
+### 3. Display the percentile, with one primary key, and a secondary key
+
+The primary and secondary key will be passed to all the continuous variables. The output might be too big so we print only the top 10 for the secondary key
+
+```python
+primary_key = 'year'
+secondary_key = 'cityen'
 ```
 
 ```python
-import sidetable
-df_final.stb.freq(['year'])
+for key, value in enumerate(schema["StorageDescriptor"]["Columns"]):
+
+    if value["Type"] in ["float", "double", "bigint"]:
+
+        query = parameters["ANALYSIS"]["CONTINUOUS"]["TWO_PAIRS_DISTRIBUTION"].format(
+            step_n["database"],
+            step_n["name"],
+            primary_key,
+            secondary_key,
+            value["Name"],
+        )
+
+        output = s3.run_query(
+            query=query,
+            database=db,
+            s3_output=s3_output,
+            filename="count_distribution_{}_{}_{}".format(
+                primary_key, secondary_key, value["Name"]
+            ),  ## Add filename to print dataframe
+            destination_key=None,  ### Add destination key if need to copy output
+        )
+
+        print(
+            "Distribution of {}, by {} and {}".format(
+                value["Name"], primary_key, secondary_key,
+            )
+        )
+
+        display(
+            (
+                output.loc[
+                    lambda x: x[secondary_key].isin(
+                        (
+                            output.assign(
+                                total_secondary=lambda x: x[value["Name"]]
+                                .groupby([x[secondary_key]])
+                                .transform("sum")
+                            )
+                            .drop_duplicates(subset="total_secondary", keep="last")
+                            .sort_values(by=["total_secondary"], ascending=False)
+                            .iloc[:10, 1]
+                        ).to_list()
+                    )
+                ]
+                .set_index([primary_key, "pct", secondary_key])
+                .unstack([0, 1])
+                .fillna(0)
+                .sort_index(axis=1, level=2)
+                .style.format("{0:,.2f}")
+                .background_gradient(cmap=sns.light_palette("green", as_cmap=True))
+            )
+        )
+```
+
+# Generation report
+
+```python
+import os, time, shutil, urllib, ipykernel, json
+from pathlib import Path
+from notebook import notebookapp
 ```
 
 ```python
-df_final['year'].unique()
-```
-
-# Upload to cloud
-
-The dataset is ready to be shared with your colleagues. 
-
-
-
-<!-- #region nteract={"transient": {"deleting": false}} -->
-# Generate Studio
-
-To generate a notebook ready to use in the studio, please fill in the variables below:
-
-- 'project_name' : Name of the repository
-- 'input_datasets' : name of the table
-- 'sheetnames' : Name of the sheet, if table saved in Google Spreadsheet
-- 'bigquery_dataset' : Dataset name
-- 'destination_engine' : 'GCP' or 'GS,
-- 'path_destination_studio' : path to `Notebooks_Ready_to_use_studio`
-- 'project' : 'valid-pagoda-132423',
-- 'username' : "thomas",
-- 'pathtoken' : Path to GCP token,
-- 'connector' : 'GBQ', ## change to GS if spreadsheet
-- 'labels' : Add any labels to the variables,
-- 'date_var' : Date variable
-<!-- #endregion -->
-
-```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
-labels = []
-date_var = 'year'
-```
-
-```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
-regex = r"(.*)/(.*)"
-path = os.getcwd()
-parent_path = Path(path).parent
-test_str = str(parent_path)
-matches = re.search(regex, test_str)
-github_repo = matches.group(2)
-
-path_credential = '/Users/Thomas/Google Drive/Projects/Data_science/Google_code_n_Oauth/Client_Oauth/Google_auth/'
-
-dic_ = {
+def create_report(extension = "html", keep_code = False):
+    """
+    Create a report from the current notebook and save it in the 
+    Report folder (Parent-> child directory)
     
-          'project_name' : github_repo,
-          'input_datasets' : 'PROJECTNAME',
-          'sheetnames' : '',
-          'bigquery_dataset' : 'China',
-          'destination_engine' : 'GCP',
-          'path_destination_studio' : os.path.join(test_str,
-                                       'Notebooks_Ready_to_use_studio'),
-          'project' : 'valid-pagoda-132423',
-          'username' : "thomas",
-          'pathtoken' : path_credential,
-          'connector' : 'GBQ', ## change to GS if spreadsheet
-          'labels' : labels,
-          'date_var' : date_var
-}
-#create_studio = studio.connector_notebook(dic_)
-#create_studio.generate_notebook_studio()
-```
-
-<!-- #region nteract={"transient": {"deleting": false}} -->
-# Add data to catalogue
-
-Now that the dataset is ready, you need to add the underlying information to the data catalogue. The data catalogue is stored in [Coda](https://coda.io/d/MasterFile-Database_dvfMWDBnHh8/MetaDatabase_suYFO#_ludIZ), more precisely, in the table named `DataSource`. 
-
-The cells below helps you to push the information directly to the table using Coda API.
-
-The columns are as follow:
-
-- `Storage`: Define the location of the table
-    - GBQ, GS, MongoDB
-- `Theme`: Define a theme attached to the table
-    - Accountancy, Complexity, Correspondance, Customer_prediction, Distance, Environment, Finance, Macro, Production, Productivity, Survey, Trade
-- `Database`: Name of the dataset. Use only for GBQ or MongoDB (collection)
-    - Business, China, Steamforged, Trade
-- `Path`:A URL with the path of the location of the dataset
-- `Filename`: Name of the table
-- `Description`: Description of the table. Be very specific. 
-- `Source_data`: A list of the data sources used to construct the table.
-- `Link_methodology`: URL linked to the notebook
-- `Dataset_documentation`: Github repository attached to the table
-- `Status`: Status of the table. 
-    - `Closed` if the table won't be altered in the future
-    - `Active` if the table will be altered in the future
-- `Profiling`: Specify if the user created a Pandas profiling
-    - `True` if the profiling has been created
-    - `False` otherwise
-- `Profiling_URL`: Profiling URL (link to Github). Always located in `Data_catalogue/table_profiling`
-- `JupyterStudio`: Specify if the user created a notebook to open the studio
-    - `True` if the notebook has been created
-    - `False` otherwise
-- `JupyterStudio_launcher`: Notebook URL (link to Github). Always located in `Notebooks_Ready_to_use_studio`
-- `Nb_projects`: Number of projects using this dataset. A Coda formula. Do not update this row
-- `Created on`: Date of creation. A Coda formula. Do not update this row
-
-Remember to commit in GitHub to activate the URL link for the profiling and Studio
-<!-- #endregion -->
-
-```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
-Storage = 'GBQ'
-Theme = 'Trade' 
-Database = 'China'
-Description = "The table is related to the paper that studies the effect of industrial policy in China, the VAT export tax, on the quality upgrading. We use Chinese transaction data for 2002-2006 to isolate the causal impact of the exogenous variation of VAT refund tax and within firm-product change in HS6 exported quality products."
-Filename = 'VAT_export_2002_2010'
-Status = 'Active'
-```
-
-<!-- #region nteract={"transient": {"deleting": false}} -->
-The next cell pushes the information to [Coda](https://coda.io/d/MasterFile-Database_dvfMWDBnHh8/Test-API_suDBp#API_tuDK4)
-<!-- #endregion -->
-
-```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
-regex = r"(.*)/(.*)"
-path = os.getcwd()
-parent_path = Path(path).parent
-test_str = str(parent_path)
-matches = re.search(regex, test_str)
-github_repo = matches.group(2)
-Source_data = ['tradedata_*', 'base_hs6_VAT_2002_2012', 'city_cn_en']
-
-Profiling = True
-if Profiling:
-    Profiling_URL = 'http://htmlpreview.github.io/?https://github.com/' \
-    'thomaspernet/{}/blob/master/Data_catalogue/table_profiling/{}.html'.format(github_repo,
-                                                                               Filename)
-else:
-    Profiling_URL = ''
-JupyterStudio = False
-if JupyterStudio:
-    JupyterStudio_URL = '"https://mybinder.org/v2/gh/thomaspernet/{0}/' \
-    'master?filepath=Notebooks_Ready_to_use_studio%2F{1}_studio.ipynb'.format(github_repo, Filename)
-else:
-    JupyterStudio_URL = ''
-### BigQuery only 
-path_url = 'https://console.cloud.google.com/bigquery?project=valid-pagoda-132423' \
-'&p=valid-pagoda-132423&d=China&t={}&page=table'.format(Filename)
-
-Link_methodology = 'https://nbviewer.jupyter.org/github/thomaspernet/' \
-    '{0}/blob/master/Data_preprocessing/' \
-    '{1}.ipynb'.format(github_repo,
-    Filename)
-
-Dataset_documentation = 'https://github.com/thomaspernet/{}'.format(github_repo)
-
-to_add = {
-    'Storage': Storage,
-    'Theme': Theme,
-    'Database': Database,
-    'Path_url': path_url,
-    'Filename': Filename,
-    'Description': Description,
-    'Source_data': Source_data,
-    'Link_methodology': Link_methodology,
-    'Dataset_documentation': Dataset_documentation,
-    'Status': Status,
-    'Profiling_URL': Profiling_URL,
-    'JupyterStudio_launcher': JupyterStudio_URL
-
-}
-cols= []
-for key, value in to_add.items():
-    coda = {
-    'column': key,
-    'value':value
-    }
-    cols.append(coda)
+    1. Exctract the current notbook name
+    2. Convert the Notebook 
+    3. Move the newly created report
     
-###load token coda
-with open('token_coda.json') as json_file:
-    data = json.load(json_file)
+    Args:
+    extension: string. Can be "html", "pdf", "md"
     
-token = data[0]['token'] 
+    
+    """
+    
+    ### Get notebook name
+    connection_file = os.path.basename(ipykernel.get_connection_file())
+    kernel_id = connection_file.split('-', 1)[0].split('.')[0]
 
-uri = f'https://coda.io/apis/v1beta1/docs/vfMWDBnHh8/tables/grid-HgpAnIEhpP/rows'
-headers = {'Authorization': 'Bearer {}'.format(token)}
-payload = {
-  'rows': [
-    {
-      'cells': cols,
-    },
-  ],
-}
-req = requests.post(uri, headers=headers, json=payload)
-req.raise_for_status() # Throw if there was an error.
-res = req.json()
+    for srv in notebookapp.list_running_servers():
+        try:
+            if srv['token']=='' and not srv['password']:  
+                req = urllib.request.urlopen(srv['url']+'api/sessions')
+            else:
+                req = urllib.request.urlopen(srv['url']+ \
+                                             'api/sessions?token=' + \
+                                             srv['token'])
+            sessions = json.load(req)
+            notebookname = sessions[0]['name']
+        except:
+            pass  
+    
+    sep = '.'
+    path = os.getcwd()
+    #parent_path = str(Path(path).parent)
+    
+    ### Path report
+    #path_report = "{}/Reports".format(parent_path)
+    #path_report = "{}/Reports".format(path)
+    
+    ### Path destination
+    name_no_extension = notebookname.split(sep, 1)[0]
+    source_to_move = name_no_extension +'.{}'.format(extension)
+    dest = os.path.join(path,'Reports', source_to_move)
+    
+    ### Generate notebook
+    if keep_code:
+        os.system('jupyter nbconvert --to {} {}'.format(
+    extension,notebookname))
+    else:
+        os.system('jupyter nbconvert --no-input --to {} {}'.format(
+    extension,notebookname))
+    
+    ### Move notebook to report folder
+    #time.sleep(5)
+    shutil.move(source_to_move, dest)
+    print("Report Available at this adress:\n {}".format(dest))
 ```
 
-```python jupyter={"outputs_hidden": false, "source_hidden": false} nteract={"transient": {"deleting": false}}
-req.raise_for_status() 
+```python
+create_report(extension = "html", keep_code= True)
 ```
