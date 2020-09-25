@@ -17,74 +17,57 @@ jupyter:
 
 # Baseline dataset paper Quality data preprocessing
 
-This notebook has been generated on 08/13/2020
+# Objective(s)
 
-The objective of this notebook is:
+*  Create a dataset with year 2002 to 2010, which join the export, tax and tariff tables. 
+* Add the query to the parameter_ETL.json 
+* Please, update the Source URL by clicking on the button after the information have been pasted
+  * US 02 create baseline tables Modify rows
+  * Delete tables and Github related to the US: Delete rows
+  
+# Metadata
 
-*  Create a dataset with year 2002 to 2010, including the following variables:
+* Epic: Epic 1
+* US: US 2
+* Date Begin: 9/25/2020
+* Duration Task: 1
+* Description: Join export, tax and tariff tables
+* Status: Active
+  * Change Status task: Active
+  * Update table: Modify rows
+* Source URL: US 02 create baseline tables
+* Task type: Jupyter Notebook
+* Users: Thomas Pernet
+* Watchers: Thomas Pernet
+* User Account: https://468786073381.signin.aws.amazon.com/console
+* Estimated Log points: 8
+* Task tag: #athena,#sql,#data-preparation
+* Toggl Tag: #data-preparation
 
-  * Date:
-    * Date 
-  * Firm id:
-    * ID 
-  * Export price:
-    * value 
-  * Quantity:
-    * Quantity 
-  * VAT:
-    *  
-  * Province
-    * province 
-  * City:
-    *  city_prod 
-  * Destination:
-    * Origin_or_destination 
-  * HS6:
-    * HS 
-  * HS4:
-    * 
-  * Trade status:
-    * Trade_type 
-  * Business type
-    * Business_type 
+# Input Cloud Storage [AWS/GCP]
 
-## Global steps 
+If link from the internet, save it to the cloud first
 
-The global steps to construct the dataset are the following:
+## Table/file
 
-- Lorem ipsum dolor sit amet
-- Lorem ipsum dolor sit amet
-- Lorem ipsum dolor sit amet
+* Origin: 
+* Athena
+* Name: 
+* applied_mfn_tariffs_hs02_china_2002_2010
+* base_hs6_VAT_2002_2012
+* import_export
+* Github: * 01_tables_trade_tariffs_taxes
 
-## Input Cloud Storage [AWS/GCP]: If link from the internet, save it to the cloud first
+# Destination Output/Delivery
 
-The data source to construct the dataset are the following:
+## Table/file
 
-* BigQuery 
-  *  Table: 
-    * tradedata_* 
-    * Notebook construction file (data lineage) 
-      * md :
-      * github: https://github.com/thomaspernet/Chinese-Trade-Data
-  *  Table: 
-    * base_hs6_VAT_2002_2012 
-    * Notebook construction file (data lineage) 
-      * md :
-      * github:
-    * Spreadsheet: 
-        * base_hs6_VAT_2002_2012 
-          * https://docs.google.com/spreadsheets/d/1Sl_8jh1gMKHWBRCjQDRBHyB26IQU2tIAioHdxaqdJqM/edit#gid=620969611
-        * Source: 
-          * Google Drive: base_hs6_VAT_2002_2012.dta
-        * Notebook construction file (data lineage) 
-          * md :
-          
-    * Table: applied_MFN_Tariffs_hs02_china_2002_2010 
-        * From https://console.cloud.google.com/storage/browser/chinese_data
-
-
-
-
+* Origin: 
+* Athena
+* Name:
+* VAT_export_2002_2010
+* GitHub:
+  *  00_preparation_baseline_db
 <!-- #region heading_collapsed=true -->
 ## Destination Output/Delivery
 
