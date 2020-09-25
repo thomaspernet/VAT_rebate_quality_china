@@ -247,12 +247,12 @@ print(json.dumps(parameters, indent=4, sort_keys=False, ensure_ascii=False))
 ```
 
 ```python
-#json_filename ='parameters_ETL.json'
-#json_file = json.dumps(parameters)
-#f = open(json_filename,"w")
-#f.write(json_file)
-#f.close()
-#s3.upload_file(json_filename, 'DATA/ETL')
+json_filename ='parameters_ETL.json'
+json_file = json.dumps(parameters)
+f = open(json_filename,"w")
+f.write(json_file)
+f.close()
+s3.upload_file(json_filename, 'DATA/ETL')
 ```
 
 <!-- #region heading_collapsed=true -->
