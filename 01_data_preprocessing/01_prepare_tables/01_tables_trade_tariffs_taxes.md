@@ -60,6 +60,8 @@ Select the US you just created →Create Athena tables for the project trade, ta
     * TAX_DATA/TRANSFORMED/VAT_REBATE
     * TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS
     * ADDITIONAL_DATA/SIGMAS_HS3
+    * LOOKUP_DATA/COUNTRY_NAME
+    * LOOKUP_DATA/CITY_NAME
 * Github: 
 * https://github.com/thomaspernet/Chinese-Trade-Data
 - https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_Data_preprocessing/00_download_data_from_/APPLIED_MFN_TARIFFS
@@ -76,6 +78,8 @@ Select the US you just created →Create Athena tables for the project trade, ta
     * import_export
     * base_hs6_VAT_2002_2012
     * applied_mfn_tariffs_hs02_china_2002_2010
+    * country_cn_en
+    * city_cn_en
 * GitHub:
   *  [01_tables_trade_tariffs_taxes](https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/grid-NpDE6BBM0M/i-TZi-tP5WlR/01_tables_trade_tariffs_taxes.md)
 <!-- #endregion -->
@@ -84,7 +88,6 @@ Select the US you just created →Create Athena tables for the project trade, ta
 
 ```python
 from awsPy.aws_authorization import aws_connector
-from awsPy.aws_athena import service_athena
 from awsPy.aws_s3 import service_s3
 from pathlib import Path
 import pandas as pd
@@ -150,8 +153,75 @@ If the file is empty, add information and send it to the S3.
                      
                   ]
                }
-          }     
+          }
 ```
+
+## Templare prepare table
+
+To prepare a table from existing table, you can use the following schema. The list `ALL_SCHAME` accepts one or more steps. Each steps, `STEPS_X` can be a sequence of queries execution. 
+
+```
+"PREPARATION": {
+        "ALL_SCHEMA": [
+                {"STEPS_00": {
+                    'name':'Join export, tariff and tax',
+                    'execution':
+                    [{
+                        "database": "chinese_trade",
+                        "name": "VAT_export_2003_2010",
+                        "output_id": "",
+                        "query": {
+                            "top": "",
+                            "middle": "",
+                            "bottom": ""
+                    }
+                    }
+                    ]
+                }
+                }],
+                "template":{
+                    "top": "CREATE TABLE {}.{} WITH (format = 'PARQUET') AS "
+                }
+            }
+``` 
+
+To add a query execution with a within, use the following template:
+
+```
+{
+                        "database": "chinese_trade",
+                        "name": "VAT_export_2003_2010",
+                        "output_id": "",
+                        "query": {
+                            "top": "",
+                            "middle": "",
+                            "bottom": ""
+                    }
+                    }
+``` 
+
+To add a step, use this template:
+
+```
+{"STEPS_X": {
+                    'name':'Join export, tariff and tax',
+                    'execution':
+                    [{
+                        "database": "chinese_trade",
+                        "name": "VAT_export_2003_2010",
+                        "output_id": "",
+                        "query": {
+                            "top": "",
+                            "middle": "",
+                            "bottom": ""
+                    }
+                    }
+                    ]
+                }
+                }
+```
+
+Each step name should follow this format `STEPS_0`, `STEPS_1`, `STEPS_2`, etc
 
 ## Steps
 
@@ -161,154 +231,197 @@ If the file is empty, add information and send it to the S3.
 4. Create Chinese sigma
 
 ```python
+s3.download_file(key = 'DATA/ETL/parameters_ETL.json')
+with open('parameters_ETL.json', 'r') as fp:
+    parameters = json.load(fp)
+print(json.dumps(parameters, indent=4, sort_keys=True))
+```
+
+To add or alter the file, copy and paste it below
+
+```python
 parameters = {
-   "GLOBAL":{
-      "DATABASE":"chinese_trade",
-      "QUERIES_OUTPUT":"SQL_OUTPUT_ATHENA"
-   },
-   "TABLES":{
-      "CREATION":{
-         "template":{
-            "top":"CREATE EXTERNAL TABLE IF NOT EXISTS {0}.{1} (",
-            "middle":"{0} {1} {2}",
-            "bottom":"ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe' WITH SERDEPROPERTIES ( 'serialization.format' = ',', 'field.delim' = '{0}') LOCATION '{1}' TBLPROPERTIES ('has_encrypted_data'='false', 'skip.header.line.count'='1')"
-         },
-         "ALL_SCHEMA":[
-            {
-               "database":"chinese_trade",
-               "name":"import_export",
+    "GLOBAL": {
+        "DATABASE": "chinese_trade",
+        "QUERIES_OUTPUT": "SQL_OUTPUT_ATHENA"
+    },
+    "TABLES": {
+        "CREATION": {
+            "ALL_SCHEMA": [
+                {
+                    "database": "chinese_trade",
+                    "name": "import_export",
+                    "output_id": "",
+                    "s3URI": "s3://chinese-data/TRADE_DATA/TRANSFORMED/",
+                    "schema": {
+                        "comments": [],
+                        "format": [
+                            "string",
+                            "string",
+                            "string",
+                            "string",
+                            "string",
+                            "string",
+                            "string",
+                            "string",
+                            "string",
+                            "string",
+                            "string",
+                            "int",
+                            "int"
+                        ],
+                        "variables": [
+                            "date",
+                            "ID",
+                            "business_type",
+                            "intermediate",
+                            "trade_type",
+                            "province",
+                            "city_prod",
+                            "matching_city",
+                            "imp_exp",
+                            "hs",
+                            "origin_or_destination",
+                            "values",
+                            "quantities"
+                        ]
+                    },
+                    "separator": ","
+                },
+                {
+                    "database": "chinese_trade",
+                    "name": "base_hs6_VAT_2002_2012",
+                    "output_id": "",
+                    "s3URI": "s3://chinese-data/TAX_DATA/TRANSFORMED/VAT_REBATE/",
+                    "schema": {
+                        "comments": [],
+                        "format": [
+                            "string",
+                            "string",
+                            "float",
+                            "float",
+                            "float",
+                            "float"
+                        ],
+                        "variables": [
+                            "hs6",
+                            "year",
+                            "tax_rebate",
+                            "ln_vat_rebate",
+                            "vat_m",
+                            "vat_reb_m"
+                        ]
+                    },
+                    "separator": ","
+                },
+                {
+                    "database": "chinese_trade",
+                    "name": "applied_mfn_tariffs_hs02_china_2002_2010",
+                    "output_id": "",
+                    "s3URI": "s3://chinese-data/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS/",
+                    "schema": {
+                        "comments": [],
+                        "format": [
+                            "string",
+                            "string",
+                            "float",
+                            "string"
+                        ],
+                        "variables": [
+                            "reporter",
+                            "year",
+                            "import_tax",
+                            "HS02"
+                        ]
+                    },
+                    "separator": ","
+                },
+                {
+                    "database": "chinese_trade",
+                    "name": "sigma_industry",
+                    "output_id": "",
+                    "s3URI": "s3://chinese-data/ADDITIONAL_DATA/SIGMAS_HS3/",
+                    "schema": {
+                        "comments": [
+                            "Country code",
+                            "countr name",
+                            "sigma",
+                            "industry code"
+                        ],
+                        "format": [
+                            "string",
+                            "string",
+                            "float",
+                            "string"
+                        ],
+                        "variables": [
+                            "ccode",
+                            "cname",
+                            "sigma",
+                            "HS3"
+                        ]
+                    },
+                    "separator": ","
+                },
+                {
+               "database":"chinese_lookup",
+               "name":"country_cn_en",
                "output_id":"",
                "separator":",",
-               "s3URI":"s3://chinese-data/TRADE_DATA/TRANSFORMED/",
+               "s3URI":"s3://chinese-data/LOOKUP_DATA/COUNTRY_NAME/",
                "schema":{
                   "variables":[
-                     "date",
-                     "ID",
-                     "business_type",
-                     "intermediate",
-                     "trade_type",
-                     "province",
-                     "city_prod",
-                     "matching_city",
-                     "imp_exp",
-                     "hs",
-                     "origin_or_destination",
-                     "values",
-                     "quantities"
+                      "country_cn","country_en","iso_alpha","code_2" 
                   ],
                   "format":[
-                     "string",
-                     "string",
-                     "string",
-                     "string",
-                     "string",
-                     "string",
-                     "string",
-                     "string",
-                     "string",
-                     "string",
-                     "string",
-                     "int",
-                     "int"
+                      "string","string","string","string"
                   ],
                   "comments":[
+                      "Country name in Chinese","Country name in English",
+                      "Country code","Country code WB"
                      
                   ]
                }
-            },
-            {
-               "database":"chinese_trade",
-               "name":"base_hs6_VAT_2002_2012",
+          },
+                {
+               "database":"chinese_lookup",
+               "name":"city_cn_en",
                "output_id":"",
                "separator":",",
-               "s3URI":"s3://chinese-data/TAX_DATA/TRANSFORMED/VAT_REBATE/",
+               "s3URI":"s3://chinese-data/LOOKUP_DATA/CITY_NAME/",
                "schema":{
                   "variables":[
-                     "hs6",
-                     "year",
-                     "tax_rebate",
-                     "ln_vat_rebate",
-                     "vat_m",
-                     "vat_reb_m"
+                      "extra_code","geocode4_corr","citycn","cityen","province_cn","province_en"
                   ],
                   "format":[
-                     "string",
-                     "string",
-                     "float",
-                     "float",
-                     "float",
-                     "float"
+                      "string","string","string","string","string","string"
                   ],
                   "comments":[
-                     
-                  ]
-               }
-            },
-            {
-               "database":"chinese_trade",
-               "name":"applied_mfn_tariffs_hs02_china_2002_2010",
-               "output_id":"",
-               "separator":",",
-               "s3URI":"s3://chinese-data/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS/",
-               "schema":{
-                  "variables":[
-                     "reporter",
-                     "year",
-                     "import_tax",
-                     "HS02"
-                  ],
-                  "format":[
-                     "string",
-                     "string",
-                     "float",
-                     "string"
-                  ],
-                  "comments":[
-                     
-                  ]
-               }
-            },
-             {
-               "database":"chinese_trade",
-               "name":"sigma_industry",
-               "output_id":"",
-               "separator":",",
-               "s3URI":"s3://chinese-data/ADDITIONAL_DATA/SIGMAS_HS3/",
-               "schema":{
-                  "variables":[
-                      "ccode", "cname", "sigma", "HS3"
-                  ],
-                  "format":[
-                      "string", "string", "float", "string"
-                  ],
-                  "comments":[
-                     'Country code', 'countr name', 'sigma', 'industry code'
+                     "Correspondence code","Official code","City name in Chinese","City name in English",
+                      "Province name in Chinese","Province name in English"
                   ]
                }
           } 
-         ]
-      },
-      "PREPARATION":[
-         {
-            "STEPS_XX":{
-               "query":{
-                  "top":{
-                     
-                  },
-                  "middle":{
-                     
-                  },
-                  "bottom":{
-                     
-                  }
-               }
-            },
-            "output_id":[
-               
-            ]
-         }
-      ]
-   }
+            ],
+            "template": {
+                "bottom": "ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe' WITH SERDEPROPERTIES ( 'serialization.format' = ',', 'field.delim' = '{0}') LOCATION '{1}' TBLPROPERTIES ('has_encrypted_data'='false', 'skip.header.line.count'='1')",
+                "middle": "{0} {1} {2}",
+                "top": "CREATE EXTERNAL TABLE IF NOT EXISTS {0}.{1} ("
+            }
+        },
+        "PREPARATION": [
+            {
+                "STEPS_XX": {
+                    "query": {
+                        "bottom": {},
+                        "middle": {},
+                        "top": {}
+                    }
+                },
+                "output_id": []
+            }
+        ]
+    }
 }
 ```
 
@@ -321,16 +434,24 @@ f.close()
 s3.upload_file(json_filename, 'DATA/ETL')
 ```
 
-```python
-s3.download_file(key = 'DATA/ETL/parameters_ETL.json')
-with open('parameters_ETL.json', 'r') as fp:
-    parameters = json.load(fp)
-print(parameters)
-```
-
+<!-- #region -->
 # Run Parameters files
 
 1. Create a database
+
+**Chinese trade**
+
+
+```
+CREATE DATABASE chinese_trade
+```
+
+**Chinese look up**
+
+```
+CREATE DATABASE chinese_lookup
+```
+<!-- #endregion -->
 
 ```python
 s3_output = parameters['GLOBAL']['QUERIES_OUTPUT']
@@ -465,6 +586,40 @@ s3.run_query(
             database=bd,
             s3_output=s3_output,
             filename='chinese_sigma_industry',  ## Add filename to print dataframe
+            destination_key=None,  ### Add destination key if need to copy output
+        )
+```
+
+Country name
+
+```python
+query = """
+SELECT *
+FROM country_cn_en
+LIMIT 10
+"""
+s3.run_query(
+            query=query,
+            database='chinese_lookup',
+            s3_output=s3_output,
+            filename='chinese_country_cn_en',  ## Add filename to print dataframe
+            destination_key=None,  ### Add destination key if need to copy output
+        )
+```
+
+City name
+
+```python
+query = """
+SELECT *
+FROM city_cn_en
+LIMIT 10
+"""
+s3.run_query(
+            query=query,
+            database='chinese_lookup',
+            s3_output=s3_output,
+            filename='chinese_city_cn_en',  ## Add filename to print dataframe
             destination_key=None,  ### Add destination key if need to copy output
         )
 ```
