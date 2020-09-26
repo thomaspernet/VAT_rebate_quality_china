@@ -289,14 +289,14 @@ In the first step, we merge sigma with the dataframe. There are three industries
 
 |    | _merge    |   Count |    Percent |   Cumulative Count |   Cumulative Percent |
 |---:|:----------|--------:|-----------:|-------------------:|---------------------:|
-|  0 | both      | 5058872 | 0.995119   |            5058872 |             0.995119 |
-|  1 | left_only |   24811 | 0.00488052 |            5083683 |             1        |
+|  0 | both      | 5836151 | 0.99461    |            5836151 |              0.99461 |
+|  1 | left_only |   31629 | 0.00539028 |            5867780 |              1       |
 
 ```
 temp=  (
     df_vat.assign(
-    hs3_string = lambda x: x['hs6_string'].str[:3],
-    hs4_string = lambda x: x['hs6_string'].str[:4],
+    hs3 = lambda x: x['hs6'].str[:3],
+    hs4 = lambda x: x['hs6'].str[:4],
         
 )
     .merge(sigma, how = 'left', indicator= True)
@@ -315,8 +315,8 @@ We also compute the following variables:
 ```python
 df_quality = (
     df_vat.assign(
-    hs3_string = lambda x: x['hs6_string'].str[:3],
-    hs4_string = lambda x: x['hs6_string'].str[:4],
+    hs3 = lambda x: x['hs6'].str[:3],
+    hs4 = lambda x: x['hs6'].str[:4],
         
 )
     .merge(sigma, how = 'inner')
@@ -326,6 +326,8 @@ df_quality = (
     )
 )
 ```
+
+Compute the Fixed Effect city-year, `FE_ct`
 
 ```python
 df_quality["FE_ct"] = pd.factorize(df_quality["year"].astype('string') + 
@@ -338,7 +340,7 @@ The formula is:
 
 $$\ln \left( y _ { f h c t } \right)  = \varphi _ { h } + \varphi _ { c t } + \epsilon _ { f h c t }$$
 
-There are two quality:
+There are two `quality`:
 
 1. Price adjusted: $\ln \left( p _ { f h c t } \right) - \ln \left( \hat { q } _ { f h c t } \right)$
 2. Khandelwal: $\hat{\epsilon}_{f c h t} /(\sigma-1)$
@@ -355,26 +357,46 @@ cat_proc = make_pipeline(
     OneHotEncoder()
 )
 preprocessor = make_column_transformer(
-    (cat_proc, tuple(['hs6_string', 'FE_ct']))
+    (cat_proc, tuple(['hs6', 'FE_ct']))
 )
 clf = make_pipeline(preprocessor,
                     LinearRegression(fit_intercept=True, normalize=False))
 ```
 
-It takes about 6m to compute the weights
+It takes about 5/6m to compute the weights
 
 ```python
 %%time
-MODEL = clf.fit(df_quality[['hs6_string', 'FE_ct']], df_quality['y']) 
+MODEL = clf.fit(df_quality[['hs6', 'FE_ct']], df_quality['y']) 
+```
+
+Save the model in S3, [vat-rebate-quality/ALGORITHM](https://s3.console.aws.amazon.com/s3/buckets/vat-rebate-quality/ALGORITHM/?region=eu-west-3&tab=overview)
+
+```python
+s3 = service_s3.connect_S3(client = client,
+                      bucket = 'vat-rebate-quality', verbose = True) 
 ```
 
 ```python
-#pred_class = MODEL.predict(df_quality[['HS6', 'FE_ct']])
+from datetime import date
+import joblib
+today = date.today().strftime('%Y%M%d')
+model_ols_output_path = 'OLS_MODEL.sav'
+
+joblib.dump(MODEL, model_ols_output_path)
+
+## save S3
+destination_model_ols = "ALGORITHM/{0}/OLS/MODELS/{1}".format(today, model_ols_output_path)
+
+s3.upload_file(
+    model_ols_output_path,
+    destination_model_ols
+)
 ```
 
 ```python
 df_quality = df_quality.assign(
-    prediction = lambda x: MODEL.predict(x[['hs6_string', 'FE_ct']]),
+    prediction = lambda x: MODEL.predict(x[['hs6', 'FE_ct']]),
     residual = lambda x: x['y'] - x['prediction'],
     price_adjusted_quality = lambda x: np.log(x['unit_price']) - x['residual'],
     kandhelwal_quality = lambda x: x['residual'] / (x['sigma'].astype('float') -1)
@@ -383,48 +405,46 @@ df_quality = df_quality.assign(
 
 Create the following fixed effect for the baseline regression:
 
-* firm-product-regime
-* HS4-year-regime
-* city-year 
-* destination-year
-* Product-year
-
-```python
-df_quality.columns
-```
+* city-product: `FE_ck`
+* City-sector-year: `FE_cst`
+* City-product-regime: `FE_ckr`
+* City-sector-regime-year: `FE_csrt`
+* Product-year: `FE_kt`
+* Product-destination: `FE_pj`
+* Destination-year: `FE_jt`
 
 ```python
 ### city-product
 df_quality["FE_ck"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
-                                    df_quality["hs6_string"].astype('str')
+                                    df_quality["hs6"].astype('str')
                                    )[0]
 
 ### City-sector-year
 df_quality["FE_cst"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
-                                    df_quality["hs4_string"].astype('str') +
+                                    df_quality["hs4"].astype('str') +
                                     df_quality["year"].astype('str')
                                    )[0]
 
 ### City-product-regime
 df_quality["FE_ckr"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
-                                    df_quality["hs6_string"].astype('str') +
+                                    df_quality["hs6"].astype('str') +
                                     df_quality["regime"].astype('str')
                                    )[0]
 
 ### City-sector-regime-year
 df_quality["FE_csrt"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
-                                    df_quality["hs4_string"].astype('str') +
+                                    df_quality["hs4"].astype('str') +
                                     df_quality["regime"].astype('str') +
                                     df_quality["year"].astype('str')
                                    )[0]
 
 ## Product-year
-df_quality["FE_kt"] = pd.factorize(df_quality["hs6_string"].astype('str') + 
+df_quality["FE_kt"] = pd.factorize(df_quality["hs6"].astype('str') + 
                                     df_quality["year"].astype('str')
                                    )[0]
 
 ## Product-destination
-df_quality["FE_pj"] = pd.factorize(df_quality["hs6_string"].astype('str') + 
+df_quality["FE_pj"] = pd.factorize(df_quality["hs6"].astype('str') + 
                                     df_quality["country_en"].astype('str')
                                    )[0]
 
@@ -441,23 +461,11 @@ df_quality["FE_jt"] = pd.factorize(df_quality["country_en"].astype('str') +
 ```
 
 ```python
-pd.set_option('display.max_columns', None)
-```
-
-```python
-df_quality.head()
-```
-
-```python
-df_quality['kandhelwal_quality'].isna().sum()
-```
-
-```python
 reindex = [
     'cityen', 'geocode4_corr', 'year', 'regime',
-    'hs6_string','hs4_string','hs3_string',
-    'Country_en','ISO_alpha',
-    'Quantity', 'value', 'unit_price', 
+    'hs6','hs4','hs3',
+    'country_en','iso_alpha',
+    'quantity', 'value', 'unit_price', 
     'kandhelwal_quality','price_adjusted_quality',
     'lag_tax_rebate', 'ln_lag_tax_rebate', 'lag_import_tax', 'ln_lag_import_tax', 
     'sigma', 'sigma_price', 'y', 'prediction', 'residual', 
@@ -465,20 +473,46 @@ reindex = [
     #'FE_ct', 'FE_fpr', 'FE_str','FE_dt', 'FE_pt'
 ]
 
-df_quality = df_quality.reindex(columns = reindex).rename(columns  = {
-    'hs6_string' : 'HS6',
-    'hs4_string' : 'HS4',
-    'hs3_string' : 'HS3',
-})
+df_quality = df_quality.reindex(columns = reindex)
+```
+
+```python
+df_quality.head()
 ```
 
 ```python
 df_quality.shape
 ```
 
-# Upload to cloud
+Plot the average quality by year
 
-The dataset is ready to be shared with your colleagues. 
+![](https://drive.google.com/uc?export=view&id=1Q9KHBwEyx6tTuCU8hsy3_P46uIOm_dB9)
+
+```python
+import matplotlib.pyplot as plt
+```
+
+```python
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(13,8))
+(
+    df_quality
+    .groupby(['year', 'regime'])['kandhelwal_quality']
+    .mean()
+    .unstack(-1)
+    .plot
+    .line(ax=axes[0], title = 'kandhelwal_quality')
+)
+(
+    df_quality
+    .groupby(['year', 'regime'])['price_adjusted_quality']
+    .mean()
+    .unstack(-1)
+    .plot
+    .line(ax=axes[1], title = 'price_adjusted_quality')
+)
+```
+
+# Upload to S3
 
 ## Output 
 
@@ -491,11 +525,6 @@ df_quality.to_csv('quality_vat_export_2003_2010.csv', index = False)
 ```
 
 ```python
-s3 = service_s3.connect_S3(client = client,
-                      bucket = 'vat-rebate-quality', verbose = True) 
-```
-
-```python
 s3.upload_file(
 'quality_vat_export_2003_2010.csv',
     'DATA/TRANSFORMED'
@@ -505,21 +534,77 @@ s3.upload_file(
 ```python
 import shutil
 os.remove('quality_vat_export_2003_2010.csv')
+os.remove('OLS_MODEL.sav')
 ```
 
-### Dashboad Data studio
-
-- Name: [Quality_Export_2003_2010](https://datastudio.google.com/u/0/explorer/4721292b-b490-49db-bcdb-2306a2b43aae?config=%7B%22projectId%22:%22valid-pagoda-132423%22,%22tableId%22:%22quality_vat_export_2003_2010%22,%22datasetId%22:%22China%22,%22billingProjectId%22:%22valid-pagoda-132423%22,%22connectorType%22:%22BIG_QUERY%22,%22sqlType%22:%22STANDARD_SQL%22%7D)
-
-![](https://drive.google.com/uc?export=view&id=1j7J2vnv1FZaB0iCIVBUKwrWXwo0bm34T)
+# Generation report
 
 ```python
-(
-    df_quality
-    .groupby(['year', 'regime'])['kandhelwal_quality']
-    .mean()
-    #.unstack(-1)
-    #.plot
-    #.line()
-)
+import os, time, shutil, urllib, ipykernel, json
+from pathlib import Path
+from notebook import notebookapp
+```
+
+```python
+def create_report(extension = "html", keep_code = False):
+    """
+    Create a report from the current notebook and save it in the 
+    Report folder (Parent-> child directory)
+    
+    1. Exctract the current notbook name
+    2. Convert the Notebook 
+    3. Move the newly created report
+    
+    Args:
+    extension: string. Can be "html", "pdf", "md"
+    
+    
+    """
+    
+    ### Get notebook name
+    connection_file = os.path.basename(ipykernel.get_connection_file())
+    kernel_id = connection_file.split('-', 1)[0].split('.')[0]
+
+    for srv in notebookapp.list_running_servers():
+        try:
+            if srv['token']=='' and not srv['password']:  
+                req = urllib.request.urlopen(srv['url']+'api/sessions')
+            else:
+                req = urllib.request.urlopen(srv['url']+ \
+                                             'api/sessions?token=' + \
+                                             srv['token'])
+            sessions = json.load(req)
+            notebookname = sessions[0]['name']
+        except:
+            pass  
+    
+    sep = '.'
+    path = os.getcwd()
+    #parent_path = str(Path(path).parent)
+    
+    ### Path report
+    #path_report = "{}/Reports".format(parent_path)
+    #path_report = "{}/Reports".format(path)
+    
+    ### Path destination
+    name_no_extension = notebookname.split(sep, 1)[0]
+    source_to_move = name_no_extension +'.{}'.format(extension)
+    dest = os.path.join(path,'Reports', source_to_move)
+    
+    ### Generate notebook
+    if keep_code:
+        os.system('jupyter nbconvert --to {} {}'.format(
+    extension,notebookname))
+    else:
+        os.system('jupyter nbconvert --no-input --to {} {}'.format(
+    extension,notebookname))
+    
+    ### Move notebook to report folder
+    #time.sleep(5)
+    shutil.move(source_to_move, dest)
+    print("Report Available at this adress:\n {}".format(dest))
+```
+
+```python
+create_report(extension = "html", keep_code= True)
 ```
