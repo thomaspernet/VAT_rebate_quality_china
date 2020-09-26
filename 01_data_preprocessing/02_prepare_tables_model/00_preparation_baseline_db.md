@@ -304,6 +304,26 @@ with open('parameters_ETL.json', 'r') as fp:
     parameters = json.load(fp)
 ```
 
+### Detail steps
+
+1. Filter the trade data
+    1. Filter year 2002 to 2010
+    2. Keep processing and ordinary trade and create regime variable
+    3. Keep domestic players (remove foreign firms)
+    4. Remove intermediate companies
+    5. Exclude negative quality and value
+2. Aggregate quantity and value
+    1. Aggregate quantiy and value by year, regime (ordinary, processing), HS6 (6 digits product ID), city and destination country
+3. Create unit value
+    1. Compute unit value as value/quantity. Remove when division is null
+    2. Merge import tariff
+    3. Merge VAT tax
+    4. Merge city name in english and city ID
+    5. Merge with country name
+    6. Get the lag of tax and tariff 
+    7. Compute log of tax and tariff
+    8. Remove NULL value of tax and tariff
+
 ```python
 step_0 = {
    "STEPS_0":{
