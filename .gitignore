@@ -152,3 +152,5 @@ creds/service.json
 01_Data_preprocessing/XX_template_preprocessing_AWS.ipynb
 01_Data_preprocessing/XX_template_preprocessing_AWS.ipynb
 01_Data_preprocessing/XX_template_preprocessing_AWS.md
+02_data_analysis/00_template_Analysis_AWS.ipynb
+02_data_analysis/00_template_Analysis_AWS.md
