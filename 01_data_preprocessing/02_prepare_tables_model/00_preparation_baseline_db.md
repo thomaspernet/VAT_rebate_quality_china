@@ -147,19 +147,23 @@ The table schema is automatically modifidied based on the parameter logs
    "output_id":"",
    "separator":",",
    "s3URI":"",
-   "schema":{
-      "variables":[
-         
-      ],
-      "format":[
-         
-      ],
-      "comments":[
-         
-      ]
+   "schema":[
+   {
+      "Name":"",
+      "Type":"",
+      "Comment":""
    }
+]
 }
 ```
+
+Each variable has to pass written inside the schema:
+
+- `Name`: Variable name
+- `Type`: Type of variable. Refer to [athena/latest/ug/data-types](https://docs.aws.amazon.com/athena/latest/ug/data-types.html) for the accepted data type
+- `Comment`: Provide a comment to the variable
+
+You can add other fields if needed, they will be pushed to Glue.
 
 ## Templare prepare table
 
@@ -186,9 +190,9 @@ The table schema is automatically modifidied based on the parameter logs
             ],
             "schema":[
                {
-                  "Name":"geocode4_corr",
+                  "Name":"",
                   "Type":"",
-                  "Comment":"Official chinese city ID"
+                  "Comment":""
                }
             ]
          }
@@ -266,11 +270,80 @@ The schema is related to a table, and will be modified by Glue API. **Only** var
 The json file already contains queries to analyse the dataset. It contains queries to count the number of observations for a given variables, for a group and a pair of group. It also has queries to provide the distribution for a single column, for a group and a pair of group. The queries are available in the key `ANALYSIS`
 <!-- #endregion -->
 
+# Prepare parameters file
+
+There are three steps to prepara the parameter file:
+
+1. Prepare `GLOBAL` parameters
+2. Prepare `TABLES.CREATION`:
+    - Usually a notebook in the folder `01_prepare_tables` 
+3. Prepare `TABLES.PREPARATION`
+    - Usually a notebook in the folder `02_prepare_tables_model` 
+    
+The parameter file is named `parameters_ETL.json` and will be moved each time in the root folder `01_data_preprocessing` for versioning. When the parameter file is finished, we will use it in the deployment process to run the entire process
+    
+## Prepare `GLOBAL` parameters
+    
+To begin with, you need to add the global parameters in the key `GLOBAL`:
+
+- `DATABASE`
+- `QUERIES_OUTPUT`. By default, `SQL_OUTPUT_ATHENA`
+
+## 2. Prepare `TABLES.CREATION` 
+
+This part should already been done with the notebooks in the folder `01_prepare_tables`. At this stage, the key `TABLES.CREATION`  in parameter file should have content, except if the project needs tables already created from a different project
+
+## 3. Prepare `TABLES.PREPARATION`
+
+In this stage of the ETL, we are processing the data from existing tables in Athena. This stage is meant to use one or more table to create temporary, intermediate or final tables to use in the analysis. The notebook template is named `XX_template_table_preprocessing_AWS` and should be saved in the child folder `02_prepare_tables_model`
+
 ```python
 ### If chinese characters, set  ensure_ascii=False
 s3.download_file(key = 'DATA/ETL/parameters_ETL.json')
 with open('parameters_ETL.json', 'r') as fp:
     parameters = json.load(fp)
+```
+
+```python
+step_0 = {
+   "STEPS_0":{
+      "name":"Join export, tariff and tax",
+      "execution":[
+         {
+            "database":"chinese_trade",
+            "name":"VAT_export_2003_2010",
+            "output_id":"",
+            "query":{
+               "top":"WITH filter_data AS ( SELECT date as year, id, trade_type, business_type, CASE WHEN length(hs) < 5 THEN CONCAT('0', hs) ELSE hs END as hs6, city_prod, origin_or_destination as destination, quantities, value, CASE WHEN trade_type = '进料加工贸易' OR trade_type = '一般贸易' THEN 'ELIGIBLE' ELSE 'NOT_ELIGIBLE' END as regime FROM chinese_trade.import_export WHERE date in ('2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010') AND imp_exp = '出口' AND ( trade_type = '进料加工贸易' OR trade_type = '一般贸易' OR trade_type = '来料加工装配贸易' OR trade_type = '加工贸易') AND intermediate = 'No' AND ( business_type = '国有企业' OR business_type = '私营企业' OR business_type = '集体企业' OR business_type = '国有' OR business_type = '私营' OR business_type = '集体' ) AND quantities > 0 AND value > 0)",
+               "middle":"SELECT * FROM ( WITH aggregate AS ( SELECT city_prod, year, regime, hs6, destination, SUM(quantities) as quantity, SUM(value) as value FROM filter_data GROUP BY year, regime, HS6, city_prod, destination )",
+               "bottom":"SELECT cityen, geocode4_corr, aggregate.year, regime, aggregate.hs6, country_en, ISO_alpha, quantity, value, CASE WHEN quantity = 0 THEN NULL ELSE CAST(value AS DECIMAL(16,5))/CAST(quantity AS DECIMAL(16,5))  END AS unit_price, lag_tax_rebate, ln(1 + lag_tax_rebate) as ln_lag_tax_rebate, lag_import_tax, ln(1 + lag_import_tax) AS ln_lag_import_tax FROM aggregate INNER JOIN (SELECT DISTINCT(citycn) as citycn, cityen,geocode4_corr FROM chinese_lookup.city_cn_en ) AS city_cn_en ON city_cn_en.citycn = aggregate.city_prod LEFT JOIN chinese_lookup.country_cn_en ON country_cn_en.Country_cn = aggregate.destination INNER JOIN ( SELECT year, hs02, LAG(import_tax, 1) OVER ( PARTITION BY hs02 ORDER BY hs02, year ) AS lag_import_tax FROM chinese_trade.applied_mfn_tariffs_hs02_china_2002_2010 WHERE import_tax IS NOT NULL ) as import_tarrif ON import_tarrif.year = aggregate.year AND import_tarrif.HS02 = aggregate.hs6 LEFT JOIN ( SELECT HS6, year, tax_rebate, vat_m, vat_reb_m, LAG(vat_m, 1) OVER ( PARTITION BY hs6 ORDER BY hs6, year ) AS lag_vat_m, LAG(vat_reb_m, 1) OVER ( PARTITION BY hs6 ORDER BY HS6, year ) AS lag_vat_reb_m, LAG(tax_rebate, 1) OVER ( PARTITION BY hs6 ORDER BY HS6, year ) AS lag_tax_rebate FROM chinese_trade.base_hs6_vat_2002_2012 WHERE vat_m IS NOT NULL ) as vat ON aggregate.year = vat.year AND aggregate.HS6 = vat.hs6 WHERE lag_tax_rebate IS NOT NULL AND lag_import_tax IS NOT NULL ORDER BY geocode4_corr, HS6, year, regime )"
+            }
+         }
+      ],
+       "schema":[
+               {
+                  "Name":"",
+                  "Type":"",
+                  "Comment":""
+               }
+            ]
+   }
+}
+```
+
+To remove an item from the list, use `pop` with the index to remove. Exemple `parameters['TABLES']['PREPARATION']['ALL_SCHEMA'].pop(6)` will remove the 5th item
+
+```python
+to_remove = False
+if to_remove:
+    parameters['TABLES']['PREPARATION']['ALL_SCHEMA'].pop(0)
+```
+
+```python
+parameters["TABLES"]["PREPARATION"]['ALL_SCHEMA'].append(step_0)
+```
+
+```python
 print(json.dumps(parameters, indent=4, sort_keys=False, ensure_ascii=False))
 ```
 
@@ -281,6 +354,19 @@ f = open(json_filename,"w")
 f.write(json_file)
 f.close()
 s3.upload_file(json_filename, 'DATA/ETL')
+```
+
+```python
+s3.download_file(key = 'DATA/ETL/parameters_ETL.json')
+with open('parameters_ETL.json', 'r') as fp:
+    parameters = json.load(fp)
+```
+
+Move `parameters_ETL.json` to the parent folder `01_prepare_tables`
+
+```python
+import shutil
+shutil.move('parameters_ETL.json', '../parameters_ETL.json')
 ```
 
 <!-- #region heading_collapsed=true -->

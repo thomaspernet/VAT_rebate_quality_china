@@ -15,40 +15,33 @@ jupyter:
     name: python3
 ---
 
-<!-- #region -->
-# Create Athena tables for the project trade, tariffs and taxes
-
-
-Select the US you just created →Create Athena tables for the project trade, tariffs and taxes
-* The ID is yoa18cktx45832m
-* Add notebook Epic Epic 1 US US 1 Create Athena tables for the project trade, tariffs and taxes
+# Create baseline table Quality, VAT, Tax, Tariff
 
 # Objective(s)
 
-*   All trade data are available in the S3 in gz format. In this US, we are going to parse the folder and create a table in Athena
-* Make sure to add the information in Glue using boto
-  * Create a wrapper in AwsPy if needed
+*  Create a dataset with year 2003 to 2010, which import the CSV file that contains the quality, tax, tariff and fixed effect
+* Add the query to the parameter_ETL.json 
 * Please, update the Source URL by clicking on the button after the information have been pasted
-  * US 01 create tables Athena Modify rows
+  * US 02 create baseline tables Modify rows
   * Delete tables and Github related to the US: Delete rows
-  
+
 # Metadata
 
 * Epic: Epic 1
-* US: US 1
-* Date Begin: 9/24/2020
+* US: US 2
+* Date Begin: 9/26/2020
 * Duration Task: 0
-* Description: Create the Chinese import/export data from 2000 to 2010 along with vat rebate and tariffs
+* Description: Create the table to use in the empirical analysis. It includes quality, tariff, tax
 * Status: Active
   * Change Status task: Active
   * Update table: Modify rows
-* Source URL: [US 01 create tables Athena](https://coda.io/d/_di6Ik05Tjwm/US-01-create-table-Athena_suIeP)
+* Source URL: US 02 create baseline tables
 * Task type: Jupyter Notebook
 * Users: Thomas Pernet
 * Watchers: Thomas Pernet
 * User Account: https://468786073381.signin.aws.amazon.com/console
-* Estimated Log points: 8
-* Task tag: #data-preparation,#sql,#athena,#s3
+* Estimated Log points: 5
+* Task tag: #athena,#sql,#data-preparation
 * Toggl Tag: #data-preparation
 
 # Input Cloud Storage [AWS/GCP]
@@ -56,36 +49,23 @@ Select the US you just created →Create Athena tables for the project trade, ta
 ## Table/file
 
 * Origin: 
-    * S3
+* S3
 * Name: 
-    * TRADE_DATA/TRANSFORMED
-    * TAX_DATA/TRANSFORMED/VAT_REBATE
-    * TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS
-    * ADDITIONAL_DATA/SIGMAS_HS3
-    * LOOKUP_DATA/COUNTRY_NAME
-    * LOOKUP_DATA/CITY_NAME
+* TRADE_DATA/TRANSFORMED
 * Github: 
-* https://github.com/thomaspernet/Chinese-Trade-Data
-- https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_Data_preprocessing/00_download_data_from_/APPLIED_MFN_TARIFFS
-- https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/00_download_data_from_/Sigma/sigma.py
+    * https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md
 
 # Destination Output/Delivery
 
 ## Table/file
 
 * Origin: 
-    * S3
-    * Athena
+* Athena
 * Name:
-    * import_export
-    * base_hs6_VAT_2002_2012
-    * applied_mfn_tariffs_hs02_china_2002_2010
-    * country_cn_en
-    * city_cn_en
+* quality_vat_export_2003_2010
 * GitHub:
-  *  [01_tables_trade_tariffs_taxes](https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/grid-NpDE6BBM0M/i-TZi-tP5WlR/01_tables_trade_tariffs_taxes.md)
-<!-- #endregion -->
-```python inputHidden=false jupyter={"outputs_hidden": false} outputHidden=false
+    * https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/02_create_quality_tariff_tax_table.md
+```python inputHidden=false outputHidden=false jupyter={"outputs_hidden": false}
 from awsPy.aws_authorization import aws_connector
 from awsPy.aws_s3 import service_s3
 from awsPy.aws_glue import service_glue
@@ -105,7 +85,7 @@ bucket = 'chinese-data'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 ```
 
-```python inputHidden=false jupyter={"outputs_hidden": false} outputHidden=false
+```python inputHidden=false outputHidden=false jupyter={"outputs_hidden": false}
 con = aws_connector.aws_instantiate(credential = path_cred,
                                        region = region)
 client= con.client_boto()
@@ -123,7 +103,7 @@ if pandas_setting:
 ```
 
 <!-- #region -->
-# Parameter file
+# Creation tables
 
 The data creation, and transformation are done through a JSON file. The JSON file is available in the S3, and version in Github.
 
@@ -191,9 +171,9 @@ You can add other fields if needed, they will be pushed to Glue.
             ],
             "schema":[
                {
-                  "Name":"",
+                  "Name":"geocode4_corr",
                   "Type":"",
-                  "Comment":""
+                  "Comment":"Official chinese city ID"
                }
             ]
          }
@@ -297,10 +277,6 @@ with open('parameters_ETL.json', 'r') as fp:
     parameters = json.load(fp)
 ```
 
-```python
-parameters['GLOBAL']['DATABASE'] = 'chinese_trade'
-```
-
 ## 2. Prepare `TABLES.CREATION`
 
 This part usually starts with raw/transformed data in S3. The typical architecture in the S3 is:
@@ -310,115 +286,53 @@ This part usually starts with raw/transformed data in S3. The typical architectu
 One or more notebooks in the folder `01_prepare_tables` are used to create the raw tables. Please, use the notebook named `XX_template_table_creation_AWS` to create table using the key `TABLES.CREATION`
 
 ```python
-new_tables = [
-    {
-        "database": "chinese_trade",
-        "name": "base_hs6_VAT_2002_2012",
-        "output_id": "",
-        "separator": ",",
-        "s3URI": "s3://chinese-data/TAX_DATA/TRANSFORMED/VAT_REBATE/",
-        "schema": [
-            {"Name": "hs6", "Type": "string", "Comment": ""},
-            {"Name": "year", "Type": "string", "Comment": ""},
-            {"Name": "tax_rebate", "Type": "float", "Comment": ""},
-            {"Name": "ln_vat_rebate", "Type": "float", "Comment": ""},
-            {"Name": "vat_m", "Type": "float", "Comment": ""},
-            {"Name": "vat_reb_m", "Type": "float", "Comment": ""},
-        ],
-    },
-    {
-        "database": "chinese_trade",
-        "name": "applied_mfn_tariffs_hs02_china_2002_2010",
-        "output_id": "",
-        "separator": ",",
-        "s3URI": "s3://chinese-data/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS/",
-        "schema": [
-            {"Name": "reporter", "Type": "string", "Comment": ""},
-            {"Name": "year", "Type": "string", "Comment": ""},
-            {"Name": "import_tax", "Type": "float", "Comment": ""},
-            {"Name": "HS02", "Type": "string", "Comment": ""},
-        ],
-    },
-    {
-        "database": "chinese_trade",
-        "name": "sigma_industry",
-        "output_id": "",
-        "separator": ",",
-        "s3URI": "s3://chinese-data/ADDITIONAL_DATA/SIGMAS_HS3/",
-        "schema": [
-            {"Name": "ccode", "Type": "string", "Comment": "Country code"},
-            {"Name": "cname", "Type": "string", "Comment": "countr name"},
-            {"Name": "sigma", "Type": "float", "Comment": "sigma"},
-            {"Name": "HS3", "Type": "string", "Comment": "industry code"},
-        ],
-    },
-    {
-        "database": "chinese_lookup",
-        "name": "country_cn_en",
-        "output_id": "",
-        "separator": ",",
-        "s3URI": "s3://chinese-data/LOOKUP_DATA/COUNTRY_NAME/",
-        "schema": [
-            {
-                "Name": "country_cn",
-                "Type": "string",
-                "Comment": "Country name in Chinese",
-            },
-            {
-                "Name": "country_en",
-                "Type": "string",
-                "Comment": "Country name in English",
-            },
-            {"Name": "iso_alpha", "Type": "string", "Comment": "Country code"},
-            {"Name": "code_2", "Type": "string", "Comment": "Country code WB"},
-        ],
-    },
-    {
-        "database": "chinese_lookup",
-        "name": "city_cn_en",
-        "output_id": "",
-        "separator": ",",
-        "s3URI": "s3://chinese-data/LOOKUP_DATA/CITY_NAME/",
-        "schema": [
-            {"Name": "extra_code", "Type": "string", "Comment": "Correspondence code"},
-            {"Name": "geocode4_corr", "Type": "string", "Comment": "Official code"},
-            {"Name": "citycn", "Type": "string", "Comment": "City name in Chinese"},
-            {"Name": "cityen", "Type": "string", "Comment": "City name in English"},
-            {
-                "Name": "province_cn",
-                "Type": "string",
-                "Comment": "Province name in Chinese",
-            },
-            {
-                "Name": "province_en",
-                "Type": "string",
-                "Comment": "Province name in English",
-            },
-        ],
-    },
-    {
-        "database": "chinese_trade",
-        "name": "import_export",
-        "output_id": "",
-        "separator": ",",
-        "s3URI": "s3://chinese-data/TRADE_DATA/TRANSFORMED/",
-        "schema": [
-            {"Name": "date", "Type": "string", "Comment": ""},
-            {"Name": "ID", "Type": "string", "Comment": ""},
-            {"Name": "business_type", "Type": "string", "Comment": ""},
-            {"Name": "intermediate", "Type": "string", "Comment": ""},
-            {"Name": "trade_type", "Type": "string", "Comment": ""},
-            {"Name": "province", "Type": "string", "Comment": ""},
-            {"Name": "city_prod", "Type": "string", "Comment": ""},
-            {"Name": "matching_city", "Type": "string", "Comment": ""},
-            {"Name": "imp_exp", "Type": "string", "Comment": ""},
-            {"Name": "hs", "Type": "string", "Comment": ""},
-            {"Name": "origin_or_destination", "Type": "string", "Comment": ""},
-            {"Name": "value", "Type": "int", "Comment": ""},
-            {"Name": "quantities", "Type": "int", "Comment": ""},
-        ],
-    },
-]
+new_table = [{
+    "database": "chinese_trade",
+    "name": "quality_vat_export_2003_2010",
+    "output_id": "",
+    "separator": ",",
+    "s3URI": "s3://vat-rebate-quality/DATA/TRANSFORMED/",
+    "schema": [{'Name': 'cityen', 'Type': 'string', 'Comment': ''},
+ {'Name': 'geocode4_corr', 'Type': 'string', 'Comment': ''},
+ {'Name': 'year', 'Type': 'string', 'Comment': ''},
+ {'Name': 'regime',
+  'Type': 'string',
+  'Comment': 'Eligible to the rebate or not'},
+ {'Name': 'hs6', 'Type': 'string', 'Comment': ''},
+ {'Name': 'hs4', 'Type': 'string', 'Comment': ''},
+ {'Name': 'hs3', 'Type': 'string', 'Comment': ''},
+ {'Name': 'country_en', 'Type': 'string', 'Comment': ''},
+ {'Name': 'iso_alpha', 'Type': 'string', 'Comment': ''},
+ {'Name': 'quantity', 'Type': 'int', 'Comment': ''},
+ {'Name': 'value', 'Type': 'int', 'Comment': ''},
+ {'Name': 'unit_price', 'Type': 'float', 'Comment': ''},
+ {'Name': 'kandhelwal_quality',
+  'Type': 'float',
+  'Comment': 'kandhelwal quality. cf https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md'},
+ {'Name': 'price_adjusted_quality',
+  'Type': 'float',
+  'Comment': 'price adjusted quality. https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md'},
+ {'Name': 'lag_tax_rebate', 'Type': 'float', 'Comment': ''},
+ {'Name': 'ln_lag_tax_rebate', 'Type': 'float', 'Comment': ''},
+ {'Name': 'lag_import_tax', 'Type': 'float', 'Comment': ''},
+ {'Name': 'ln_lag_import_tax', 'Type': 'float', 'Comment': ''},
+ {'Name': 'sigma', 'Type': 'float', 'Comment': ''},
+ {'Name': 'sigma_price', 'Type': 'float', 'Comment': ''},
+ {'Name': 'y', 'Type': 'float', 'Comment': ' log quantity plus sigma '},
+ {'Name': 'prediction', 'Type': 'float', 'Comment': ''},
+ {'Name': 'residual', 'Type': 'float', 'Comment': ''},
+ {'Name': 'FE_ck', 'Type': 'string', 'Comment': 'city product FE'},
+ {'Name': 'FE_cst', 'Type': 'string', 'Comment': 'City sector year FE'},
+ {'Name': 'FE_ckr', 'Type': 'string', 'Comment': 'City product regime FE'},
+ {'Name': 'FE_csrt',
+  'Type': 'string',
+  'Comment': 'City sector regime year FE'},
+ {'Name': 'FE_kt', 'Type': 'string', 'Comment': 'Product year FE'},
+ {'Name': 'FE_pj', 'Type': 'string', 'Comment': 'Product destination FE'},
+ {'Name': 'FE_jt', 'Type': 'string', 'Comment': 'Destination year FE'},
+ {'Name': 'FE_ct', 'Type': 'string', 'Comment': 'City year FE'}]
+}]
+#len(parameters['TABLES']['CREATION']['ALL_SCHEMA'])
 ```
 
 To remove an item from the list, use `pop` with the index to remove. Exemple `parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(6)` will remove the 5th item
@@ -430,7 +344,7 @@ if to_remove:
 ```
 
 ```python
-parameters['TABLES']['CREATION']['ALL_SCHEMA'].extend(new_tables)
+parameters['TABLES']['CREATION']['ALL_SCHEMA'].extend(new_table)
 ```
 
 ```python
@@ -481,8 +395,17 @@ The cell below will execute the queries in the key `TABLES.PREPARATION` for all 
 
 ## Steps
 
+If you don't need to execute all the schema, change to code below from
 1. Add `quality_vat_export_2003_2010` 
     - No need to execute all the JSON, filter the last table. Use the following code to select a table to create
+    
+```
+for key, value in parameters["TABLES"]["CREATION"].items():
+    if key == "ALL_SCHEMA":
+        for table_info in value:
+``` 
+
+To 
     
 ```
 for key, value in parameters["TABLES"]["CREATION"].items():
@@ -503,59 +426,59 @@ db = parameters['GLOBAL']['DATABASE']
 for key, value in parameters["TABLES"]["CREATION"].items():
     if key == "ALL_SCHEMA":
         for table_info in value:
-            # CREATE QUERY
+            if table_info['name'] in ['quality_vat_export_2003_2010']:
 
-            ### Create top/bottom query
-            table_top = parameters["TABLES"]["CREATION"]["template"]["top"].format(
+                ## CREATE QUERY
+
+                ### Create top/bottom query
+                table_top = parameters["TABLES"]["CREATION"]["template"]["top"].format(
                         table_info["database"], table_info["name"]
                     )
-            table_bottom = parameters["TABLES"]["CREATION"]["template"][
+                table_bottom = parameters["TABLES"]["CREATION"]["template"][
                         "bottom"
                     ].format(table_info["separator"], table_info["s3URI"])
 
-            ### Create middle
-            table_middle = ""
-            nb_var = len(table_info["schema"])
-            for i, val in enumerate(table_info["schema"]):
-                if i == nb_var - 1:
-                    table_middle += parameters["TABLES"]["CREATION"]["template"][
+                    ### Create middle
+                table_middle = ""
+                nb_var = len(table_info["schema"])
+                for i, val in enumerate(table_info["schema"]):
+                    if i == nb_var - 1:
+                        table_middle += parameters["TABLES"]["CREATION"]["template"][
                                 "middle"
                             ].format(val['Name'], val['Type'], ")")
-                else:
-                    table_middle += parameters["TABLES"]["CREATION"]["template"][
+                    else:
+                        table_middle += parameters["TABLES"]["CREATION"]["template"][
                                 "middle"
                             ].format(val['Name'], val['Type'], ",")
 
-            query = table_top + table_middle + table_bottom
+                query = table_top + table_middle + table_bottom
+                ## DROP IF EXIST
 
-            ## DROP IF EXIST
-
-            s3.run_query(
+                s3.run_query(
                             query="DROP TABLE {}".format(table_info["name"]),
                             database=db,
                             s3_output=s3_output
                     )
 
-            ## RUN QUERY
-            output = s3.run_query(
+                ## RUN QUERY
+                output = s3.run_query(
                         query=query,
                         database=table_info["database"],
                         s3_output=s3_output,
                         filename=None,  ## Add filename to print dataframe
                         destination_key=None,  ### Add destination key if need to copy output
                     )
-
                 ## SAVE QUERY ID
-            table_info['output_id'] = output['QueryID']
+                table_info['output_id'] = output['QueryID']
 
-                     ### UPDATE CATALOG
-            glue.update_schema_table(
+                ### UPDATE CATALOG
+                glue.update_schema_table(
                         database=table_info["database"],
                         table=table_info["name"],
                         schema=table_info["schema"],
                     )
 
-            print(output)
+                print(output)
 ```
 
 Get the schema of the lattest job
@@ -676,7 +599,7 @@ You need to pass the primary group in the cell below
 Returns the top 10 only
 
 ```python
-primary_key = ""
+primary_key = "year"
 ```
 
 ```python
@@ -856,7 +779,7 @@ The primary key will be passed to all the continuous variables
 - Heatmap is colored based on the row, ie darker blue indicates larger values for a given row
 
 ```python
-primary_key = ""
+primary_key = "year"
 table_top = ""
 table_top_var = ""
 table_middle = ""
@@ -939,8 +862,8 @@ The primary and secondary key will be passed to all the continuous variables. Th
 - Heatmap is colored based on the column, ie darker green indicates larger values for a given column
 
 ```python
-primary_key = ''
-secondary_key = ''
+primary_key = 'year'
+secondary_key = 'cityen'
 ```
 
 ```python
