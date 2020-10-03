@@ -81,9 +81,9 @@ path = os.getcwd()
 parent_path = str(Path(path).parent.parent.parent)
 
 
-name_credential = 'XX.csv'
-region = ''
-bucket = ''
+name_credential = 'thomas_vat_credentials.csv'
+region = 'eu-west-3'
+bucket = 'chinese-data'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 ```
 
