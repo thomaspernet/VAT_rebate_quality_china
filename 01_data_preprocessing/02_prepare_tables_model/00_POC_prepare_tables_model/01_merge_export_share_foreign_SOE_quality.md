@@ -234,6 +234,23 @@ The parameter file is named `parameters_ETL.json` and will be moved each time in
 
 # Steps
 
+Merge all tables with `quality_vat_export_2003_2010`
+
+- Matche variables for city, regime, product destination:
+    - year
+    - regime
+    - geocode4_corr
+    - hs6
+    - iso_alpha
+    
+- Matche variables for city, regime, product:
+    - year
+    - regime
+    - geocode4_corr
+    - hs6
+
+the new table name is `quality_vat_export_covariate_2003_2010`
+
 ```python
 s3.download_file(key = 'DATA/ETL/parameters_ETL.json')
 with open('parameters_ETL.json', 'r') as fp:
@@ -247,13 +264,13 @@ from datetime import date
 today = date.today().strftime('%Y%M%d')
 ```
 
-# Table `XX`
+# Table `quality_vat_export_covariate_2003_2010`
 
-- Table name: `XX`
+- Table name: `quality_vat_export_covariate_2003_2010`
 
 ```python
 query = """
-DROP TABLE XX
+DROP TABLE quality_vat_export_covariate_2003_2010
 """
 s3.run_query(
                     query=query,
@@ -264,12 +281,193 @@ s3.run_query(
 
 ```python
 query = """
+CREATE TABLE chinese_trade.quality_vat_export_covariate_2003_2010
+WITH (
+  format='PARQUET'
+) AS
+WITH merge_cov AS (
+SELECT 
+  quality_vat_export_2003_2010.cityen, 
+  quality_vat_export_2003_2010.geocode4_corr, 
+  quality_vat_export_2003_2010.year, 
+  quality_vat_export_2003_2010.regime, 
+  quality_vat_export_2003_2010.hs6, 
+  hs4, 
+  hs3, 
+  quality_vat_export_2003_2010.country_en, 
+  quality_vat_export_2003_2010.iso_alpha, 
+  quantity, 
+  value, 
+  unit_price, 
+  kandhelwal_quality, 
+  price_adjusted_quality, 
+  lag_tax_rebate, 
+  ln_lag_tax_rebate, 
+  lag_import_tax, 
+  ln_lag_import_tax, 
+  sigma, 
+  sigma_price, 
+  y, 
+  prediction, 
+  residual, 
+  FE_ck, 
+  FE_cst, 
+  FE_ckr, 
+  FE_csrt, 
+  FE_kt, 
+  FE_pj, 
+  FE_jt, 
+  FE_ct, 
+  CASE WHEN lag_foreign_export_share_ckr IS NULL THEN 0 ELSE lag_foreign_export_share_ckr END AS lag_foreign_export_share_ckr,
+  
+  CASE WHEN lag_soe_export_share_ckr IS NULL THEN 0 ELSE lag_soe_export_share_ckr END AS lag_soe_export_share_ckr,
+  
+CASE WHEN lag_foreign_export_share_ckjr IS NULL THEN 0 ELSE lag_foreign_export_share_ckjr END AS lag_foreign_export_share_ckjr,
+  
+CASE WHEN lag_soe_export_share_ckjr IS NULL THEN 0 ELSE lag_soe_export_share_ckjr END AS lag_soe_export_share_ckjr
+
+  FROM quality_vat_export_2003_2010 
+  
+  LEFT JOIN chinese_trade.lag_foreign_export_ckr
+ON quality_vat_export_2003_2010.geocode4_corr = lag_foreign_export_ckr.geocode4_corr AND
+quality_vat_export_2003_2010.year = lag_foreign_export_ckr.year AND
+quality_vat_export_2003_2010.hs6 = lag_foreign_export_ckr.hs6 AND
+quality_vat_export_2003_2010.regime = lag_foreign_export_ckr.regime
+
+
+LEFT JOIN chinese_trade.lag_soe_export_ckr
+ON quality_vat_export_2003_2010.geocode4_corr = lag_soe_export_ckr.geocode4_corr AND
+quality_vat_export_2003_2010.year = lag_soe_export_ckr.year AND
+quality_vat_export_2003_2010.hs6 = lag_soe_export_ckr.hs6 AND
+quality_vat_export_2003_2010.regime = lag_soe_export_ckr.regime
+
+LEFT JOIN chinese_trade.lag_foreign_export_ckjr
+ON quality_vat_export_2003_2010.geocode4_corr = lag_foreign_export_ckjr.geocode4_corr AND
+quality_vat_export_2003_2010.year = lag_foreign_export_ckjr.year AND
+quality_vat_export_2003_2010.hs6 = lag_foreign_export_ckjr.hs6 AND
+quality_vat_export_2003_2010.regime = lag_foreign_export_ckjr.regime AND
+quality_vat_export_2003_2010.iso_alpha = lag_foreign_export_ckjr.iso_alpha
+
+LEFT JOIN chinese_trade.lag_soe_export_ckjr
+ON quality_vat_export_2003_2010.geocode4_corr = lag_soe_export_ckjr.geocode4_corr AND
+quality_vat_export_2003_2010.year = lag_soe_export_ckjr.year AND
+quality_vat_export_2003_2010.hs6 = lag_soe_export_ckjr.hs6 AND
+quality_vat_export_2003_2010.regime = lag_soe_export_ckjr.regime AND
+quality_vat_export_2003_2010.iso_alpha = lag_soe_export_ckjr.iso_alpha
+
+WHERE quantity IS NOT NULL
+  
+  ) 
+  
+  SELECT 
+  
+  merge_cov.cityen, 
+  merge_cov.geocode4_corr, 
+  merge_cov.year, 
+  merge_cov.regime, 
+  merge_cov.hs6, 
+  hs4, 
+  hs3, 
+  country_en, 
+  merge_cov.iso_alpha, 
+  quantity, 
+  value, 
+  unit_price, 
+  kandhelwal_quality, 
+  price_adjusted_quality, 
+  lag_tax_rebate, 
+  ln_lag_tax_rebate, 
+  lag_import_tax, 
+  ln_lag_import_tax, 
+  lag_soe_export_share_ckr,
+  lag_foreign_export_share_ckr
+  lag_soe_export_share_ckjr,
+  lag_foreign_export_share_ckjr,
+  sigma, 
+  sigma_price, 
+  y, 
+  prediction, 
+  residual, 
+  FE_ck, 
+  FE_cst, 
+  FE_ckr, 
+  FE_csrt, 
+  FE_kt, 
+  FE_pj, 
+  FE_jt, 
+  FE_ct
+  FROM merge_cov
+  INNER JOIN (
+    SELECT 
+    year, regime, geocode4_corr, iso_alpha, hs6
+    FROM merge_cov
+  GROUP BY year, regime, geocode4_corr, iso_alpha, hs6
+  HAVING COUNT(*) = 1
+    ) as no_duplicate ON
+    merge_cov.year = no_duplicate.year AND
+    merge_cov.regime = no_duplicate.regime AND
+    merge_cov.geocode4_corr = no_duplicate.geocode4_corr AND
+    merge_cov.iso_alpha = no_duplicate.iso_alpha AND
+    merge_cov.hs6 = no_duplicate.hs6
+
 
 """
 s3.run_query(
                     query=query,
                     database=db,
                     s3_output=s3_output,
+                )
+```
+
+Count nb of observation `quality_vat_export_2003_2010`
+
+```python
+query = """
+SELECT COUNT(*) as CNT
+FROM "chinese_trade"."quality_vat_export_2003_2010" 
+"""
+s3.run_query(
+                    query=query,
+                    database=db,
+                    s3_output=s3_output,
+    filename="count", 
+                )
+```
+
+Count nb of observation `quality_vat_export_covariate_2003_2010`. Should have less observations because we removed the duplicates
+
+```python
+query = """
+SELECT COUNT(*) as CNT
+FROM "chinese_trade"."quality_vat_export_covariate_2003_2010" 
+"""
+s3.run_query(
+                    query=query,
+                    database=db,
+                    s3_output=s3_output,
+    filename="count", 
+                )
+```
+
+Check duplicates
+
+```python
+query = """
+SELECT CNT, COUNT(*) AS CNT_DUPLICATE
+FROM (
+SELECT year, regime, geocode4_corr, iso_alpha, hs6, COUNT(*) as CNT
+FROM "chinese_trade"."quality_vat_export_covariate_2003_2010" 
+GROUP BY 
+year, regime, geocode4_corr, iso_alpha, hs6
+  )
+  GROUP BY CNT
+  ORDER BY CNT_DUPLICATE
+"""
+s3.run_query(
+                    query=query,
+                    database=db,
+                    s3_output=s3_output,
+    filename="duplicates", 
                 )
 ```
 
@@ -283,7 +481,7 @@ The cells below execute the job in the key `ANALYSIS`. You need to change the `p
 ## Table `XX`
 
 ```python
-table = 'XX'
+table = 'quality_vat_export_covariate_2003_2010'
 schema = glue.get_table_information(
     database = db,
     table = table
@@ -513,10 +711,10 @@ table_bottom = ""
 
 var_index = 0
 size_continuous = len([len(x) for x in schema["StorageDescriptor"]["Columns"] if 
-                       x['Type'] in ["float", "double", "bigint"]])
+                       x['Type'] in ["float", "double", "bigint", "int"]])
 cont = 0
 for key, value in enumerate(schema["StorageDescriptor"]["Columns"]):
-    if value["Type"] in ["float", "double", "bigint"]:
+    if value["Type"] in ["float", "double", "bigint", "int"]:
         cont +=1
 
         if var_index == 0:
@@ -584,7 +782,7 @@ var_index = 0
 cont = 0
 for key, value in enumerate(schema["StorageDescriptor"]["Columns"]):
 
-    if value["Type"] in ["float", "double", "bigint"]:
+    if value["Type"] in ["float", "double", "bigint", "int"]:
         cont +=1
 
         if var_index == 0:
@@ -592,7 +790,7 @@ for key, value in enumerate(schema["StorageDescriptor"]["Columns"]):
             table_top = parameters["ANALYSIS"]["CONTINUOUS"]["ONE_PAIR_DISTRIBUTION"][
                 "bottom"
             ].format(
-                sdb, table, value["Name"], key, primary_key
+                db, table, value["Name"], key, primary_key
             )
         else:
             temp_middle_1 = "{} {}".format(
@@ -659,13 +857,13 @@ The primary and secondary key will be passed to all the continuous variables. Th
 
 ```python
 primary_key = 'year'
-secondary_key = 'cityen'
+secondary_key = 'regime'
 ```
 
 ```python
 for key, value in enumerate(schema["StorageDescriptor"]["Columns"]):
 
-    if value["Type"] in ["float", "double", "bigint"]:
+    if value["Type"] in ["float", "double", "bigint", "int"]:
 
         query = parameters["ANALYSIS"]["CONTINUOUS"]["TWO_PAIRS_DISTRIBUTION"].format(
             db, table,
