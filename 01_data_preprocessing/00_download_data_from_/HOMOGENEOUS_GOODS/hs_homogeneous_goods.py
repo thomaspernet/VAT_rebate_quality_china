@@ -26,7 +26,7 @@ hs6_homo = (drive.upload_data_from_spreadsheet(
     sheetID = '1-TbLM4IkK5fHJYsZMcAnoxuYJE8yxfLRxhNtwVVCpLk',
     sheetName = 'hs_hom_dif.csv',
 	 to_dataframe = True)
-     .assign( classification = 'HOMOGENEOUS')
+     .assign( classification = 'HETEROGENEOUS')
      )
 
 #### Step 2: Move to S3: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/TRADE_DATA/RAW/GOODS_CLASSIFICATION/HOMOGENEOUS/?region=eu-west-3&tab=overview
