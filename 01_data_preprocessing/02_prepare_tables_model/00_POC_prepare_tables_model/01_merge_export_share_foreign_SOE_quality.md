@@ -380,7 +380,7 @@ WHERE quantity IS NOT NULL
   lag_import_tax, 
   ln_lag_import_tax, 
   lag_soe_export_share_ckr,
-  lag_foreign_export_share_ckr
+  lag_foreign_export_share_ckr,
   lag_soe_export_share_ckjr,
   lag_foreign_export_share_ckjr,
   sigma, 
