@@ -5,7 +5,7 @@
 
 ## Table of Content
 
-
+    
 - [base_hs6_VAT_2002_2012](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-base_hs6_VAT_2002_2012)
 - [applied_mfn_tariffs_hs02_china_2002_2010](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-applied_mfn_tariffs_hs02_china_2002_2010)
 - [sigma_industry](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-sigma_industry)
@@ -20,14 +20,14 @@
 - [lag_soe_export_ckr](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-lag_soe_export_ckr)
 - [quality_vat_export_covariate_2003_2010](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-quality_vat_export_covariate_2003_2010)
 
-
+    
 
 ## Table base_hs6_vat_2002_2012
 
 - Owner: hadoop 
 - Database: chinese_trade
 - Filename: base_hs6_vat_2002_2012
-- Location: https://s3.console.aws.amazon.com/s3/chinese-data/TAX_DATA/TRANSFORMED/VAT_REBATE
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/TAX_DATA/TRANSFORMED/VAT_REBATE
 - S3uri: `s3://chinese-data/TAX_DATA/TRANSFORMED/VAT_REBATE`
 
 
@@ -40,14 +40,14 @@
 |  4 | vat_m         | float  |           |
 |  5 | vat_reb_m     | float  |           |
 
-
+    
 
 ## Table applied_mfn_tariffs_hs02_china_2002_2010
 
 - Owner: hadoop 
 - Database: chinese_trade
 - Filename: applied_mfn_tariffs_hs02_china_2002_2010
-- Location: https://s3.console.aws.amazon.com/s3/chinese-data/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS
 - S3uri: `s3://chinese-data/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS`
 
 
@@ -58,14 +58,14 @@
 |  2 | import_tax | float  |           |
 |  3 | hs02       | string | nan       |
 
-
+    
 
 ## Table sigma_industry
 
 - Owner: hadoop 
 - Database: chinese_trade
 - Filename: sigma_industry
-- Location: https://s3.console.aws.amazon.com/s3/chinese-data/ADDITIONAL_DATA/SIGMAS_HS3
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ADDITIONAL_DATA/SIGMAS_HS3
 - S3uri: `s3://chinese-data/ADDITIONAL_DATA/SIGMAS_HS3`
 
 
@@ -76,14 +76,14 @@
 |  2 | sigma  | float  | sigma        |
 |  3 | hs3    | string | nan          |
 
-
+    
 
 ## Table country_cn_en
 
 - Owner: hadoop 
 - Database: chinese_lookup
 - Filename: country_cn_en
-- Location: https://s3.console.aws.amazon.com/s3/chinese-data/LOOKUP_DATA/COUNTRY_NAME
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/LOOKUP_DATA/COUNTRY_NAME
 - S3uri: `s3://chinese-data/LOOKUP_DATA/COUNTRY_NAME`
 
 
@@ -94,14 +94,14 @@
 |  2 | iso_alpha  | string | Country code            |
 |  3 | code_2     | string | Country code WB         |
 
-
+    
 
 ## Table city_cn_en
 
 - Owner: hadoop 
 - Database: chinese_lookup
 - Filename: city_cn_en
-- Location: https://s3.console.aws.amazon.com/s3/chinese-data/LOOKUP_DATA/CITY_NAME
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/LOOKUP_DATA/CITY_NAME
 - S3uri: `s3://chinese-data/LOOKUP_DATA/CITY_NAME`
 
 
@@ -114,14 +114,14 @@
 |  4 | province_cn   | string | Province name in Chinese |
 |  5 | province_en   | string | Province name in English |
 
-
+    
 
 ## Table import_export
 
 - Owner: hadoop 
 - Database: chinese_trade
 - Filename: import_export
-- Location: https://s3.console.aws.amazon.com/s3/chinese-data/TRADE_DATA/TRANSFORMED
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/TRADE_DATA/TRANSFORMED
 - S3uri: `s3://chinese-data/TRADE_DATA/TRANSFORMED`
 
 
@@ -141,14 +141,14 @@
 | 11 | value                 | int    |           |
 | 12 | quantities            | int    |           |
 
-
+    
 
 ## Table quality_vat_export_2003_2010
 
 - Owner: hadoop 
 - Database: chinese_trade
 - Filename: quality_vat_export_2003_2010
-- Location: https://s3.console.aws.amazon.com/s3/vat-rebate-quality/DATA/TRANSFORMED
+- Location: https://s3.console.aws.amazon.com/s3/buckets/vat-rebate-quality/DATA/TRANSFORMED
 - S3uri: `s3://vat-rebate-quality/DATA/TRANSFORMED`
 
 
@@ -186,14 +186,14 @@
 | 29 | fe_jt                  | string | nan                                                                                                                                                                  |
 | 30 | fe_ct                  | string | nan                                                                                                                                                                  |
 
-
+    
 
 ## Table vat_export_2003_2010
 
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: vat_export_2003_2010
-- Location: https://s3.console.aws.amazon.com/s3/chinese-data/SQL_OUTPUT_ATHENA/tables/afd99920-592b-4910-b280-f84b68eb7d3f/
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/afd99920-592b-4910-b280-f84b68eb7d3f/
 - S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/afd99920-592b-4910-b280-f84b68eb7d3f/`
 
 
@@ -214,14 +214,14 @@
 | 12 | lag_import_tax    | float         |           |
 | 13 | ln_lag_import_tax | double        |           |
 
-
+    
 
 ## Table lag_foreign_export_ckjr
 
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_foreign_export_ckjr
-- Location: https://s3.console.aws.amazon.com/s3/chinese-data/SQL_OUTPUT_ATHENA/tables/12175656-527f-41f2-a378-978b2000bcb8/
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/12175656-527f-41f2-a378-978b2000bcb8/
 - S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/12175656-527f-41f2-a378-978b2000bcb8/`
 
 
@@ -239,14 +239,14 @@
 |  9 | total_quantities_lag          | bigint        |              |
 | 10 | lag_foreign_export_share_ckjr | decimal(21,5) |              |
 
-
+    
 
 ## Table lag_foreign_export_ckr
 
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_foreign_export_ckr
-- Location: https://s3.console.aws.amazon.com/s3/chinese-data/SQL_OUTPUT_ATHENA/tables/a12f488d-78df-4a70-9f94-a9f10c153698/
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/a12f488d-78df-4a70-9f94-a9f10c153698/
 - S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/a12f488d-78df-4a70-9f94-a9f10c153698/`
 
 
@@ -263,14 +263,14 @@
 |  8 | total_quantities_lag         | bigint        |           |
 |  9 | lag_foreign_export_share_ckr | decimal(21,5) |           |
 
-
+    
 
 ## Table lag_soe_export_ckjr
 
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_soe_export_ckjr
-- Location: https://s3.console.aws.amazon.com/s3/chinese-data/SQL_OUTPUT_ATHENA/tables/6c8101c9-2713-4843-8fcc-7e093240714d/
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/6c8101c9-2713-4843-8fcc-7e093240714d/
 - S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/6c8101c9-2713-4843-8fcc-7e093240714d/`
 
 
@@ -288,14 +288,14 @@
 |  9 | total_quantities_lag      | bigint        |           |
 | 10 | lag_soe_export_share_ckjr | decimal(21,5) |           |
 
-
+    
 
 ## Table lag_soe_export_ckr
 
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_soe_export_ckr
-- Location: https://s3.console.aws.amazon.com/s3/chinese-data/SQL_OUTPUT_ATHENA/tables/b354a1ec-6c1e-4e95-838e-67b4cba3ac63/
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/b354a1ec-6c1e-4e95-838e-67b4cba3ac63/
 - S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/b354a1ec-6c1e-4e95-838e-67b4cba3ac63/`
 
 
@@ -312,15 +312,15 @@
 |  8 | total_quantities_lag     | bigint        |           |
 |  9 | lag_soe_export_share_ckr | decimal(21,5) |           |
 
-
+    
 
 ## Table quality_vat_export_covariate_2003_2010
 
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: quality_vat_export_covariate_2003_2010
-- Location: https://s3.console.aws.amazon.com/s3/chinese-data/SQL_OUTPUT_ATHENA/tables/bdd7ebc7-22b1-42a0-ac12-114c34371c34/
-- S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/bdd7ebc7-22b1-42a0-ac12-114c34371c34/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/9d6131f6-2c3b-4038-87dd-0a99d01f832e/
+- S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/9d6131f6-2c3b-4038-87dd-0a99d01f832e/`
 
 
 |    | Name                          | Type          | Comment   |
@@ -344,19 +344,21 @@
 | 16 | lag_import_tax                | float         |           |
 | 17 | ln_lag_import_tax             | float         |           |
 | 18 | lag_soe_export_share_ckr      | decimal(21,5) |           |
-| 19 | lag_soe_export_share_ckjr     | decimal(21,5) |           |
-| 20 | lag_foreign_export_share_ckjr | decimal(21,5) |           |
-| 21 | sigma                         | float         |           |
-| 22 | sigma_price                   | float         |           |
-| 23 | y                             | float         |           |
-| 24 | prediction                    | float         |           |
-| 25 | residual                      | float         |           |
-| 26 | fe_ck                         | string        |           |
-| 27 | fe_cst                        | string        |           |
-| 28 | fe_ckr                        | string        |           |
-| 29 | fe_csrt                       | string        |           |
-| 30 | fe_kt                         | string        |           |
-| 31 | fe_pj                         | string        |           |
-| 32 | fe_jt                         | string        |           |
-| 33 | fe_ct                         | string        |           |
+| 19 | lag_foreign_export_share_ckr  | decimal(21,5) |           |
+| 20 | lag_soe_export_share_ckjr     | decimal(21,5) |           |
+| 21 | lag_foreign_export_share_ckjr | decimal(21,5) |           |
+| 22 | sigma                         | float         |           |
+| 23 | sigma_price                   | float         |           |
+| 24 | y                             | float         |           |
+| 25 | prediction                    | float         |           |
+| 26 | residual                      | float         |           |
+| 27 | fe_ck                         | string        |           |
+| 28 | fe_cst                        | string        |           |
+| 29 | fe_ckr                        | string        |           |
+| 30 | fe_csrt                       | string        |           |
+| 31 | fe_kt                         | string        |           |
+| 32 | fe_pj                         | string        |           |
+| 33 | fe_jt                         | string        |           |
+| 34 | fe_ct                         | string        |           |
 
+    
