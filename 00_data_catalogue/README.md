@@ -201,9 +201,12 @@
 |    | Name           | Type   | Comment                                                                                                                                                               |
 |---:|:---------------|:-------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 |  0 | country        | string | Country name                                                                                                                                                          |
-|  1 | year           | string | Year                                                                                                                                                                  |
-|  2 | gni_per_capita | float  | GDP per capita is gross domestic product divided by midyear population                                                                                                |
-|  3 | gpd_per_capita | float  | GNI per capita (formerly GNP per capita) is the gross national income, converted to U.S. dollars using the World Bank Atlas method, divided by the midyear population |
+|  1 | iso_alpha      | string | Country code                                                                                                                                                          |
+|  2 | iso_alpha03    | string | Country code, iso 03                                                                                                                                                  |
+|  3 | year           | string | Year                                                                                                                                                                  |
+|  4 | gni_per_capita | float  | GDP per capita is gross domestic product divided by midyear population                                                                                                |
+|  5 | gpd_per_capita | float  | GNI per capita (formerly GNP per capita) is the gross national income, converted to U.S. dollars using the World Bank Atlas method, divided by the midyear population |
+|  6 | income_group   | string | One of 'Others', 'Low income', 'Upper middle income','High income: nonOECD', 'Lower middle income', 'High income: OECD'                                               |
 
     
 
