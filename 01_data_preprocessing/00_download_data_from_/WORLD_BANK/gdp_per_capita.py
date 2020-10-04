@@ -10,7 +10,7 @@ import os, shutil, json
 indicators = {
 'NY.GNP.PCAP.CD':'GNI per Capita',
 'NY.GDP.PCAP.KD':'GDP per Capita'}
-df = wbdata.get_dataframe(indicators)
+df = wbdata.get_dataframe(indicators).dropna()
 
 #### Step 2: Save to S3: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD
 path = os.getcwd()
