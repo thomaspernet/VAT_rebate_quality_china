@@ -15,7 +15,56 @@ jupyter:
     name: python3
 ---
 
-# NOTEBOOK NAME FROM CODA TASK
+# Create GDP per capita table from the world bank
+
+# Objective(s)
+
+Create world_gdp_per_capita table from the world bank API (data saved in S3). 
+* Add the query to the ETL table creation key
+
+# Metadata
+
+* Epic: Epic 1
+* US: US 1
+* Date Begin: 10/4/2020
+* Duration Task: 0
+* Description: Create Athena table with gdp per capita information
+* Step type: Raw table
+* Status: Active
+* Source URL: US 01 create tables Athena
+* Task type: Jupyter Notebook
+* Users: Thomas Pernet
+* Watchers: Thomas Pernet
+* User Account: https://468786073381.signin.aws.amazon.com/console
+* Estimated Log points: 5
+* Task tag: #athena,#world-bank
+* Toggl Tag: #data-preparation
+* Meetings:  
+* Email Information:  
+  * thread: Number of threads: 0(Default 0, to avoid display email)
+  *  
+
+# Input Cloud Storage [AWS/GCP]
+
+## Table/file
+
+* Origin: 
+* S3
+* Name: 
+* TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD
+* Github: 
+  * https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/00_download_data_from_/WORLD_BANK/gdp_per_capita.py
+
+# Destination Output/Delivery
+
+## Table/file
+
+* Origin: 
+* Athena
+* Name:
+* world_gdp_per_capita
+* GitHub:
+* https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/01_prepare_tables/03_create_gdp_per_capita_table.md
 ```python inputHidden=false jupyter={"outputs_hidden": false} outputHidden=false
 from awsPy.aws_authorization import aws_connector
 from awsPy.aws_s3 import service_s3
@@ -228,13 +277,9 @@ To begin with, you need to add the global parameters in the key `GLOBAL`:
 
 ```python
 ### If chinese characters, set  ensure_ascii=False
-s3.download_file(key = 'DATA/ETL/parameters_ETL_template.json')
+s3.download_file(key = 'DATA/ETL/parameters_ETL.json')
 with open('parameters_ETL.json', 'r') as fp:
     parameters = json.load(fp)
-```
-
-```python
-parameters['GLOBAL']['DATABASE'] = ''
 ```
 
 ## 2. Prepare `TABLES.CREATION`
@@ -246,14 +291,24 @@ This part usually starts with raw/transformed data in S3. The typical architectu
 One or more notebooks in the folder `01_prepare_tables` are used to create the raw tables. Please, use the notebook named `XX_template_table_creation_AWS` to create table using the key `TABLES.CREATION`
 
 ```python
+'Long Name', 'Country Code', 'Country ISO3', 'date',
+'GNI per Capita', 'GDP per Capita', 'Income Group'
+
 new_table = [{
-    "database": "",
-    "name": "",
+    "database": "world_bank",
+    "name": "world_gdp_per_capita",
     "output_id": "",
     "separator": ",",
-    "s3URI": "",
+    "s3URI": "s3://chinese-data/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD",
     "schema": [
-        {'Name': '', 'Type': '', 'Comment': ''}]
+        {'Name': 'country', 'Type': 'string', 'Comment': 'Country name'},
+        {'Name': 'iso_alpha', 'Type': 'string', 'Comment': 'Country code'},
+        {'Name': 'iso_alpha03', 'Type': 'string', 'Comment': 'Country code, iso 03'},
+        {'Name': 'year', 'Type': 'string', 'Comment': 'Year'},
+        {'Name': 'gni_per_capita', 'Type': 'float', 'Comment': """GDP per capita is gross domestic product divided by midyear population"""},
+        {'Name': 'gpd_per_capita', 'Type': 'float', 'Comment': """GNI per capita (formerly GNP per capita) is the gross national income, converted to U.S. dollars using the World Bank Atlas method, divided by the midyear population"""},
+        {'Name': 'income_group', 'Type': 'string', 'Comment': """One of 'Others', 'Low income', 'Upper middle income','High income: nonOECD', 'Lower middle income', 'High income: OECD'"""},
+    ]
 }
 ]
 #len(parameters['TABLES']['CREATION']['ALL_SCHEMA'])
@@ -262,9 +317,9 @@ new_table = [{
 To remove an item from the list, use `pop` with the index to remove. Exemple `parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(6)` will remove the 5th item
 
 ```python
-to_remove = False
+to_remove = True
 if to_remove:
-    parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(0)
+    parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(-1)
 ```
 
 ```python
@@ -363,58 +418,59 @@ for key, value in parameters["TABLES"]["CREATION"].items():
     if key == "ALL_SCHEMA":
         for table_info in value:
             # CREATE QUERY
+            if table_info['name'] in ['world_gdp_per_capita']:
 
-            ### Create top/bottom query
-            table_top = parameters["TABLES"]["CREATION"]["template"]["top"].format(
-                        table_info["database"], table_info["name"]
-                    )
-            table_bottom = parameters["TABLES"]["CREATION"]["template"][
-                        "bottom_Lazyserde"
-                    ].format(table_info["separator"], table_info["s3URI"])
+                ### Create top/bottom query
+                table_top = parameters["TABLES"]["CREATION"]["template"]["top"].format(
+                            table_info["database"], table_info["name"]
+                        )
+                table_bottom = parameters["TABLES"]["CREATION"]["template"][
+                            "bottom_Lazyserde"
+                        ].format(table_info["separator"], table_info["s3URI"])
 
-            ### Create middle
-            table_middle = ""
-            nb_var = len(table_info["schema"])
-            for i, val in enumerate(table_info["schema"]):
-                if i == nb_var - 1:
-                    table_middle += parameters["TABLES"]["CREATION"]["template"][
-                                "middle"
-                            ].format(val['Name'], val['Type'], ")")
-                else:
-                    table_middle += parameters["TABLES"]["CREATION"]["template"][
-                                "middle"
-                            ].format(val['Name'], val['Type'], ",")
+                ### Create middle
+                table_middle = ""
+                nb_var = len(table_info["schema"])
+                for i, val in enumerate(table_info["schema"]):
+                    if i == nb_var - 1:
+                        table_middle += parameters["TABLES"]["CREATION"]["template"][
+                                    "middle"
+                                ].format(val['Name'], val['Type'], ")")
+                    else:
+                        table_middle += parameters["TABLES"]["CREATION"]["template"][
+                                    "middle"
+                                ].format(val['Name'], val['Type'], ",")
 
-            query = table_top + table_middle + table_bottom
+                query = table_top + table_middle + table_bottom
 
-            ## DROP IF EXIST
+                ## DROP IF EXIST
 
-            s3.run_query(
-                            query="DROP TABLE {}".format(table_info["name"]),
-                            database=db,
-                            s3_output=s3_output
-                    )
+                s3.run_query(
+                                query="DROP TABLE {}.{}".format(table_info["database"],table_info["name"]),
+                                database=db,
+                                s3_output=s3_output
+                        )
 
-            ## RUN QUERY
-            output = s3.run_query(
-                        query=query,
-                        database=table_info["database"],
-                        s3_output=s3_output,
-                        filename=None,  ## Add filename to print dataframe
-                        destination_key=None,  ### Add destination key if need to copy output
-                    )
+                ## RUN QUERY
+                output = s3.run_query(
+                            query=query,
+                            database=table_info["database"],
+                            s3_output=s3_output,
+                            filename=None,  ## Add filename to print dataframe
+                            destination_key=None,  ### Add destination key if need to copy output
+                        )
 
-                ## SAVE QUERY ID
-            table_info['output_id'] = output['QueryID']
+                    ## SAVE QUERY ID
+                table_info['output_id'] = output['QueryID']
 
-                     ### UPDATE CATALOG
-            glue.update_schema_table(
-                        database=table_info["database"],
-                        table=table_info["name"],
-                        schema=table_info["schema"],
-                    )
+                         ### UPDATE CATALOG
+                glue.update_schema_table(
+                            database=table_info["database"],
+                            table=table_info["name"],
+                            schema=table_info["schema"],
+                        )
 
-            print(output)
+                print(output)
 ```
 
 Get the schema of the lattest job
@@ -622,7 +678,7 @@ You need to pass the primary group in the cell below
 Returns the top 10 only
 
 ```python
-primary_key = ""
+primary_key = "year"
 ```
 
 ```python
@@ -802,7 +858,7 @@ The primary key will be passed to all the continuous variables
 - Heatmap is colored based on the row, ie darker blue indicates larger values for a given row
 
 ```python
-primary_key = ""
+primary_key = "income_group"
 table_top = ""
 table_top_var = ""
 table_middle = ""
@@ -885,8 +941,8 @@ The primary and secondary key will be passed to all the continuous variables. Th
 - Heatmap is colored based on the column, ie darker green indicates larger values for a given column
 
 ```python
-primary_key = ''
-secondary_key = ''
+primary_key = 'income_group'
+secondary_key = 'country'
 ```
 
 ```python
