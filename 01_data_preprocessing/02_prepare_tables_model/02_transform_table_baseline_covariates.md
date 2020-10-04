@@ -212,7 +212,8 @@ To add a step, use this template inside `TABLES.PREPARATION.ALL_SCHEMA`
                   "Type":"",
                   "Comment":""
                }
-            ]
+            ],
+     "partition_keys":[]
    }
 }
 ```
@@ -232,6 +233,7 @@ To add a query execution with a within, use the following template inside the li
 }
 ``` 
 
+If your table can be grouped by two or more variables, use the key `partition_keys`. For instance, if your table can be grouped by variable A, B and C, then use ` "partition_keys":["A", "B", "C"]`. We use this key to compute if your table has duplicates. If it does, you should make sure your query is correct.
 
 
 Each step name should follow this format `STEPS_0`, `STEPS_1`, `STEPS_2`, etc
@@ -293,7 +295,7 @@ In this stage of the ETL, we are processing the data from existing tables in Ath
 s3.download_file(key = 'DATA/ETL/parameters_ETL.json')
 with open('parameters_ETL.json', 'r') as fp:
     parameters = json.load(fp)
-print(json.dumps(parameters, indent=4, sort_keys=True, ensure_ascii=False))
+print(json.dumps(parameters, indent=4, sort_keys=False, ensure_ascii=False))
 ```
 
 We are now at the second steps of the transformation. The second steps consists in creating four tables:
@@ -327,7 +329,8 @@ step_1 = [{
                   "Type":"varchar(10)",
                   "Comment":"Only FOREIGN"
                }
-            ]
+            ],
+       "partition_keys": ["year_lag", "regime", "geocode4_corr", "iso_alpha", "hs6"]
    }
 },
     {
@@ -351,7 +354,8 @@ step_1 = [{
                   "Type":"",
                   "Comment":""
                }
-            ]
+            ],
+       "partition_keys": ["year_lag", "regime", "geocode4_corr", "hs6"]
    }
 },
     {
@@ -375,7 +379,8 @@ step_1 = [{
                   "Type":"",
                   "Comment":""
                }
-            ]
+            ],
+       "partition_keys": ["year_lag", "regime", "geocode4_corr", "iso_alpha", "hs6"]
    }
 },
     {
@@ -399,7 +404,8 @@ step_1 = [{
                   "Type":"",
                   "Comment":""
                }
-            ]
+            ],
+       "partition_keys": ["year_lag", "regime", "geocode4_corr", "hs6"]
    }
 },
     {
@@ -423,7 +429,9 @@ step_1 = [{
                   "Type":"",
                   "Comment":""
                }
-            ]
+            ],
+       "partition_keys": ["year", "regime", "geocode4_corr", "iso_alpha", "hs6"]
+       
    }
 }
 ]
@@ -478,11 +486,6 @@ The cell below will execute the queries in the key `TABLES.PREPARATION` for all 
 <!-- #endregion -->
 
 ```python
-s3_output = parameters['GLOBAL']['QUERIES_OUTPUT']
-db = parameters['GLOBAL']['DATABASE']
-```
-
-```python
 for key, value in parameters["TABLES"]["PREPARATION"].items():
     if key == "ALL_SCHEMA":
         ### LOOP STEPS
@@ -504,7 +507,7 @@ for key, value in parameters["TABLES"]["PREPARATION"].items():
                     ### CREATE TOP
                     table_top = parameters["TABLES"]["PREPARATION"]["template"][
                         "top"
-                    ].format(step_n["database"], step_n["name"],)
+                    ].format(step_n["database"], step_n["name"])
 
                     ### COMPILE QUERY
                     query = (
@@ -531,7 +534,22 @@ for key, value in parameters["TABLES"]["PREPARATION"].items():
                         schema=steps[step_name]["schema"],
                     )
 
-                    print(output)
+                    #print(output)
+                    
+                    ### COUNT DUPLICATES
+                    if len(steps[step_name]['partition_keys']) > 0:
+                        groups = ' , '.join(steps[step_name]['partition_keys'])
+
+                        query_duplicates = parameters["ANALYSIS"]['COUNT_DUPLICATES']['query'].format(
+                            step_n["database"],step_n["name"],groups
+                            )
+                        dup = s3.run_query(
+                            query=query_duplicates,
+                            database=step_n["database"],
+                            s3_output=s3_output,
+                            filename="duplicates_{}".format(step_n["name"]))
+                        print(step_n["name"])
+                        display(dup)
 ```
 
 Get the schema of the lattest job
@@ -541,6 +559,94 @@ schema = glue.get_table_information(
     database = step_n['database'],
     table = step_n['name'])['Table']
 schema
+```
+
+<!-- #region -->
+### Create and save data catalog
+
+The data catalog is available in Glue. Although, we might want to get a quick access to the tables in Github. In this part, we are generating a `README.md` in the folder `00_data_catalogue`. All tables used in the project will be added to the catalog. We use the ETL parameter file and the schema in Glue to create the README. 
+
+
+To generate the table of content, please add:
+ 
+- Repo's owner
+- Repo's name
+
+Bear in mind the code will erase the previous README. 
+
+<!-- #endregion -->
+
+```python
+add_catalog_github = True
+owner = 'thomaspernet'
+repo_name = 'VAT_rebate_quality_china'
+```
+
+```python
+if add_catalog_github:
+    README = """
+    # Data Catalogue
+
+    {}
+
+    """
+
+    top_readme = """
+
+    ## Table of Content
+
+    """
+
+    github_link = os.path.join("https://github.com/", owner, repo_name,"tree/master/00_data_catalogue#table-")
+
+    for key in parameters['TABLES'].keys():
+        for i, table in enumerate(parameters['TABLES'][key]['ALL_SCHEMA']):
+            if key == 'CREATION':
+                github_db = table['database']
+                github_tb = table['name']
+            else:
+                step_name = "STEPS_{}".format(i)
+                github_db =table[step_name]['execution'][0]['database']
+                github_tb = table[step_name]['execution'][0]['name']
+
+            toc = "{}{}".format(github_link, github_tb)
+            top_readme += '\n- [{0}]({1})'.format(github_tb,toc)
+            schema_github = glue.get_table_information(
+            database = github_db,
+            table = github_tb
+        )
+
+            github_owner = schema_github['Table']['Owner']
+            github_db = schema_github['Table']['DatabaseName']
+            github_table = schema_github['Table']['Name']
+            github_location = schema_github['Table']['StorageDescriptor']['Location'].replace(
+                's3://', 'https://s3.console.aws.amazon.com/s3/')
+            github_s3uril = schema_github['Table']['StorageDescriptor']['Location']
+            tb = pd.json_normalize(schema_github['Table']['StorageDescriptor']['Columns']).to_markdown()
+
+            template = """
+
+    ## Table {0}
+
+    - Owner: {1} 
+    - Database: {2}
+    - Filename: {0}
+    - Location: {3}
+    - S3uri: `{4}`
+
+
+    {5}
+
+    """
+            README += template.format(github_table,
+                                      github_owner,
+                                      github_db,
+                                      github_location,
+                                      github_s3uril,
+                                      tb)
+    README = README.format(top_readme)
+    with open(os.path.join(str(Path(path).parent.parent), '00_data_catalogue/README.md'), "w") as outfile:
+            outfile.write(README)
 ```
 
 # Analytics
