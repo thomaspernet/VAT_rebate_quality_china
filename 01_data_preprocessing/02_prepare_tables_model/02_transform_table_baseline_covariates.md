@@ -295,7 +295,6 @@ In this stage of the ETL, we are processing the data from existing tables in Ath
 s3.download_file(key = 'DATA/ETL/parameters_ETL.json')
 with open('parameters_ETL.json', 'r') as fp:
     parameters = json.load(fp)
-print(json.dumps(parameters, indent=4, sort_keys=False, ensure_ascii=False))
 ```
 
 We are now at the second steps of the transformation. The second steps consists in creating four tables:
@@ -419,7 +418,7 @@ step_1 = [{
             "query":{
                "top":" WITH merge_cov AS ( SELECT quality_vat_export_2003_2010.cityen, quality_vat_export_2003_2010.geocode4_corr, quality_vat_export_2003_2010.year, quality_vat_export_2003_2010.regime, quality_vat_export_2003_2010.hs6, hs4, hs3, quality_vat_export_2003_2010.country_en, quality_vat_export_2003_2010.iso_alpha, quantity, value, unit_price, kandhelwal_quality, price_adjusted_quality, lag_tax_rebate, ln_lag_tax_rebate, lag_import_tax, ln_lag_import_tax, sigma, sigma_price, y, prediction, residual, FE_ck, FE_cst, FE_ckr, FE_csrt, FE_kt, FE_pj, FE_jt, FE_ct, CASE WHEN lag_foreign_export_share_ckr IS NULL THEN 0 ELSE lag_foreign_export_share_ckr END AS lag_foreign_export_share_ckr, CASE WHEN lag_soe_export_share_ckr IS NULL THEN 0 ELSE lag_soe_export_share_ckr END AS lag_soe_export_share_ckr, CASE WHEN lag_foreign_export_share_ckjr IS NULL THEN 0 ELSE lag_foreign_export_share_ckjr END AS lag_foreign_export_share_ckjr, CASE WHEN lag_soe_export_share_ckjr IS NULL THEN 0 ELSE lag_soe_export_share_ckjr END AS lag_soe_export_share_ckjr FROM quality_vat_export_2003_2010 ",
                 "middle":" LEFT JOIN chinese_trade.lag_foreign_export_ckr ON quality_vat_export_2003_2010.geocode4_corr = lag_foreign_export_ckr.geocode4_corr AND quality_vat_export_2003_2010.year = lag_foreign_export_ckr.year AND quality_vat_export_2003_2010.hs6 = lag_foreign_export_ckr.hs6 AND quality_vat_export_2003_2010.regime = lag_foreign_export_ckr.regime LEFT JOIN chinese_trade.lag_soe_export_ckr ON quality_vat_export_2003_2010.geocode4_corr = lag_soe_export_ckr.geocode4_corr AND quality_vat_export_2003_2010.year = lag_soe_export_ckr.year AND quality_vat_export_2003_2010.hs6 = lag_soe_export_ckr.hs6 AND quality_vat_export_2003_2010.regime = lag_soe_export_ckr.regime LEFT JOIN chinese_trade.lag_foreign_export_ckjr ON quality_vat_export_2003_2010.geocode4_corr = lag_foreign_export_ckjr.geocode4_corr AND quality_vat_export_2003_2010.year = lag_foreign_export_ckjr.year AND quality_vat_export_2003_2010.hs6 = lag_foreign_export_ckjr.hs6 AND quality_vat_export_2003_2010.regime = lag_foreign_export_ckjr.regime AND quality_vat_export_2003_2010.iso_alpha = lag_foreign_export_ckjr.iso_alpha LEFT JOIN chinese_trade.lag_soe_export_ckjr ON quality_vat_export_2003_2010.geocode4_corr = lag_soe_export_ckjr.geocode4_corr AND quality_vat_export_2003_2010.year = lag_soe_export_ckjr.year AND quality_vat_export_2003_2010.hs6 = lag_soe_export_ckjr.hs6 AND quality_vat_export_2003_2010.regime = lag_soe_export_ckjr.regime AND quality_vat_export_2003_2010.iso_alpha = lag_soe_export_ckjr.iso_alpha WHERE quantity IS NOT NULL ) ",
-                "bottom":" SELECT merge_cov.cityen, merge_cov.geocode4_corr, merge_cov.year, merge_cov.regime, merge_cov.hs6, hs4, hs3, country_en, merge_cov.iso_alpha, quantity, value, unit_price, kandhelwal_quality, price_adjusted_quality, lag_tax_rebate, ln_lag_tax_rebate, lag_import_tax, ln_lag_import_tax, lag_soe_export_share_ckr, lag_foreign_export_share_ckr lag_soe_export_share_ckjr, lag_foreign_export_share_ckjr, sigma, sigma_price, y, prediction, residual, FE_ck, FE_cst, FE_ckr, FE_csrt, FE_kt, FE_pj, FE_jt, FE_ct FROM merge_cov INNER JOIN ( SELECT year, regime, geocode4_corr, iso_alpha, hs6 FROM merge_cov GROUP BY year, regime, geocode4_corr, iso_alpha, hs6 HAVING COUNT(*) = 1 ) as no_duplicate ON merge_cov.year = no_duplicate.year AND merge_cov.regime = no_duplicate.regime AND merge_cov.geocode4_corr = no_duplicate.geocode4_corr AND merge_cov.iso_alpha = no_duplicate.iso_alpha AND merge_cov.hs6 = no_duplicate.hs6 "
+                "bottom":" SELECT merge_cov.cityen, merge_cov.geocode4_corr, merge_cov.year, merge_cov.regime, merge_cov.hs6, hs4, hs3, country_en, merge_cov.iso_alpha, quantity, value, unit_price, kandhelwal_quality, price_adjusted_quality, lag_tax_rebate, ln_lag_tax_rebate, lag_import_tax, ln_lag_import_tax, lag_soe_export_share_ckr, lag_foreign_export_share_ckr, lag_soe_export_share_ckjr, lag_foreign_export_share_ckjr, sigma, sigma_price, y, prediction, residual, FE_ck, FE_cst, FE_ckr, FE_csrt, FE_kt, FE_pj, FE_jt, FE_ct FROM merge_cov INNER JOIN ( SELECT year, regime, geocode4_corr, iso_alpha, hs6 FROM merge_cov GROUP BY year, regime, geocode4_corr, iso_alpha, hs6 HAVING COUNT(*) = 1 ) as no_duplicate ON merge_cov.year = no_duplicate.year AND merge_cov.regime = no_duplicate.regime AND merge_cov.geocode4_corr = no_duplicate.geocode4_corr AND merge_cov.iso_alpha = no_duplicate.iso_alpha AND merge_cov.hs6 = no_duplicate.hs6 "
             }
          }
       ],
@@ -440,7 +439,7 @@ step_1 = [{
 To remove an item from the list, use `pop` with the index to remove. Exemple `parameters['TABLES']['PREPARATION']['ALL_SCHEMA'].pop(6)` will remove the 5th item
 
 ```python
-to_remove = True
+to_remove = False
 if to_remove:
     parameters['TABLES']['PREPARATION']['ALL_SCHEMA'].pop(-1)
 ```
@@ -486,13 +485,18 @@ The cell below will execute the queries in the key `TABLES.PREPARATION` for all 
 <!-- #endregion -->
 
 ```python
+s3_output = parameters['GLOBAL']['QUERIES_OUTPUT']
+```
+
+```python
 for key, value in parameters["TABLES"]["PREPARATION"].items():
     if key == "ALL_SCHEMA":
         ### LOOP STEPS
         for i, steps in enumerate(value):
             step_name = "STEPS_{}".format(i)
             if step_name in [
-               'STEPS_1', 'STEPS_2', 'STEPS_3', 'STEPS_4', 'STEPS_5']:
+               #'STEPS_1', 'STEPS_2', 'STEPS_3', 'STEPS_4', 
+                'STEPS_5']:
 
                 ### LOOP EXECUTION WITHIN STEP
                 for j, step_n in enumerate(steps[step_name]["execution"]):
@@ -500,7 +504,7 @@ for key, value in parameters["TABLES"]["PREPARATION"].items():
                     ### DROP IF EXIST
                     s3.run_query(
                         query="DROP TABLE {}.{}".format(step_n["database"], step_n["name"]),
-                        database=db,
+                        database=step_n["database"],
                         s3_output=s3_output,
                     )
 
@@ -518,7 +522,7 @@ for key, value in parameters["TABLES"]["PREPARATION"].items():
                     )
                     output = s3.run_query(
                         query=query,
-                        database=db,
+                        database=step_n["database"],
                         s3_output=s3_output,
                         filename=None,  ## Add filename to print dataframe
                         destination_key=None,  ### Add destination key if need to copy output
@@ -585,15 +589,15 @@ repo_name = 'VAT_rebate_quality_china'
 ```python
 if add_catalog_github:
     README = """
-    # Data Catalogue
+# Data Catalogue
 
-    {}
+{}
 
     """
 
     top_readme = """
 
-    ## Table of Content
+## Table of Content
 
     """
 
@@ -620,22 +624,22 @@ if add_catalog_github:
             github_db = schema_github['Table']['DatabaseName']
             github_table = schema_github['Table']['Name']
             github_location = schema_github['Table']['StorageDescriptor']['Location'].replace(
-                's3://', 'https://s3.console.aws.amazon.com/s3/')
+                's3://', 'https://s3.console.aws.amazon.com/s3/buckets/')
             github_s3uril = schema_github['Table']['StorageDescriptor']['Location']
             tb = pd.json_normalize(schema_github['Table']['StorageDescriptor']['Columns']).to_markdown()
 
             template = """
 
-    ## Table {0}
+## Table {0}
 
-    - Owner: {1} 
-    - Database: {2}
-    - Filename: {0}
-    - Location: {3}
-    - S3uri: `{4}`
+- Owner: {1} 
+- Database: {2}
+- Filename: {0}
+- Location: {3}
+- S3uri: `{4}`
 
 
-    {5}
+{5}
 
     """
             README += template.format(github_table,
