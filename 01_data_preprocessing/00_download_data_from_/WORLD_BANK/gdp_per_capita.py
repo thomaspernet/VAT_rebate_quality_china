@@ -12,6 +12,21 @@ indicators = {
 'NY.GDP.PCAP.KD':'GDP per Capita'}
 df = wbdata.get_dataframe(indicators).dropna()
 
+meta_data =  pd.read_excel('http://wits.worldbank.org/data/public/WITSCountryProfile-Country_Indicator_ProductMetada-en.xlsx',
+sheet_name="Country-Metadata")
+
+meta_data.head()
+
+df_final= (df
+.reset_index()
+.merge(meta_data, how = 'inner', left_on = ['country'], right_on = ['Country Name'])
+.drop(columns = ['country', 'Country Name'])
+.reindex(columns = ['Long Name', 'Country Code', 'Country ISO3', 'date',
+'GNI per Capita', 'GDP per Capita', 'Income Group'])
+)
+
+df_final['Income Group'].unique()
+
 #### Step 2: Save to S3: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD
 path = os.getcwd()
 parent_path = str(Path(path).parent.parent.parent)
@@ -27,7 +42,7 @@ con = aws_connector.aws_instantiate(credential = path_cred,
 client= con.client_boto()
 s3 = service_s3.connect_S3(client = client,
                       bucket = bucket, verbose = True)
-df.reset_index().to_csv('gdp_gni_per_capita.csv', index = False)
+df_final.to_csv('gdp_gni_per_capita.csv', index = False)
 
 s3.upload_file('gdp_gni_per_capita.csv', 'TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD')
 
