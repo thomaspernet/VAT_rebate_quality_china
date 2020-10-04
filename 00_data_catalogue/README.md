@@ -341,8 +341,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: quality_vat_export_covariate_2003_2010
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/9d6131f6-2c3b-4038-87dd-0a99d01f832e/
-- S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/9d6131f6-2c3b-4038-87dd-0a99d01f832e/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/f6d8ca3a-4726-4d65-b6b1-09afe033041d/
+- S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/f6d8ca3a-4726-4d65-b6b1-09afe033041d/`
 
 
 |    | Name                          | Type          | Comment   |
@@ -356,31 +356,34 @@
 |  6 | hs3                           | string        |           |
 |  7 | country_en                    | string        |           |
 |  8 | iso_alpha                     | string        |           |
-|  9 | quantity                      | int           |           |
-| 10 | value                         | int           |           |
-| 11 | unit_price                    | float         |           |
-| 12 | kandhelwal_quality            | float         |           |
-| 13 | price_adjusted_quality        | float         |           |
-| 14 | lag_tax_rebate                | float         |           |
-| 15 | ln_lag_tax_rebate             | float         |           |
-| 16 | lag_import_tax                | float         |           |
-| 17 | ln_lag_import_tax             | float         |           |
-| 18 | lag_soe_export_share_ckr      | decimal(21,5) |           |
-| 19 | lag_foreign_export_share_ckr  | decimal(21,5) |           |
-| 20 | lag_soe_export_share_ckjr     | decimal(21,5) |           |
-| 21 | lag_foreign_export_share_ckjr | decimal(21,5) |           |
-| 22 | sigma                         | float         |           |
-| 23 | sigma_price                   | float         |           |
-| 24 | y                             | float         |           |
-| 25 | prediction                    | float         |           |
-| 26 | residual                      | float         |           |
-| 27 | fe_ck                         | string        |           |
-| 28 | fe_cst                        | string        |           |
-| 29 | fe_ckr                        | string        |           |
-| 30 | fe_csrt                       | string        |           |
-| 31 | fe_kt                         | string        |           |
-| 32 | fe_pj                         | string        |           |
-| 33 | fe_jt                         | string        |           |
-| 34 | fe_ct                         | string        |           |
+|  9 | gni_per_capita                | float         |           |
+| 10 | gpd_per_capita                | float         |           |
+| 11 | income_group                  | string        |           |
+| 12 | quantity                      | int           |           |
+| 13 | value                         | int           |           |
+| 14 | unit_price                    | float         |           |
+| 15 | kandhelwal_quality            | float         |           |
+| 16 | price_adjusted_quality        | float         |           |
+| 17 | lag_tax_rebate                | float         |           |
+| 18 | ln_lag_tax_rebate             | float         |           |
+| 19 | lag_import_tax                | float         |           |
+| 20 | ln_lag_import_tax             | float         |           |
+| 21 | lag_soe_export_share_ckr      | decimal(21,5) |           |
+| 22 | lag_foreign_export_share_ckr  | decimal(21,5) |           |
+| 23 | lag_soe_export_share_ckjr     | decimal(21,5) |           |
+| 24 | lag_foreign_export_share_ckjr | decimal(21,5) |           |
+| 25 | sigma                         | float         |           |
+| 26 | sigma_price                   | float         |           |
+| 27 | y                             | float         |           |
+| 28 | prediction                    | float         |           |
+| 29 | residual                      | float         |           |
+| 30 | fe_ck                         | string        |           |
+| 31 | fe_cst                        | string        |           |
+| 32 | fe_ckr                        | string        |           |
+| 33 | fe_csrt                       | string        |           |
+| 34 | fe_kt                         | string        |           |
+| 35 | fe_pj                         | string        |           |
+| 36 | fe_jt                         | string        |           |
+| 37 | fe_ct                         | string        |           |
 
     
