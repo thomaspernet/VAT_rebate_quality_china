@@ -295,7 +295,10 @@ SELECT
   hs4, 
   hs3, 
   quality_vat_export_2003_2010.country_en, 
-  quality_vat_export_2003_2010.iso_alpha, 
+  quality_vat_export_2003_2010.iso_alpha,
+  gni_per_capita,
+  gpd_per_capita,
+  income_group,
   quantity, 
   value, 
   unit_price, 
@@ -355,6 +358,10 @@ quality_vat_export_2003_2010.hs6 = lag_soe_export_ckjr.hs6 AND
 quality_vat_export_2003_2010.regime = lag_soe_export_ckjr.regime AND
 quality_vat_export_2003_2010.iso_alpha = lag_soe_export_ckjr.iso_alpha
 
+LEFT JOIN world_bank.world_gdp_per_capita
+ON quality_vat_export_2003_2010.iso_alpha = world_gdp_per_capita.iso_alpha03 AND 
+quality_vat_export_2003_2010.year = world_gdp_per_capita.year 
+
 WHERE quantity IS NOT NULL
   
   ) 
@@ -370,6 +377,9 @@ WHERE quantity IS NOT NULL
   hs3, 
   country_en, 
   merge_cov.iso_alpha, 
+  gni_per_capita,
+  gpd_per_capita,
+  income_group,
   quantity, 
   value, 
   unit_price, 
