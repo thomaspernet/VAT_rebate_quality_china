@@ -13,6 +13,7 @@
 - [city_cn_en](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-city_cn_en)
 - [import_export](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-import_export)
 - [quality_vat_export_2003_2010](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-quality_vat_export_2003_2010)
+- [world_gdp_per_capita](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-world_gdp_per_capita)
 - [VAT_export_2003_2010](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-VAT_export_2003_2010)
 - [lag_foreign_export_ckjr](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-lag_foreign_export_ckjr)
 - [lag_foreign_export_ckr](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-lag_foreign_export_ckr)
@@ -185,6 +186,24 @@
 | 28 | fe_pj                  | string | nan                                                                                                                                                                  |
 | 29 | fe_jt                  | string | nan                                                                                                                                                                  |
 | 30 | fe_ct                  | string | nan                                                                                                                                                                  |
+
+    
+
+## Table world_gdp_per_capita
+
+- Owner: hadoop 
+- Database: world_bank
+- Filename: world_gdp_per_capita
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD
+- S3uri: `s3://chinese-data/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD`
+
+
+|    | Name           | Type   | Comment                                                                                                                                                               |
+|---:|:---------------|:-------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|  0 | country        | string | Country name                                                                                                                                                          |
+|  1 | year           | string | Year                                                                                                                                                                  |
+|  2 | gni_per_capita | float  | GDP per capita is gross domestic product divided by midyear population                                                                                                |
+|  3 | gpd_per_capita | float  | GNI per capita (formerly GNP per capita) is the gross national income, converted to U.S. dollars using the World Bank Atlas method, divided by the midyear population |
 
     
 
