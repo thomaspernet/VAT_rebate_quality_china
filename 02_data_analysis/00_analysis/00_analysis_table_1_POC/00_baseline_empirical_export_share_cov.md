@@ -176,7 +176,11 @@ SELECT
   iso_alpha, 
   gni_per_capita, 
   gpd_per_capita, 
-  income_group, 
+  income_group,
+  CASE WHEN 
+income_group = 'Low income' OR income_group = 'Low Lower middle income' 
+OR (income_group IS NULL AND ISO_alpha != 'HKG') then 
+'LDC' ELSE 'DC' END AS income_group_ldc_dc,
   quantity, 
   value, 
   unit_price, 
