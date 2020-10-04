@@ -65,7 +65,7 @@ Estimate the baseline regression with the following table:
 # Connexion server
 <!-- #endregion -->
 
-```sos kernel="SoS"
+```sos kernel="Python 3"
 from awsPy.aws_authorization import aws_connector
 from awsPy.aws_s3 import service_s3
 from awsPy.aws_glue import service_glue
@@ -85,7 +85,7 @@ bucket = 'chinese-data'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 ```
 
-```sos kernel="SoS"
+```sos kernel="Python 3"
 con = aws_connector.aws_instantiate(credential = path_cred,
                                        region = region)
 client= con.client_boto()
@@ -94,7 +94,7 @@ s3 = service_s3.connect_S3(client = client,
 glue = service_glue.connect_glue(client = client) 
 ```
 
-```sos kernel="SoS"
+```sos kernel="Python 3"
 pandas_setting = True
 if pandas_setting:
     #cm = sns.light_palette("green", as_cmap=True)
@@ -108,12 +108,12 @@ if pandas_setting:
 Since we load the data as a Pandas DataFrame, we want to pass the `dtypes`. We load the schema from Glue to guess the types
 <!-- #endregion -->
 
-```sos kernel="SoS"
+```sos kernel="Python 3"
 db = 'chinese_trade'
 table = 'quality_vat_export_covariate_2003_2010'
 ```
 
-```sos kernel="SoS"
+```sos kernel="Python 3"
 dtypes = {}
 schema = (glue.get_table_information(database = db,
                            table = table)
@@ -135,30 +135,116 @@ dtypes
 <!-- #region kernel="SoS" -->
 - Filename: quality_vat_export_covariate_2003_2010
 - S3: https://s3.console.aws.amazon.com/s3/buckets/vat-rebate-quality/DATA/TRANSFORMED/?region=eu-west-3
+
+In order to avoid extra work to compute the size of a city, we get it from the query below. To get the size, we use the following rule:
+
+- If national average of exported quantity > total quantity exported by a city in 2003, then SMALL else LARGE
+- If national average of count exported prodcut > total count of exported product by a city in 2003, then SMALL else LARGE
 <!-- #endregion -->
 
-```sos kernel="SoS"
+```sos kernel="Python 3"
 download_data = True
 if download_data:
     s3 = service_s3.connect_S3(client = client,
                           bucket = 'vat-rebate-quality', verbose = False)
     query = """
-    SELECT * 
-    FROM {}.{}
-    """.format(db, table)
-    df = (s3.run_query(
+    WITH count_n_sum AS (
+  SELECT 
+    year, 
+    cityen, 
+    COUNT(
+      DISTINCT(hs6)
+    ) as count_hs6, 
+    SUM(quantity) as sum_quantity 
+  FROM 
+    quality_vat_export_covariate_2003_2010 
+  WHERE 
+    year = '2003' 
+  GROUP BY 
+    cityen, 
+    year
+) 
+SELECT 
+  quality_vat_export_covariate_2003_2010.cityen, 
+  geocode4_corr, 
+  quality_vat_export_covariate_2003_2010.year, 
+  regime, 
+  hs6, 
+  hs4, 
+  hs3, 
+  country_en, 
+  iso_alpha, 
+  gni_per_capita, 
+  gpd_per_capita, 
+  income_group, 
+  quantity, 
+  value, 
+  unit_price, 
+  kandhelwal_quality, 
+  price_adjusted_quality, 
+  lag_tax_rebate, 
+  ln_lag_tax_rebate, 
+  lag_import_tax, 
+  ln_lag_import_tax, 
+  lag_soe_export_share_ckr, 
+  lag_foreign_export_share_ckr, 
+  lag_soe_export_share_ckjr, 
+  lag_foreign_export_share_ckjr, 
+  sigma, 
+  sigma_price, 
+  y, 
+  prediction, 
+  residual, 
+  fe_ck, 
+  fe_cst, 
+  fe_ckr, 
+  fe_csrt, 
+  fe_kt, 
+  fe_pj, 
+  fe_jt, 
+  fe_ct, 
+  count_hs6, 
+  sum_quantity, 
+  city_average_hs6, 
+  city_average_quantity, 
+  CASE WHEN sum_quantity > city_average_quantity THEN 'LARGE_QUANTITY' ELSE 'SMALL_QUANTITY' END AS size_quantity, 
+  CASE WHEN count_hs6 > city_average_hs6 THEN 'LARGE_COUNT' ELSE 'SMALL_COUNT' END AS size_product 
+FROM 
+  count_n_sum 
+  LEFT JOIN (
+    SELECT 
+      MIN(year) as year, 
+      AVG(count_hs6) as city_average_hs6, 
+      AVG(sum_quantity) as city_average_quantity 
+    FROM 
+      count_n_sum
+  ) as city_avg ON count_n_sum.year = city_avg.year 
+  LEFT JOIN quality_vat_export_covariate_2003_2010 ON quality_vat_export_covariate_2003_2010.cityen = count_n_sum.cityen
+    """
+    output = s3.run_query(
         query=query,
         database=db,
         s3_output='SQL_OUTPUT_ATHENA',
-        filename='quality_vat_export_covariate_2003_2010',  # Add filename to print dataframe
-        destination_key='DATA/TRANSFORMED',  # Add destination key if need to copy output
-        dtype = dtypes
+        filename=None,  # Add filename to print dataframe
+        destination_key=None # Add destination key if need to copy output
     )
-            )
-    s3.download_file(
+    print(output)
+```
+
+```sos kernel="Python 3"
+s3.copy_object_s3(
+    source_key = os.path.join('SQL_OUTPUT_ATHENA', "{}.csv".format(output['QueryID'])),
+    destination_key = "DATA/TRANSFORMED/quality_vat_export_covariate_2003_2010.csv",
+    remove = True
+)
+```
+
+```sos kernel="Python 3"
+s3.download_file(
         key = 'DATA/TRANSFORMED/quality_vat_export_covariate_2003_2010.csv',
     path_local = os.path.join(str(Path(path).parent.parent.parent), 
-                              "00_data_catalogue/temporary_local_data"))
+                              "00_data_catalogue/temporary_local_data")
+)
 ```
 
 <!-- #region kernel="SoS" -->
