@@ -117,6 +117,14 @@ Since we load the data as a Pandas DataFrame, we want to pass the `dtypes`. We l
 - List homogeneous goods: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/TRADE_DATA/RAW/GOODS_CLASSIFICATION/HOMOGENEOUS/?region=eu-west-3&tab=overview
 <!-- #endregion -->
 
+```sos kernel="SoS"
+s3.download_file(
+        key = 'TRADE_DATA/RAW/GOODS_CLASSIFICATION/HOMOGENEOUS/homogeneous.csv',
+    path_local = os.path.join(str(Path(path).parent.parent.parent), 
+                              "00_data_catalogue/temporary_local_data")
+)
+```
+
 <!-- #region kernel="SoS" -->
 # Models to estimate
 
@@ -164,16 +172,35 @@ path = "function/table_golatex.R"
 source(path)
 ```
 
+<!-- #region kernel="R" -->
+Code to get the list of homogeneous list. `hs6.csv` is the list of HS6 in the database
+
+```
+library(concordance)
+hs6 <- read_csv('hs6.csv', col_types = "c") %>%
+mutate(goods=sapply(hs6, function(x) { get_proddiff(sourcevar = x, "hs", prop = "w") })) %>%
+mutate(homogeneous = ifelse(goods > 0.5, "HOMOGENEOUS", "HETEREGENEOUS"))
+write.csv(hs6, 'homogeneous.csv')
+```
+<!-- #endregion -->
+
 ```sos kernel="R"
-path = '../../../00_Data_catalogue/temporary_local_data/XX.csv'
+path = '../../../00_Data_catalogue/temporary_local_data/homogeneous.csv'
+homogeneous <- read_csv(path, col_types = "dcc")
+head(homogeneous)
+```
+
+```sos kernel="R"
+path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010.csv'
 df_final <- read_csv(path) %>%
 mutate_if(is.character, as.factor) %>%
     mutate_at(vars(starts_with("fe")), as.factor) %>%
-mutate(regime = relevel(XX, ref='XX'))
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(homogeneous, by= "hs6") 
 ```
 
 <!-- #region kernel="SoS" -->
-## Table 1: 
+## Table 1: Countries, goods and cities characteristics, no covariates
 
 $$
 \begin{aligned}
@@ -183,32 +210,42 @@ $$
 $$
 
 
-* Column 1: Estimate baseline regression subset LDC countries
+* Column 1: Estimate baseline regression subset LDC countries: `income_group_ldc_dc` -> `LDC`
     * FE: 
         - city-product-regime: `fe_ckr`
         - city-sector-regime-year: `fe_csrt`
         - product-year: `fe_kt`
-* Column 2: Estimate baseline regression subset DC countries
+* Column 2: Estimate baseline regression subset DC countries: `income_group_ldc_dc` -> `DC`
     * FE: 
         - city-product-regime: `fe_ckr`
         - city-sector-regime-year: `fe_csrt`
         - product-year: `fe_kt`
-* Column 3: Estimate baseline regression subset Homogeneous goods
+* Column 3: Estimate baseline regression subset Homogeneous goods: `classification` -> `HOMOGENEOUS`
     * FE: 
         - city-product-regime: `fe_ckr`
         - city-sector-regime-year: `fe_csrt`
         - product-year: `fe_kt`
-* Column 4: Estimate baseline regression subset heterogeneous goods
+* Column 4: Estimate baseline regression subset heterogeneous goods: `classification` -> != `HOMOGENEOUS`
     * FE: 
         - city-product-regime: `fe_ckr`
         - city-sector-regime-year: `fe_csrt`
         - product-year: `fe_kt`
-* Column 5: Estimate baseline regression subset small cities
+* Column 5: Estimate baseline regression subset small cities: `size_product` -> == `SMALL_COUNT`
     * FE: 
         - city-product-regime: `fe_ckr`
         - city-sector-regime-year: `fe_csrt`
         - product-year: `fe_kt`
-* Column 6: Estimate baseline regression subset large cities
+* Column 6: Estimate baseline regression subset large cities: `size_product` -> == `LARGE_COUNT`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`   
+* Column 7: Estimate baseline regression subset small cities: `size_quantity` -> == `SMALL_QUANTITY`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 8: Estimate baseline regression subset large cities: `size_quantity` -> == `LARGE_QUANTITY`
     * FE: 
         - city-product-regime: `fe_ckr`
         - city-sector-regime-year: `fe_csrt`
@@ -218,20 +255,40 @@ Sector is defined as the GBT 4 digits
 <!-- #endregion -->
 
 ```sos kernel="R"
-t_0 <- felm(YYY ~XXX
-            | FE|0 | CLUSTER, df_final %>% filter(XXX == 'YYY'),
+#### COUNTRIES
+t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(income_group_ldc_dc == 'LDC'),
             exactDOF = TRUE)
 
-t_0 <- felm(YYY ~XXX
-            | FE|0 | CLUSTER, df_final %>% filter(XXX != 'YYY'),
+t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(income_group_ldc_dc != 'LDC'),
             exactDOF = TRUE)
 
-t_2 <- felm(kYYY ~XXX
-            | FE|0 | CLUSTER, df_final,
+#### GOODS
+t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(homogeneous) | homogeneous == 'HOMOGENEOUS'),
             exactDOF = TRUE)
 
-t_3 <- felm(kYYY ~XXX
-            | FE|0 | CLUSTER, df_final,
+t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(homogeneous == 'HETEREGENEOUS'),
+            exactDOF = TRUE)
+
+#### CITIES
+##### HS6
+t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_product == 'SMALL_COUNT'),
+            exactDOF = TRUE)
+
+t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_product == 'LARGE_COUNT'),
+            exactDOF = TRUE)
+##### Quantity
+t_6 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_quantity == 'SMALL_QUANTITY'),
+            exactDOF = TRUE)
+
+t_7 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_quantity == 'LARGE_QUANTITY'),
             exactDOF = TRUE)
 ```
 
@@ -252,25 +309,19 @@ except:
 ```
 
 ```sos kernel="R"
-dep <- "Dependent variable: YYYY"
+dep <- "Dependent variable: Product quality"
 fe1 <- list(
-    c("XXXXX", "Yes", "Yes", "No", "No"),
+    c("City-product-regime fixed effects","Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes"),
     
-    c("XXXXX", "Yes", "Yes", "No", "No"),
+    c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes"),
     
-    c("XXXXX","Yes", "Yes", "Yes", "No"),
-    
-    c("XXXXX","No", "No", "Yes", "Yes"),
-    
-    c("XXXXX","No", "No", "Yes", "Yes"),
-    
-    c("XXXXX", "No", "No", "No", "Yes")
+    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes")
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3
+    t_0,t_1, t_2, t_3, t_4,t_5, t_6, t_7
 ),
-    title="TITLE",
+    title="VAT export tax and firm’s quality upgrading, characteristics of the destination countries, products, and cities",
     dep_var = dep,
     addFE=fe1,
     save=TRUE,
@@ -280,18 +331,31 @@ table_1 <- go_latex(list(
 ```
 
 ```sos kernel="Python 3"
-tbe1  = "This table estimates eq(3). " \
-"Heteroskedasticity-robust standard errors" \
-"clustered at the product level appear inparentheses."\
-"\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."
+tbe1  = """
+This table estimates eq(3). 
+LDC and DC are defined according to the World Bank country classification.
+Homogeneous and heterogeneous goods are defined according to the official list of goods`s classification, Rauch (1999).
+Small and large are computed based on either the count of HS6 exported by city $c$ or the total quantity exported.
+When one of these two metrics are above national average, the city is considered as large.
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
 
 multicolumn ={
-    'Eligible': 1,
-    'Non-Eligible': 1,
-    'All': 1,
-    'All benchmark': 1,
+    'LDC': 1,
+    'DC': 1,
+    'Homogeneous': 1,
+    'Heterogeneous': 1,
+    'Small HS6': 1,
+    'Large HS6': 1,
+    'Small Quantity': 1,
+    'Large Quantityk': 1,
 }
-multi_lines_dep = ''
+multi_lines_dep = '(city/product/trade regime/year)'
 #new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
 lb.beautify(table_number = 0,
             #multi_lines_dep = None,
@@ -300,20 +364,372 @@ lb.beautify(table_number = 0,
             multicolumn = multicolumn,
             table_nte = tbe1,
             jupyter_preview = True,
-            resolution = 150)
+            resolution = 200)
+```
+
+<!-- #region kernel="Python 3" -->
+## Table 2: Countries, goods and cities characteristics, with covariates city, regime destination, product
+
+$$
+\begin{aligned}
+\operatorname{Quality}_{c,k,j, t}^{R} &=\alpha \ln \operatorname{VAT} \operatorname{Export} \operatorname{tax}_{k, t-1} \times \text { Eligibility }^{R} \\
+&+F E_{c,k}^{R}+F E_{c,s,t}^{R}+ F E_{k, t}+\epsilon_{ck,j, t}^{R}
+\end{aligned}
+$$
+
+
+* Column 1: Estimate baseline regression subset LDC countries: `income_group_ldc_dc` -> `LDC`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 2: Estimate baseline regression subset DC countries: `income_group_ldc_dc` -> `DC`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 3: Estimate baseline regression subset Homogeneous goods: `classification` -> `HOMOGENEOUS`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 4: Estimate baseline regression subset heterogeneous goods: `classification` -> != `HOMOGENEOUS`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 5: Estimate baseline regression subset small cities: `size_product` -> == `SMALL_COUNT`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 6: Estimate baseline regression subset large cities: `size_product` -> == `LARGE_COUNT`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`   
+* Column 7: Estimate baseline regression subset small cities: `size_quantity` -> == `SMALL_QUANTITY`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 8: Estimate baseline regression subset large cities: `size_quantity` -> == `LARGE_QUANTITY`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`    
+
+Sector is defined as the GBT 4 digits
+<!-- #endregion -->
+
+```sos kernel="R"
+#### COUNTRIES
+t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(income_group_ldc_dc == 'LDC'),
+            exactDOF = TRUE)
+
+t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(income_group_ldc_dc != 'LDC'),
+            exactDOF = TRUE)
+
+#### GOODS
+t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(homogeneous) | homogeneous == 'HOMOGENEOUS'),
+            exactDOF = TRUE)
+
+t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(homogeneous == 'HETEREGENEOUS'),
+            exactDOF = TRUE)
+
+#### CITIES
+##### HS6
+t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_product == 'SMALL_COUNT'),
+            exactDOF = TRUE)
+
+t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_product == 'LARGE_COUNT'),
+            exactDOF = TRUE)
+##### Quantity
+t_6 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_quantity == 'SMALL_QUANTITY'),
+            exactDOF = TRUE)
+
+t_7 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_quantity == 'LARGE_QUANTITY'),
+            exactDOF = TRUE)
+```
+
+```sos kernel="Python 3"
+import os
+try:
+    os.remove("Tables/table_1.txt")
+except:
+    pass
+try:
+    os.remove("Tables/table_1.tex")
+except:
+    pass
+try:
+    os.remove("Tables/table_1.pdf")
+except:
+    pass
+```
+
+```sos kernel="R"
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    c("City-product-regime fixed effects","Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes"),
+    
+    c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes"),
+    
+    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4,t_5, t_6, t_7
+),
+    title="VAT export tax and firm’s quality upgrading, characteristics of the destination countries, products, and cities",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name="Tables/table_1.txt"
+)
+```
+
+```sos kernel="Python 3"
+tbe1  = """
+This table estimates eq(3). 
+LDC and DC are defined according to the World Bank country classification.
+Homogeneous and heterogeneous goods are defined according to the official list of goods`s classification, Rauch (1999).
+Small and large are computed based on either the count of HS6 exported by city $c$ or the total quantity exported.
+When one of these two metrics are above national average, the city is considered as large.
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
+
+multicolumn ={
+    'LDC': 1,
+    'DC': 1,
+    'Homogeneous': 1,
+    'Heterogeneous': 1,
+    'Small HS6': 1,
+    'Large HS6': 1,
+    'Small Quantity': 1,
+    'Large Quantityk': 1,
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+#new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
+lb.beautify(table_number = 1,
+            #multi_lines_dep = None,
+            multi_lines_dep = multi_lines_dep,
+            new_row= False,
+            multicolumn = multicolumn,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 200)
+```
+
+<!-- #region kernel="Python 3" -->
+## Table 3: Countries, goods and cities characteristics, with covariates city, regime, product
+
+$$
+\begin{aligned}
+\operatorname{Quality}_{c,k,j, t}^{R} &=\alpha \ln \operatorname{VAT} \operatorname{Export} \operatorname{tax}_{k, t-1} \times \text { Eligibility }^{R} \\
+&+F E_{c,k}^{R}+F E_{c,s,t}^{R}+ F E_{k, t}+\epsilon_{ck,j, t}^{R}
+\end{aligned}
+$$
+
+
+* Column 1: Estimate baseline regression subset LDC countries: `income_group_ldc_dc` -> `LDC`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 2: Estimate baseline regression subset DC countries: `income_group_ldc_dc` -> `DC`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 3: Estimate baseline regression subset Homogeneous goods: `classification` -> `HOMOGENEOUS`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 4: Estimate baseline regression subset heterogeneous goods: `classification` -> != `HOMOGENEOUS`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 5: Estimate baseline regression subset small cities: `size_product` -> == `SMALL_COUNT`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 6: Estimate baseline regression subset large cities: `size_product` -> == `LARGE_COUNT`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`   
+* Column 7: Estimate baseline regression subset small cities: `size_quantity` -> == `SMALL_QUANTITY`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`
+* Column 8: Estimate baseline regression subset large cities: `size_quantity` -> == `LARGE_QUANTITY`
+    * FE: 
+        - city-product-regime: `fe_ckr`
+        - city-sector-regime-year: `fe_csrt`
+        - product-year: `fe_kt`    
+
+Sector is defined as the GBT 4 digits
+<!-- #endregion -->
+
+```sos kernel="R"
+#### COUNTRIES
+t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(income_group_ldc_dc == 'LDC'),
+            exactDOF = TRUE)
+
+t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(income_group_ldc_dc != 'LDC'),
+            exactDOF = TRUE)
+
+#### GOODS
+t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(homogeneous) | homogeneous == 'HOMOGENEOUS'),
+            exactDOF = TRUE)
+
+t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(homogeneous == 'HETEREGENEOUS'),
+            exactDOF = TRUE)
+
+#### CITIES
+##### HS6
+t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_product == 'SMALL_COUNT'),
+            exactDOF = TRUE)
+
+t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_product == 'LARGE_COUNT'),
+            exactDOF = TRUE)
+##### Quantity
+t_6 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_quantity == 'SMALL_QUANTITY'),
+            exactDOF = TRUE)
+
+t_7 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_quantity == 'LARGE_QUANTITY'),
+            exactDOF = TRUE)
+```
+
+```sos kernel="Python 3"
+import os
+try:
+    os.remove("Tables/table_2.txt")
+except:
+    pass
+try:
+    os.remove("Tables/table_2.tex")
+except:
+    pass
+try:
+    os.remove("Tables/table_2.pdf")
+except:
+    pass
+```
+
+```sos kernel="R"
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    c("City-product-regime fixed effects","Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes"),
+    
+    c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes"),
+    
+    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4,t_5, t_6, t_7
+),
+    title="VAT export tax and firm’s quality upgrading, characteristics of the destination countries, products, and cities",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name="Tables/table_2.txt"
+)
+```
+
+```sos kernel="Python 3"
+tbe1  = """
+This table estimates eq(3). 
+LDC and DC are defined according to the World Bank country classification.
+Homogeneous and heterogeneous goods are defined according to the official list of goods`s classification, Rauch (1999).
+Small and large are computed based on either the count of HS6 exported by city $c$ or the total quantity exported.
+When one of these two metrics are above national average, the city is considered as large.
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
+
+multicolumn ={
+    'LDC': 1,
+    'DC': 1,
+    'Homogeneous': 1,
+    'Heterogeneous': 1,
+    'Small HS6': 1,
+    'Large HS6': 1,
+    'Small Quantity': 1,
+    'Large Quantityk': 1,
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+#new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
+lb.beautify(table_number = 2,
+            #multi_lines_dep = None,
+            multi_lines_dep = multi_lines_dep,
+            new_row= False,
+            multicolumn = multicolumn,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 200)
 ```
 
 <!-- #region nteract={"transient": {"deleting": false}} kernel="SoS" -->
 # Generate reports
 <!-- #endregion -->
 
-```sos nteract={"transient": {"deleting": false}} outputExpanded=false kernel="SoS"
+```sos nteract={"transient": {"deleting": false}} outputExpanded=false kernel="Python 3"
 import os, time, shutil, urllib, ipykernel, json
 from pathlib import Path
 from notebook import notebookapp
 ```
 
-```sos nteract={"transient": {"deleting": false}} outputExpanded=false kernel="SoS"
+```sos nteract={"transient": {"deleting": false}} outputExpanded=false kernel="Python 3"
 def create_report(extension = "html", keep_code = False):
     """
     Create a report from the current notebook and save it in the 
@@ -373,6 +789,6 @@ def create_report(extension = "html", keep_code = False):
     print("Report Available at this adress:\n {}".format(dest))
 ```
 
-```sos nteract={"transient": {"deleting": false}} outputExpanded=false kernel="SoS"
-create_report(extension = "html")
+```sos nteract={"transient": {"deleting": false}} outputExpanded=false kernel="Python 3"
+create_report(extension = "html", keep_code = True)
 ```
