@@ -9,4 +9,5 @@ The project requires to download data from the internet, or from Google Drive (p
 - [HOMOGENEOUS_GOODS](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data_from_/HOMOGENEOUS_GOODS): Rauch (1999) classifies each SITC Rev. 2 
 - [Sigma](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data_from_/Sigma): Broda and Weinstein (2006) estimate product-level import demand elasticities for 73 countries using HS0 3-digit codes
 - [WORLD_BANK](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data_from_/WORLD_BANK): GDP and GNI from the World bank
+- [BACI](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data_from_/BACI): BACI trade dataset 92-2002
 
