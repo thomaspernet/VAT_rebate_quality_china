@@ -1,0 +1,33 @@
+
+% Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mon, Oct 05, 2020 - 08:58:12
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm’s quality upgrading, characteristics of the destination countries, products, and cities} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lcccccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{8}{c}{Dependent variable: Product quality} \\ 
+\cline{2-9} 
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6) & (7) & (8)\\ 
+\hline \\[-1.8ex] 
+ ln\_lag\_tax\_rebate &  &  &  &  &  &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
+  regimeELIGIBLE &  &  &  &  &  &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
+  ln\_lag\_import\_tax &  &  &  &  &  &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
+  ln\_lag\_tax\_rebate:regimeELIGIBLE & $-$0.341$^{*}$ & $-$0.161$^{*}$ & $-$0.010 & $-$0.164$^{*}$ & 0.591 & $-$0.157$^{*}$ & $-$0.690$^{***}$ & $-$0.133 \\ 
+  & (0.197) & (0.091) & (0.236) & (0.091) & (0.993) & (0.085) & (0.195) & (0.088) \\ 
+  regimeELIGIBLE:ln\_lag\_import\_tax & $-$0.109 & $-$0.009 & $-$0.353 & 0.066 & 1.156 & 0.058 & 0.318 & 0.049 \\ 
+  & (0.499) & (0.101) & (0.314) & (0.108) & (1.132) & (0.106) & (0.399) & (0.107) \\ 
+ \hline \\[-1.8ex] 
+City-product-regime fixed effects & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+City-sector-regime-year fixed effects & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+product-year fixed effects & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Observations & 512,902 & 5,319,443 & 263,803 & 5,568,542 & 440,542 & 5,391,803 & 1,185,737 & 4,646,608 \\ 
+R$^{2}$ & 0.571 & 0.331 & 0.391 & 0.319 & 0.678 & 0.294 & 0.501 & 0.279 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 

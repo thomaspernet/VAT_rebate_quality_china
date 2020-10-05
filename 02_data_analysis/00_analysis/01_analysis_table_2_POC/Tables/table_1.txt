@@ -1,0 +1,37 @@
+
+% Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mon, Oct 05, 2020 - 09:14:45
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm’s quality upgrading, characteristics of the destination countries, products, and cities} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lcccccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{8}{c}{Dependent variable: Product quality} \\ 
+\cline{2-9} 
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6) & (7) & (8)\\ 
+\hline \\[-1.8ex] 
+ ln\_lag\_tax\_rebate &  &  &  &  &  &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
+  regimeELIGIBLE &  &  &  &  &  &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
+  ln\_lag\_import\_tax &  &  &  &  &  &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
+  lag\_foreign\_export\_share\_ckjr & 0.567$^{***}$ & 0.378$^{***}$ & 0.417$^{***}$ & 0.390$^{***}$ & 0.187$^{***}$ & 0.393$^{***}$ & 0.274$^{***}$ & 0.401$^{***}$ \\ 
+  & (0.080) & (0.029) & (0.053) & (0.033) & (0.072) & (0.032) & (0.035) & (0.032) \\ 
+  lag\_soe\_export\_share\_ckjr & 0.610$^{***}$ & 0.565$^{***}$ & 0.597$^{***}$ & 0.571$^{***}$ & 0.664$^{***}$ & 0.567$^{***}$ & 0.586$^{***}$ & 0.571$^{***}$ \\ 
+  & (0.040) & (0.022) & (0.041) & (0.023) & (0.044) & (0.022) & (0.033) & (0.022) \\ 
+  ln\_lag\_tax\_rebate:regimeELIGIBLE & $-$0.325 & $-$0.161$^{*}$ & $-$0.024 & $-$0.160$^{*}$ & 0.732 & $-$0.156$^{*}$ & $-$0.687$^{***}$ & $-$0.132 \\ 
+  & (0.199) & (0.090) & (0.235) & (0.090) & (0.983) & (0.084) & (0.193) & (0.088) \\ 
+  regimeELIGIBLE:ln\_lag\_import\_tax & $-$0.116 & $-$0.008 & $-$0.318 & 0.063 & 1.420 & 0.059 & 0.330 & 0.049 \\ 
+  & (0.496) & (0.100) & (0.327) & (0.108) & (1.106) & (0.106) & (0.401) & (0.107) \\ 
+ \hline \\[-1.8ex] 
+City-product-regime fixed effects & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+City-sector-regime-year fixed effects & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+product-year fixed effects & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Observations & 512,902 & 5,319,443 & 263,803 & 5,568,542 & 440,542 & 5,391,803 & 1,185,737 & 4,646,608 \\ 
+R$^{2}$ & 0.573 & 0.334 & 0.396 & 0.322 & 0.680 & 0.297 & 0.503 & 0.283 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
