@@ -184,6 +184,14 @@ resolution = 150):
         lines = lines.replace('lag\\_soe\\_export\\_share\\_ckr',
                               '\\text{lag SOE export share}_{ckr}^R')
 
+        lines = lines.replace('density\\_china\\_ville',
+                              '\\text{Density}_{ck}')
+
+        lines = lines.replace('balassa',
+                              '\\text{Comp Adv}_{ck}')
+
+
+
         #### very risky
         lines = lines.replace('(0.000)',
                               '')
