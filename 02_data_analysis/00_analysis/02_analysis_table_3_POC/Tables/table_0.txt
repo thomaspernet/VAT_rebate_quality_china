@@ -1,0 +1,52 @@
+
+% Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mon, Oct 05, 2020 - 14:04:12
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm’s quality upgrading, Effect of density} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lcccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{4}{c}{Dependent variable: Product quality} \\ 
+\cline{2-5} 
+\\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
+\hline \\[-1.8ex] 
+ ln\_lag\_tax\_rebate &  & $-$0.357$^{***}$ & $-$0.062 &  \\ 
+  & (0.000) & (0.101) & (0.163) & (0.000) \\ 
+  density\_china\_ville &  &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) & (0.000) \\ 
+  regimeELIGIBLE &  &  &  &  \\ 
+  & (0.000) &  &  & (0.000) \\ 
+  balassa &  &  &  &  \\ 
+  &  &  &  & (0.000) \\ 
+  ln\_lag\_import\_tax &  & 0.021 & $-$0.072 &  \\ 
+  & (0.000) & (0.048) & (0.103) & (0.000) \\ 
+  ln\_lag\_tax\_rebate:density\_china\_ville & 1.123 & 0.436 & 0.008 & 1.192 \\ 
+  & (0.855) & (0.315) & (0.815) & (0.865) \\ 
+  ln\_lag\_tax\_rebate:regimeELIGIBLE & 0.006 &  &  & 0.014 \\ 
+  & (0.193) &  &  & (0.193) \\ 
+  density\_china\_ville:regimeELIGIBLE &  &  &  &  \\ 
+  & (0.000) &  &  & (0.000) \\ 
+  ln\_lag\_tax\_rebate:balassa &  &  &  & $-$0.053$^{*}$ \\ 
+  &  &  &  & (0.028) \\ 
+  regimeELIGIBLE:balassa &  &  &  &  \\ 
+  &  &  &  & (0.000) \\ 
+  regimeELIGIBLE:ln\_lag\_import\_tax & 0.047 &  &  & 0.047 \\ 
+  & (0.128) &  &  & (0.127) \\ 
+  ln\_lag\_tax\_rebate:density\_china\_ville:regimeELIGIBLE & $-$0.910 &  &  & $-$0.875 \\ 
+  & (0.961) &  &  & (0.971) \\ 
+  ln\_lag\_tax\_rebate:regimeELIGIBLE:balassa &  &  &  & $-$0.030 \\ 
+  &  &  &  & (0.030) \\ 
+ \hline \\[-1.8ex] 
+City-product fixed effects & No & Yes & Yes & No \\ 
+City-sector-year fixed effects & No & Yes & Yes & No \\ 
+Product-destination fixed effect & No & Yes & Yes & No \\ 
+City-product-regime fixed effects & Yes & No & No & Yes \\ 
+City-sector-regime-year fixed effects & Yes & No & No & Yes \\ 
+product-year fixed effects & Yes & No & No & Yes \\ 
+Observations & 4,744,218 & 3,998,921 & 745,297 & 4,744,218 \\ 
+R$^{2}$ & 0.280 & 0.408 & 0.607 & 0.280 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 

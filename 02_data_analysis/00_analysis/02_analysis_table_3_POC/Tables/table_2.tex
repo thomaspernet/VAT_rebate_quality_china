@@ -1,0 +1,82 @@
+
+\documentclass[preview]{standalone} 
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
+
+\begin{document}% Date and time \times  Mon, Oct 05, 2020 - 14 \times 43 \times 18
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm’s quality upgrading, Effect of density} 
+\label{}
+\begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
+\begin{tabular}{@{\extracolsep{5pt}}lcccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+& \multicolumn{4}{c}{Dependent variable: Product quality} \\
+&\multicolumn{4}{c}{(city/product/trade regime/year)} \\ 
+\cline{2-5}
+            
+\\[-1.8ex]
+            &\multicolumn{1}{c}{}&\multicolumn{1}{c}{Eligible}&\multicolumn{1}{c}{Non-Eligible}\\
+\\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
+\hline \\[-1.8ex] 
+ Ln VAT export tax_{k,t-1} &  & $-$0.358$^{***}$ & $-$0.060 &  \\ 
+  &  & (0.101) & (0.163) &  \\ 
+  \text{Density}_{ck} &  &  &  &  \\ 
+  &  &  &  &  \\ 
+  \text{lag foreign export share}_{ckr}^R & 0.027$^{***}$ & 0.028$^{**}$ & 0.040$^{**}$ & 0.026$^{**}$ \\ 
+  & (0.010) & (0.012) & (0.020) & (0.010) \\ 
+  \text{lag SOE export share}_{ckr}^R & 0.039$^{***}$ & 0.065$^{***}$ & 0.002 & 0.040$^{***}$ \\ 
+  & (0.011) & (0.011) & (0.024) & (0.011) \\ 
+  \text{Comp Adv}_{ck} &  &  &  &  \\ 
+  &  &  &  &  \\ 
+  Ln VAT import tax_{k,t-1} &  & 0.020 & $-$0.072 &  \\ 
+  &  & (0.048) & (0.102) &  \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Density}_{ck} & 1.108 & 0.438 & $-$0.003 & 1.177 \\ 
+  & (0.854) & (0.315) & (0.815) & (0.864) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Eligible}^R & 0.004 &  &  & 0.012 \\ 
+  & (0.193) &  &  & (0.193) \\ 
+  \text{Density}_{ck} \times \text{Eligible}^R &  &  &  &  \\ 
+  &  &  &  &  \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Comp Adv}_{ck} &  &  &  & $-$0.053$^{*}$ \\ 
+  &  &  &  & (0.028) \\ 
+  \text{Eligible}^R \times \text{Comp Adv}_{ck} &  &  &  &  \\ 
+  &  &  &  &  \\ 
+  Ln VAT import tax_{k,t-1} \times \text{Eligible}^R & 0.047 &  &  & 0.047 \\ 
+  & (0.127) &  &  & (0.127) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Density}_{ck} \times \text{Eligible}^R & $-$0.895 &  &  & $-$0.859 \\ 
+  & (0.960) &  &  & (0.969) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Eligible}^R \times \text{Comp Adv}_{ck} &  &  &  & $-$0.031 \\ 
+  &  &  &  & (0.030) \\ 
+ \hline \\[-1.8ex] 
+City-product fixed effects & No & Yes & Yes & No \\ 
+City-sector-year fixed effects & No & Yes & Yes & No \\ 
+Product-destination fixed effect & No & Yes & Yes & No \\ 
+City-product-regime fixed effects & Yes & No & No & Yes \\ 
+City-sector-regime-year fixed effects & Yes & No & No & Yes \\ 
+product-year fixed effects & Yes & No & No & Yes \\ 
+Observations & 4,744,218 & 3,998,921 & 745,297 & 4,744,218 \\ 
+R$^{2}$ & 0.280 & 0.408 & 0.607 & 0.280 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular}
+\end{adjustbox}
+\begin{tablenotes} 
+ \small 
+ \item \\ 
+
+This table estimates eq(3). 
+LDC and DC are defined according to the World Bank country classification.
+Homogeneous and heterogeneous goods are defined according to the official list of goods`s classification, Rauch (1999).
+Small and large are computed based on either the count of HS6 exported by city $c$ or the total quantity exported.
+When one of these two metrics are above national average, the city is considered as large.
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%. 
+\end{tablenotes}
+\end{table}
+
+\end{document}
