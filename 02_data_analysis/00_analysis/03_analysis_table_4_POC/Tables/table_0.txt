@@ -1,0 +1,33 @@
+
+% Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Tue, Oct 06, 2020 - 06:55:20
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm’s quality upgrading, characteristics of sensible sectors} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{5}{c}{Dependent variable: Product quality} \\ 
+\cline{2-6} 
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5)\\ 
+\hline \\[-1.8ex] 
+ ln\_lag\_tax\_rebate &  &  &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
+  regimeELIGIBLE &  &  &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
+  ln\_lag\_import\_tax &  &  &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
+  ln\_lag\_tax\_rebate:regimeELIGIBLE & $-$0.151$^{*}$ & $-$0.173$^{*}$ & $-$0.164$^{*}$ & $-$0.149$^{*}$ & $-$0.152$^{*}$ \\ 
+  & (0.086) & (0.093) & (0.086) & (0.085) & (0.085) \\ 
+  regimeELIGIBLE:ln\_lag\_import\_tax & 0.056 & 0.149 & 0.033 & 0.062 & 0.056 \\ 
+  & (0.105) & (0.106) & (0.105) & (0.105) & (0.105) \\ 
+ \hline \\[-1.8ex] 
+City-product-regime fixed effects & Yes & Yes & Yes & Yes & Yes \\ 
+City-sector-regime-year fixed effects & Yes & Yes & Yes & Yes & Yes \\ 
+product-year fixed effects & Yes & Yes & Yes & Yes & Yes \\ 
+Observations & 5,827,366 & 4,162,528 & 5,780,615 & 5,693,323 & 5,832,345 \\ 
+R$^{2}$ & 0.321 & 0.324 & 0.321 & 0.318 & 0.321 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
