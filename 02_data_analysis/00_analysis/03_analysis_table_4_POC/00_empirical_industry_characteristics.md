@@ -473,14 +473,11 @@ clustered at the product level appear inparentheses.
 \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
 
 multicolumn ={
-    'LDC': 1,
-    'DC': 1,
-    'Homogeneous': 1,
-    'Heterogeneous': 1,
-    'Small HS6': 1,
-    'Large HS6': 1,
-    'Small Quantity': 1,
-    'Large Quantityk': 1,
+    'No rare-earth': 1,
+    'No energy intensive': 1,
+    'No high tech': 1,
+    'No RD oriented': 1,
+    'No high skilled oriented': 1,
 }
 multi_lines_dep = '(city/product/trade regime/year)'
 #new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
@@ -609,14 +606,11 @@ clustered at the product level appear inparentheses.
 \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
 
 multicolumn ={
-    'LDC': 1,
-    'DC': 1,
-    'Homogeneous': 1,
-    'Heterogeneous': 1,
-    'Small HS6': 1,
-    'Large HS6': 1,
-    'Small Quantity': 1,
-    'Large Quantityk': 1,
+    'No rare-earth': 1,
+    'No energy intensive': 1,
+    'No high tech': 1,
+    'No RD oriented': 1,
+    'No high skilled oriented': 1,
 }
 multi_lines_dep = '(city/product/trade regime/year)'
 #new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
