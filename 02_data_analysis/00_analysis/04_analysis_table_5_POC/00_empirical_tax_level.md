@@ -79,9 +79,11 @@ https://drive.google.com/uc?export=view&id=151HkrKsUMiAEEgNQ66JkrIvIaoVZvYQI
 * Origin: 
 * Athena
 * Name: 
-* quality_vat_export_covariate_2003_2010
+    * quality_vat_export_covariate_2003_2010
+    * base_hs6_VAT_2002_2012
 * Github: 
   * https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/02_transform_table_baseline_covariates.md
+  * https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/01_prepare_tables/01_tables_trade_tariffs_taxes.md
 <!-- #endregion -->
 
 <!-- #region kernel="SoS" -->
@@ -138,7 +140,38 @@ Since we load the data as a Pandas DataFrame, we want to pass the `dtypes`. We l
 <!-- #region kernel="SoS" -->
 - Filename: XX
 - Main table S3: https://s3.console.aws.amazon.com/s3/buckets/vat-rebate-quality/DATA/TRANSFORMED/?region=eu-west-3&tab=overview
+- Athena:
+    - base_hs6_vat_2002_2012
 <!-- #endregion -->
+
+```sos kernel="Python 3"
+download_data = True
+db = 'chinese_trade'
+if download_data:
+
+    query = """
+    SELECT *
+    FROM chinese_trade.base_hs6_vat_2002_2012
+    """
+    output = s3.run_query(
+            query=query,
+            database=db,
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename=None,  # Add filename to print dataframe
+            destination_key=None # Add destination key if need to copy output
+        )
+    s3.download_file(
+        key = os.path.join('SQL_OUTPUT_ATHENA', "{}.csv".format(output['QueryID'])),
+    path_local = os.path.join(str(Path(path).parent.parent.parent), 
+                              "00_data_catalogue/temporary_local_data")
+)
+    os.rename(os.path.join(str(Path(path).parent.parent.parent), 
+                              "00_data_catalogue/temporary_local_data", "{}.csv".format(output['QueryID'])),
+         os.path.join(str(Path(path).parent.parent.parent), 
+                              "00_data_catalogue/temporary_local_data/base_hs6_vat_2002_2012.csv")
+         )
+    
+```
 
 <!-- #region kernel="SoS" -->
 # Models to estimate
@@ -188,19 +221,64 @@ source(path)
 ```
 
 <!-- #region kernel="R" -->
-Load industrial data
+Create the fixed effect using Pandas is faster. We then save it locally and we will remove the file at the end of the notebook
+<!-- #endregion -->
+
+```sos kernel="Python 3"
+path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010.csv'
+temp = pd.read_csv(path)
+## Shocks
+temp["fe_group_shock"] = pd.factorize(
+    temp["hs6"].astype('str') +
+    temp["country_en"].astype('str') + 
+    temp["year"].astype('str'))[0]
+```
+
+```sos kernel="Python 3"
+path_to_save = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010_temp.csv'
+temp.to_csv(path_to_save, index = False)
+```
+
+```sos kernel="R"
+path_vat = '../../../00_Data_catalogue/temporary_local_data/base_hs6_vat_2002_2012.csv'
+vat <- read_csv(path_vat, col_types = "dddddd")
+```
+
+```sos kernel="R"
+path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010_temp.csv'
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(vat)
+```
+
+<!-- #region kernel="R" -->
+Dataset `switch eligible to non eligle` and `switch non eligible to eligible`
 <!-- #endregion -->
 
 ```sos kernel="R"
-path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010.csv'
-df_final <- read_csv(path) %>%
-mutate_if(is.character, as.factor) %>%
-    mutate_at(vars(starts_with("fe")), as.factor) %>%
-mutate(regime = relevel(regime, ref='NOT_ELIGIBLE'))
+temp <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE) %>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==1)
+
+temp_2 <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE)%>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==2)
 ```
 
 <!-- #region kernel="SoS" -->
-## Table 1: Tax lelel, no covariates
+## Table 1: Tax level, no covariates
 
 $$
 \begin{aligned}
@@ -213,7 +291,7 @@ $$
   * city-product-regime: `fe_ckr`
   * city-sector-regime-year: `fe_csrt`
   * product-year: `fe_kt`
-  * Shocks: hs6 + destination + year = 2003 
+  * Shocks: `hs6` + `country_en` + `year` 
 * Column 2 includes cities presents full years with the main fixed effect:
   * city-product-regime: `fe_ckr`
   * city-sector-regime-year: `fe_csrt`
@@ -241,32 +319,70 @@ Sector is defined as the GBT 4 digits
 ```sos kernel="R"
 #### SHOCKS
 t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(hs6 != 850511),
+            | fe_ckr + fe_csrt+fe_kt + fe_group_shock|0 | hs6, df_final,
             exactDOF = TRUE)
 
 #### BALANCE
 t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter( is.na(energy)),
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
+  mutate(length = length(unique(year))) %>%
+  filter(length ==8),
             exactDOF = TRUE)
+```
 
+```sos kernel="R"
+temp_f_no_eli <- temp_2 %>%
+  filter(regime =="NOT_ELIGIBLE")
+
+temp_f_eli <- temp %>%
+  filter(regime =="ELIGIBLE") %>%
+  inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
+
+temp_f_eli <-temp_f_eli%>%
+  filter(year.x != year.y)
+
+#data_set_d <- data_set %>%
+#  anti_join(temp_f_eli)
+    
 #### ELIGIBLE TO NON ELIGIBLE
 t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(high_tech)),
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
             exactDOF = TRUE)
+```
 
+```sos kernel="R"
+temp_f_no_eli <- temp_2 %>%
+  filter(regime =="ELIGIBLE")
+
+temp_f_eli <- temp %>%
+  filter(regime =="NOT_ELIGIBLE") %>%
+  inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
+
+temp_f_eli <-temp_f_eli%>%
+  filter(year.x != year.y)
+
+#data_set_d <- data_set %>%
+#  anti_join(temp_f_eli)
+    
 #### NON ELIGIBLE TO ELIGIBLE
 t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(skilled)),
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
             exactDOF = TRUE)
+```
 
+```sos kernel="R"
+dim(df_final %>% anti_join(temp_f_eli))
+```
+
+```sos kernel="R"
 ##### ONLY 17% 
 t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(rd)),
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(vat_m==17),
             exactDOF = TRUE)
 
 ##### EXCLUDE 0%
 t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(rd)),
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(vat_reb_m != 0),
             exactDOF = TRUE)
 ```
 
@@ -293,7 +409,9 @@ fe1 <- list(
     
     c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes","Yes"),
     
-    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes","Yes")
+    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    
+    c("product-year-destination fixed effects", "Yes", "No", "No", "No","No","No")
              )
 
 table_1 <- go_latex(list(
@@ -324,7 +442,7 @@ multicolumn ={
     'Balance': 1,
     'Eligible to non eligible': 1,
     'Non eligible to eligible': 1,
-    'Only 17%': 1,
+    'Only 17\%': 1,
     'No zero rebate': 1
 }
 multi_lines_dep = '(city/product/trade regime/year)'
@@ -353,7 +471,7 @@ $$
   * city-product-regime: `fe_ckr`
   * city-sector-regime-year: `fe_csrt`
   * product-year: `fe_kt`
-  * Shocks: hs6 + destination + year = 2003 
+  * Shocks: `hs6` + `country_en` + `year` 
 * Column 2 includes cities presents full years with the main fixed effect:
   * city-product-regime: `fe_ckr`
   * city-sector-regime-year: `fe_csrt`
@@ -380,33 +498,73 @@ Sector is defined as the GBT 4 digits
 
 ```sos kernel="R"
 #### SHOCKS
-t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(hs6 != 850511),
+t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt + fe_group_shock|0 | hs6, df_final,
             exactDOF = TRUE)
 
 #### BALANCE
-t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter( is.na(energy)),
+t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
+  mutate(length = length(unique(year))) %>%
+  filter(length ==8),
             exactDOF = TRUE)
+```
 
+```sos kernel="R"
+temp_f_no_eli <- temp_2 %>%
+  filter(regime =="NOT_ELIGIBLE")
+
+temp_f_eli <- temp %>%
+  filter(regime =="ELIGIBLE") %>%
+  inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
+
+temp_f_eli <-temp_f_eli%>%
+  filter(year.x != year.y)
+
+#data_set_d <- data_set %>%
+#  anti_join(temp_f_eli)
+    
 #### ELIGIBLE TO NON ELIGIBLE
-t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(high_tech)),
+t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
             exactDOF = TRUE)
+```
 
+```sos kernel="R"
+temp_f_no_eli <- temp_2 %>%
+  filter(regime =="ELIGIBLE")
+
+temp_f_eli <- temp %>%
+  filter(regime =="NOT_ELIGIBLE") %>%
+  inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
+
+temp_f_eli <-temp_f_eli%>%
+  filter(year.x != year.y)
+
+#data_set_d <- data_set %>%
+#  anti_join(temp_f_eli)
+    
 #### NON ELIGIBLE TO ELIGIBLE
-t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(skilled)),
+t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
             exactDOF = TRUE)
+```
 
+```sos kernel="R"
 ##### ONLY 17% 
-t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(rd)),
+t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(vat_m==17),
             exactDOF = TRUE)
 
 ##### EXCLUDE 0%
-t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(rd)),
+t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(vat_reb_m != 0),
             exactDOF = TRUE)
 ```
 
@@ -433,7 +591,9 @@ fe1 <- list(
     
     c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes","Yes"),
     
-    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes","Yes")
+    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    
+    c("product-year-destination fixed effects", "Yes", "No", "No", "No","No","No")
              )
 
 table_1 <- go_latex(list(
@@ -464,7 +624,7 @@ multicolumn ={
     'Balance': 1,
     'Eligible to non eligible': 1,
     'Non eligible to eligible': 1,
-    'Only 17%': 1,
+    'Only 17\%': 1,
     'No zero rebate': 1
 }
 multi_lines_dep = '(city/product/trade regime/year)'
@@ -494,7 +654,7 @@ $$
   * city-product-regime: `fe_ckr`
   * city-sector-regime-year: `fe_csrt`
   * product-year: `fe_kt`
-  * Shocks: hs6 + destination + year = 2003 
+  * Shocks: `hs6` + `country_en` + `year` 
 * Column 2 includes cities presents full years with the main fixed effect:
   * city-product-regime: `fe_ckr`
   * city-sector-regime-year: `fe_csrt`
@@ -521,33 +681,73 @@ Sector is defined as the GBT 4 digits
 
 ```sos kernel="R"
 #### SHOCKS
-t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(hs6 != 850511),
+t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt + fe_group_shock|0 | hs6, df_final,
             exactDOF = TRUE)
 
 #### BALANCE
-t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter( is.na(energy)),
+t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
+  mutate(length = length(unique(year))) %>%
+  filter(length ==8),
             exactDOF = TRUE)
+```
 
+```sos kernel="R"
+temp_f_no_eli <- temp_2 %>%
+  filter(regime =="NOT_ELIGIBLE")
+
+temp_f_eli <- temp %>%
+  filter(regime =="ELIGIBLE") %>%
+  inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
+
+temp_f_eli <-temp_f_eli%>%
+  filter(year.x != year.y)
+
+#data_set_d <- data_set %>%
+#  anti_join(temp_f_eli)
+    
 #### ELIGIBLE TO NON ELIGIBLE
-t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(high_tech)),
+t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
             exactDOF = TRUE)
+```
 
+```sos kernel="R"
+temp_f_no_eli <- temp_2 %>%
+  filter(regime =="ELIGIBLE")
+
+temp_f_eli <- temp %>%
+  filter(regime =="NOT_ELIGIBLE") %>%
+  inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
+
+temp_f_eli <-temp_f_eli%>%
+  filter(year.x != year.y)
+
+#data_set_d <- data_set %>%
+#  anti_join(temp_f_eli)
+    
 #### NON ELIGIBLE TO ELIGIBLE
-t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(skilled)),
+t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
             exactDOF = TRUE)
+```
 
+```sos kernel="R"
 ##### ONLY 17% 
-t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(rd)),
+t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(vat_m==17),
             exactDOF = TRUE)
 
 ##### EXCLUDE 0%
-t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(rd)),
+t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(vat_reb_m != 0),
             exactDOF = TRUE)
 ```
 
@@ -574,7 +774,9 @@ fe1 <- list(
     
     c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes","Yes"),
     
-    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes","Yes")
+    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    
+    c("product-year-destination fixed effects", "Yes", "No", "No", "No","No","No")
              )
 
 table_1 <- go_latex(list(
@@ -604,7 +806,7 @@ multicolumn ={
     'Balance': 1,
     'Eligible to non eligible': 1,
     'Non eligible to eligible': 1,
-    'Only 17%': 1,
+    'Only 17\%': 1,
     'No zero rebate': 1
 }
 multi_lines_dep = '(city/product/trade regime/year)'
@@ -617,6 +819,12 @@ lb.beautify(table_number = 2,
             table_nte = tbe1,
             jupyter_preview = True,
             resolution = 200)
+```
+
+```sos kernel="Python 3"
+os.remove(path_to_save)
+os.remove(os.path.join(str(Path(path).parent.parent.parent), 
+                              "00_data_catalogue/temporary_local_data/base_hs6_vat_2002_2012.csv"))
 ```
 
 <!-- #region nteract={"transient": {"deleting": false}} kernel="SoS" -->
