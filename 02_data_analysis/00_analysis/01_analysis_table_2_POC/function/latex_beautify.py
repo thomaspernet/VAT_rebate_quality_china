@@ -184,6 +184,14 @@ resolution = 150):
         lines = lines.replace('lag\\_soe\\_export\\_share\\_ckr',
                               '\\text{lag SOE export share}_{ckr}^R')
 
+        lines = lines.replace('density\\_china\\_ville',
+                              '\\text{Density}_{ck}')
+
+        lines = lines.replace('balassa',
+                              '\\text{Comp Adv}_{ck}')
+
+
+
         #### very risky
         lines = lines.replace('(0.000)',
                               '')
@@ -239,6 +247,25 @@ resolution = 150):
     # Write the file out again
     with open(table_out, 'w') as file:
         file.write(lines)
+
+    ### Remove empty lines (usually due to fixed effect)
+    with open(table_out, 'r') as f:
+        lines = f.readlines()
+
+    list_lines_to_remove = []
+    for x, line in enumerate(lines):
+        test = bool(re.search(r'\d', line))
+        if test == False:
+            charRe = re.compile(r'^[\W]+$')
+            string = charRe.search(line)
+            if bool(string) and not line.isspace():
+                list_lines_to_remove.append(x -1)
+                list_lines_to_remove.append(x)
+
+    with open(table_out, "w") as f:
+        for x, line in enumerate(lines):
+            if x not in list_lines_to_remove:
+                f.write(line)
 
     ### add table #
     if table_nte != None:
