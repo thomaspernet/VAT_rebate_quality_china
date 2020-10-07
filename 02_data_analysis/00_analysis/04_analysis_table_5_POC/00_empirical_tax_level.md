@@ -131,6 +131,38 @@ if pandas_setting:
     pd.set_option('display.max_colwidth', None)
 ```
 
+```sos kernel="R"
+#density\_china\_ville:ln\_lag\_import\_tax
+change_import_tax_order <- function(table){
+    check_three_int <- grep("density_china_ville:regimeELIGIBLE:ln_lag_import_tax$", rownames(table$coef))
+    check_two_int <- grep("density_china_ville:ln_lag_import_tax$", rownames(table$coef))
+    check_two_eligible <- grep("^regimeELIGIBLE:balassa$", rownames(table$coef))
+    
+    if (length(check_three_int) !=0) {
+    rownames(table$coefficients)[check_three_int] <- 'ln_lag_import_tax:density_china_ville:regimeELIGIBLE'
+    rownames(table$beta)[check_three_int] <- 'ln_lag_import_tax:density_china_ville:regimeELIGIBLE'
+}
+    if (length(check_two_int) !=0) {
+    rownames(table$coefficients)[check_two_int] <- 'ln_lag_import_tax:density_china_ville'
+    rownames(table$beta)[check_two_int] <- 'ln_lag_import_tax:density_china_ville'
+}
+    if (length(check_two_eligible) !=0) {
+    rownames(table$coefficients)[check_two_eligible] <- 'balassa:regimeELIGIBLE'
+    rownames(table$beta)[check_two_eligible] <- 'balassa:regimeELIGIBLE'
+}
+    
+    return (table)
+}
+```
+
+```sos kernel="R"
+loadRData <- function(fileName){
+#loads an RData file, and returns it
+    load(fileName)
+    get(ls()[ls() != "fileName"])
+}
+```
+
 <!-- #region kernel="SoS" -->
 # Load tables
 
@@ -225,18 +257,17 @@ Create the fixed effect using Pandas is faster. We then save it locally and we w
 <!-- #endregion -->
 
 ```sos kernel="Python 3"
-path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010.csv'
-temp = pd.read_csv(path)
-## Shocks
-temp["fe_group_shock"] = pd.factorize(
-    temp["hs6"].astype('str') +
-    temp["country_en"].astype('str') + 
-    temp["year"].astype('str'))[0]
-```
-
-```sos kernel="Python 3"
-path_to_save = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010_temp.csv'
-temp.to_csv(path_to_save, index = False)
+add_shock = True
+if add_shock:
+    path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010.csv'
+    temp = pd.read_csv(path)
+    ## Shocks
+    temp["fe_group_shock"] = pd.factorize(
+        temp["hs6"].astype('str') +
+        temp["country_en"].astype('str') + 
+        temp["year"].astype('str'))[0]
+    path_to_save = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010_temp.csv'
+    temp.to_csv(path_to_save, index = False)
 ```
 
 ```sos kernel="R"
@@ -245,36 +276,10 @@ vat <- read_csv(path_vat, col_types = "dddddd")
 ```
 
 ```sos kernel="R"
-path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010_temp.csv'
-df_final <- read_csv(path) %>%
-mutate_if(is.character, as.factor) %>%
-mutate_at(vars(starts_with("fe")), as.factor) %>%
-mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
-left_join(vat)
-```
-
-<!-- #region kernel="R" -->
-Dataset `switch eligible to non eligle` and `switch non eligible to eligible`
-<!-- #endregion -->
-
-```sos kernel="R"
-temp <- df_final %>%
-  group_by(geocode4_corr, hs6, year) %>%
-  select(c("geocode4_corr","hs6","regime","year")) %>%
-  arrange(geocode4_corr, hs6, year) %>%
-  distinct(.keep_all = TRUE) %>%
-  ungroup() %>%
-  group_by(geocode4_corr, hs6) %>%
-  filter(row_number()==1)
-
-temp_2 <- df_final %>%
-  group_by(geocode4_corr, hs6, year) %>%
-  select(c("geocode4_corr","hs6","regime","year")) %>%
-  arrange(geocode4_corr, hs6, year) %>%
-  distinct(.keep_all = TRUE)%>%
-  ungroup() %>%
-  group_by(geocode4_corr, hs6) %>%
-  filter(row_number()==2)
+path_density = '../../../00_Data_catalogue/temporary_local_data/density.Rda'
+density_city <- loadRData(file = path_density) 
+density_city <- density_city %>% ungroup() %>% mutate(
+    hs6 = as.double(hs6), geocode4_corr = as.double(geocode4_corr))
 ```
 
 <!-- #region kernel="SoS" -->
@@ -317,6 +322,34 @@ Sector is defined as the GBT 4 digits
 <!-- #endregion -->
 
 ```sos kernel="R"
+path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010_temp.csv'
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(vat)
+
+# Dataset `switch eligible to non eligle` and `switch non eligible to eligible`
+temp <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE) %>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==1)
+
+temp_2 <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE)%>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==2)
+```
+
+```sos kernel="R"
 #### SHOCKS
 t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
             | fe_ckr + fe_csrt+fe_kt + fe_group_shock|0 | hs6, df_final,
@@ -339,11 +372,7 @@ temp_f_eli <- temp %>%
   inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
 
 temp_f_eli <-temp_f_eli%>%
-  filter(year.x != year.y)
-
-#data_set_d <- data_set %>%
-#  anti_join(temp_f_eli)
-    
+  filter(year.x != year.y)    
 #### ELIGIBLE TO NON ELIGIBLE
 t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
@@ -360,18 +389,11 @@ temp_f_eli <- temp %>%
 
 temp_f_eli <-temp_f_eli%>%
   filter(year.x != year.y)
-
-#data_set_d <- data_set %>%
-#  anti_join(temp_f_eli)
     
 #### NON ELIGIBLE TO ELIGIBLE
 t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
             exactDOF = TRUE)
-```
-
-```sos kernel="R"
-dim(df_final %>% anti_join(temp_f_eli))
 ```
 
 ```sos kernel="R"
@@ -458,61 +480,124 @@ lb.beautify(table_number = 0,
 ```
 
 <!-- #region kernel="Python 3" -->
-## Table 2: Industry characteristics, with covariates city, regime destination, product
-
-$$
-\begin{aligned}
-\operatorname{Quality}_{c,k,j, t}^{R} &=\alpha \ln \operatorname{VAT} \operatorname{Export} \operatorname{tax}_{k, t-1} \times \text { Eligibility }^{R} \\
-&+F E_{c,k}^{R}+F E_{c,s,t}^{R}+ F E_{k, t}+\epsilon_{ck,j, t}^{R}
-\end{aligned}
-$$
+## Table 2: Density, Tax level, with covariates city, regime destination, product
 
 * Column 1 add shocks with the main fixed effect:
   * city-product-regime: `fe_ckr`
-  * city-sector-regime-year: `fe_csrt`
-  * product-year: `fe_kt`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj` 
   * Shocks: `hs6` + `country_en` + `year` 
-* Column 2 includes cities presents full years with the main fixed effect:
+* Column 2 add shocks with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+  * Shocks: `hs6` + `country_en` + `year` 
+* Column 3 includes cities presents full years with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 4 includes cities presents full years with the main fixed effect:
   * city-product-regime: `fe_ckr`
   * city-sector-regime-year: `fe_csrt`
-  * product-year: `fe_kt`
-* Column 3 switch eligible to non eligle with the main fixed effect:
+  * product-year: `fe_kt` 
+* Column 5 switch eligible to non eligle with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 6 switch eligible to non eligle with the main fixed effect:
   * city-product-regime: `fe_ckr`
   * city-sector-regime-year: `fe_csrt`
-  * product-year: `fe_kt`
-* Column 4 switch non eligible to eligible with the main fixed effect:
+  * product-year: `fe_kt` 
+* Column 7 switch non eligible to eligible with the main fixed effect:
   * city-product-regime: `fe_ckr`
-  * city-sector-regime-year: `fe_csrt`
-  * product-year: `fe_kt`
-* Column 5 keep rebates 17% with the main fixed effect:
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 8 switch non eligible to eligible with the main fixed effect:
   * city-product-regime: `fe_ckr`
-  * city-sector-regime-year: `fe_csrt`
-  * product-year: `fe_kt`
-* Column 6 exclude rebates 0% with the main fixed effect:
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+* Column 9 keep rebates 17% with the main fixed effect:
   * city-product-regime: `fe_ckr`
-  * city-sector-regime-year: `fe_csrt`
-  * product-year: `fe_kt`
-  
-Sector is defined as the GBT 4 digits
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 10 keep rebates 17% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+* Column 11 exclude rebates 0% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 12 exclude rebates 0% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
 <!-- #endregion -->
 
 ```sos kernel="R"
-#### SHOCKS
-t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ckr + fe_csrt+fe_kt + fe_group_shock|0 | hs6, df_final,
-            exactDOF = TRUE)
+path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010_temp.csv'
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(vat) %>%
+inner_join(density_city)
 
-#### BALANCE
-t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
-  mutate(length = length(unique(year))) %>%
-  filter(length ==8),
-            exactDOF = TRUE)
+# Dataset `switch eligible to non eligle` and `switch non eligible to eligible`
+temp <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE) %>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==1)
+
+temp_2 <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE)%>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==2)
 ```
 
 ```sos kernel="R"
+#### SHOCKS
+t_0 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_pj + fe_group_shock|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_0<- change_import_tax_order(t_0)
+t_1<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_kt + fe_group_shock|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_1 <- change_import_tax_order(t_1)
+#### BALANCE
+t_2 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
+  mutate(length = length(unique(year))) %>%
+  filter(length ==8),
+            exactDOF = TRUE)
+t_2<- change_import_tax_order(t_2)
+t_3<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
+  mutate(length = length(unique(year))) %>%
+  filter(length ==8),
+            exactDOF = TRUE)
+t_3 <- change_import_tax_order(t_3)
+```
+
+```sos kernel="R"
+#### ELIGIBLE TO NON ELIGIBLE
 temp_f_no_eli <- temp_2 %>%
   filter(regime =="NOT_ELIGIBLE")
 
@@ -521,19 +606,25 @@ temp_f_eli <- temp %>%
   inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
 
 temp_f_eli <-temp_f_eli%>%
-  filter(year.x != year.y)
+  filter(year.x != year.y)   
 
-#data_set_d <- data_set %>%
-#  anti_join(temp_f_eli)
-    
-#### ELIGIBLE TO NON ELIGIBLE
-t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
+
+t_4 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% anti_join(temp_f_eli),
             exactDOF = TRUE)
+t_4<- change_import_tax_order(t_4)
+t_5<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
+            exactDOF = TRUE)
+t_5 <- change_import_tax_order(t_5)
 ```
 
 ```sos kernel="R"
+#### NON ELIGIBLE TO ELIGIBLE
 temp_f_no_eli <- temp_2 %>%
   filter(regime =="ELIGIBLE")
 
@@ -543,29 +634,49 @@ temp_f_eli <- temp %>%
 
 temp_f_eli <-temp_f_eli%>%
   filter(year.x != year.y)
-
-#data_set_d <- data_set %>%
-#  anti_join(temp_f_eli)
     
-#### NON ELIGIBLE TO ELIGIBLE
-t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
+t_6 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% anti_join(temp_f_eli),
             exactDOF = TRUE)
+t_6<- change_import_tax_order(t_6)
+t_7<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
+            exactDOF = TRUE)
+t_7 <- change_import_tax_order(t_7)
 ```
 
 ```sos kernel="R"
 ##### ONLY 17% 
-t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(vat_m==17),
+t_8 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(vat_m==17),
             exactDOF = TRUE)
+t_8<- change_import_tax_order(t_8)
+t_9<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(vat_m==17),
+            exactDOF = TRUE)
+t_9 <- change_import_tax_order(t_9)
 
 ##### EXCLUDE 0%
-t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(vat_reb_m != 0),
+t_10 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(vat_reb_m != 0),
             exactDOF = TRUE)
+t_10<- change_import_tax_order(t_10)
+t_11<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(vat_reb_m != 0),
+            exactDOF = TRUE)
+t_11 <- change_import_tax_order(t_11)
 ```
 
 ```sos kernel="Python 3"
@@ -587,17 +698,18 @@ except:
 ```sos kernel="R"
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
-    c("City-product-regime fixed effects","Yes", "Yes", "Yes", "Yes","Yes","Yes"),
     
-    c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    c("City-product-regime fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
     
-    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    c("City-sector-year fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
     
-    c("product-year-destination fixed effects", "Yes", "No", "No", "No","No","No")
+    c("Product-destination fixed effect","Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No"),
+        
+    c("product-year fixed effects", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes")
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4, t_5
+    t_0,t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8, t_9, t_10, t_11
 ),
     title="VAT export tax and firm’s quality upgrading, Robustness checks",
     dep_var = dep,
@@ -609,6 +721,12 @@ table_1 <- go_latex(list(
 ```
 
 ```sos kernel="Python 3"
+reorder = {
+    # Old, New
+    4:2, ## Density * eligible
+    8:3, ## comp * eligibile
+}
+
 tbe1  = """
 This table estimates eq(3). 
 Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
@@ -620,12 +738,12 @@ clustered at the product level appear inparentheses.
 \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
 
 multicolumn ={
-    'Shocks': 1,
-    'Balance': 1,
-    'Eligible to non eligible': 1,
-    'Non eligible to eligible': 1,
-    'Only 17\%': 1,
-    'No zero rebate': 1
+    'Shocks': 2,
+    'Balance': 2,
+    'Eligible to non eligible': 2,
+    'Non eligible to eligible': 2,
+    'Only 17\%': 2,
+    'No zero rebate': 2
 }
 multi_lines_dep = '(city/product/trade regime/year)'
 #new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
@@ -634,13 +752,14 @@ lb.beautify(table_number = 1,
             multi_lines_dep = multi_lines_dep,
             new_row= False,
             multicolumn = multicolumn,
+            reorder_var = None,
             table_nte = tbe1,
             jupyter_preview = True,
-            resolution = 200)
+            resolution = 300)
 ```
 
 <!-- #region kernel="Python 3" -->
-## Table 3: Industry characteristics, with covariates city, regime, product
+## Table 3: Tax level, with covariates city, regime destination, product
 
 $$
 \begin{aligned}
@@ -648,7 +767,6 @@ $$
 &+F E_{c,k}^{R}+F E_{c,s,t}^{R}+ F E_{k, t}+\epsilon_{ck,j, t}^{R}
 \end{aligned}
 $$
-
 
 * Column 1 add shocks with the main fixed effect:
   * city-product-regime: `fe_ckr`
@@ -680,15 +798,43 @@ Sector is defined as the GBT 4 digits
 <!-- #endregion -->
 
 ```sos kernel="R"
+path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010_temp.csv'
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(vat)
+
+# Dataset `switch eligible to non eligle` and `switch non eligible to eligible`
+temp <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE) %>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==1)
+
+temp_2 <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE)%>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==2)
+```
+
+```sos kernel="R"
 #### SHOCKS
 t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | fe_ckr + fe_csrt+fe_kt + fe_group_shock|0 | hs6, df_final,
             exactDOF = TRUE)
 
 #### BALANCE
 t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
   mutate(length = length(unique(year))) %>%
   filter(length ==8),
@@ -711,7 +857,7 @@ temp_f_eli <-temp_f_eli%>%
     
 #### ELIGIBLE TO NON ELIGIBLE
 t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
             exactDOF = TRUE)
 ```
@@ -732,7 +878,7 @@ temp_f_eli <-temp_f_eli%>%
     
 #### NON ELIGIBLE TO ELIGIBLE
 t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
             exactDOF = TRUE)
 ```
@@ -740,13 +886,13 @@ t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * 
 ```sos kernel="R"
 ##### ONLY 17% 
 t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(vat_m==17),
             exactDOF = TRUE)
 
 ##### EXCLUDE 0%
 t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(vat_reb_m != 0),
             exactDOF = TRUE)
 ```
@@ -794,6 +940,7 @@ table_1 <- go_latex(list(
 ```sos kernel="Python 3"
 tbe1  = """
 This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
 Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
 Sectors are defined following the Chinese 4-digit GB/T industry
 classification and regroup several products.
@@ -819,6 +966,798 @@ lb.beautify(table_number = 2,
             table_nte = tbe1,
             jupyter_preview = True,
             resolution = 200)
+```
+
+<!-- #region kernel="Python 3" -->
+## Table 4: Density, Tax level, with covariates city, regime destination, product
+
+* Column 1 add shocks with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj` 
+  * Shocks: `hs6` + `country_en` + `year` 
+* Column 2 add shocks with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+  * Shocks: `hs6` + `country_en` + `year` 
+* Column 3 includes cities presents full years with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 4 includes cities presents full years with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-regime-year: `fe_csrt`
+  * product-year: `fe_kt` 
+* Column 5 switch eligible to non eligle with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 6 switch eligible to non eligle with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-regime-year: `fe_csrt`
+  * product-year: `fe_kt` 
+* Column 7 switch non eligible to eligible with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 8 switch non eligible to eligible with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+* Column 9 keep rebates 17% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 10 keep rebates 17% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+* Column 11 exclude rebates 0% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 12 exclude rebates 0% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+<!-- #endregion -->
+
+```sos kernel="R"
+path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010_temp.csv'
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(vat)%>%
+inner_join(density_city)
+
+# Dataset `switch eligible to non eligle` and `switch non eligible to eligible`
+temp <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE) %>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==1)
+
+temp_2 <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE)%>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==2)
+```
+
+```sos kernel="R"
+#### SHOCKS
+t_0 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_pj + fe_group_shock|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_0<- change_import_tax_order(t_0)
+t_1<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_kt + fe_group_shock|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_1 <- change_import_tax_order(t_1)
+#### BALANCE
+t_2 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
+  mutate(length = length(unique(year))) %>%
+  filter(length ==8),
+            exactDOF = TRUE)
+t_2<- change_import_tax_order(t_2)
+t_3<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
+  mutate(length = length(unique(year))) %>%
+  filter(length ==8),
+            exactDOF = TRUE)
+t_3 <- change_import_tax_order(t_3)
+```
+
+```sos kernel="R"
+#### ELIGIBLE TO NON ELIGIBLE
+temp_f_no_eli <- temp_2 %>%
+  filter(regime =="NOT_ELIGIBLE")
+
+temp_f_eli <- temp %>%
+  filter(regime =="ELIGIBLE") %>%
+  inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
+
+temp_f_eli <-temp_f_eli%>%
+  filter(year.x != year.y)   
+
+
+t_4 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% anti_join(temp_f_eli),
+            exactDOF = TRUE)
+t_4<- change_import_tax_order(t_4)
+t_5<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
+            exactDOF = TRUE)
+t_5 <- change_import_tax_order(t_5)
+```
+
+```sos kernel="R"
+#### NON ELIGIBLE TO ELIGIBLE
+temp_f_no_eli <- temp_2 %>%
+  filter(regime =="ELIGIBLE")
+
+temp_f_eli <- temp %>%
+  filter(regime =="NOT_ELIGIBLE") %>%
+  inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
+
+temp_f_eli <-temp_f_eli%>%
+  filter(year.x != year.y)
+    
+t_6 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% anti_join(temp_f_eli),
+            exactDOF = TRUE)
+t_6<- change_import_tax_order(t_6)
+t_7<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
+            exactDOF = TRUE)
+t_7 <- change_import_tax_order(t_7)
+```
+
+```sos kernel="R"
+##### ONLY 17% 
+t_8 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(vat_m==17),
+            exactDOF = TRUE)
+t_8<- change_import_tax_order(t_8)
+t_9<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(vat_m==17),
+            exactDOF = TRUE)
+t_9 <- change_import_tax_order(t_9)
+
+##### EXCLUDE 0%
+t_10 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(vat_reb_m != 0),
+            exactDOF = TRUE)
+t_10<- change_import_tax_order(t_10)
+t_11<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(vat_reb_m != 0),
+            exactDOF = TRUE)
+t_11 <- change_import_tax_order(t_11)
+```
+
+```sos kernel="Python 3"
+import os
+try:
+    os.remove("Tables/table_3.txt")
+except:
+    pass
+try:
+    os.remove("Tables/table_3.tex")
+except:
+    pass
+try:
+    os.remove("Tables/table_3.pdf")
+except:
+    pass
+```
+
+```sos kernel="R"
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    
+    c("City-product-regime fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    
+    c("City-sector-year fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    
+    c("Product-destination fixed effect","Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No"),
+        
+    c("product-year fixed effects", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8, t_9, t_10, t_11
+),
+    title="VAT export tax and firm’s quality upgrading, Robustness checks",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name="Tables/table_3.txt"
+)
+```
+
+```sos kernel="Python 3"
+reorder = {
+    # Old, New
+    4:2, ## Density * eligible
+    8:3, ## comp * eligibile
+}
+
+tbe1  = """
+This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
+
+multicolumn ={
+    'Shocks': 2,
+    'Balance': 2,
+    'Eligible to non eligible': 2,
+    'Non eligible to eligible': 2,
+    'Only 17\%': 2,
+    'No zero rebate': 2
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+#new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
+lb.beautify(table_number = 3,
+            #multi_lines_dep = None,
+            multi_lines_dep = multi_lines_dep,
+            new_row= False,
+            multicolumn = multicolumn,
+            reorder_var = None,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 300)
+```
+
+<!-- #region kernel="Python 3" -->
+## Table 5: Tax level, with covariates city, regime, product
+
+$$
+\begin{aligned}
+\operatorname{Quality}_{c,k,j, t}^{R} &=\alpha \ln \operatorname{VAT} \operatorname{Export} \operatorname{tax}_{k, t-1} \times \text { Eligibility }^{R} \\
+&+F E_{c,k}^{R}+F E_{c,s,t}^{R}+ F E_{k, t}+\epsilon_{ck,j, t}^{R}
+\end{aligned}
+$$
+
+
+* Column 1 add shocks with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-regime-year: `fe_csrt`
+  * product-year: `fe_kt`
+  * Shocks: `hs6` + `country_en` + `year` 
+* Column 2 includes cities presents full years with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-regime-year: `fe_csrt`
+  * product-year: `fe_kt`
+* Column 3 switch eligible to non eligle with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-regime-year: `fe_csrt`
+  * product-year: `fe_kt`
+* Column 4 switch non eligible to eligible with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-regime-year: `fe_csrt`
+  * product-year: `fe_kt`
+* Column 5 keep rebates 17% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-regime-year: `fe_csrt`
+  * product-year: `fe_kt`
+* Column 6 exclude rebates 0% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-regime-year: `fe_csrt`
+  * product-year: `fe_kt`
+  
+Sector is defined as the GBT 4 digits
+<!-- #endregion -->
+
+```sos kernel="R"
+path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010_temp.csv'
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(vat)
+
+# Dataset `switch eligible to non eligle` and `switch non eligible to eligible`
+temp <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE) %>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==1)
+
+temp_2 <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE)%>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==2)
+```
+
+```sos kernel="R"
+#### SHOCKS
+t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt + fe_group_shock|0 | hs6, df_final,
+            exactDOF = TRUE)
+
+#### BALANCE
+t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
+  mutate(length = length(unique(year))) %>%
+  filter(length ==8),
+            exactDOF = TRUE)
+```
+
+```sos kernel="R"
+temp_f_no_eli <- temp_2 %>%
+  filter(regime =="NOT_ELIGIBLE")
+
+temp_f_eli <- temp %>%
+  filter(regime =="ELIGIBLE") %>%
+  inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
+
+temp_f_eli <-temp_f_eli%>%
+  filter(year.x != year.y)
+
+#data_set_d <- data_set %>%
+#  anti_join(temp_f_eli)
+    
+#### ELIGIBLE TO NON ELIGIBLE
+t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
+            exactDOF = TRUE)
+```
+
+```sos kernel="R"
+temp_f_no_eli <- temp_2 %>%
+  filter(regime =="ELIGIBLE")
+
+temp_f_eli <- temp %>%
+  filter(regime =="NOT_ELIGIBLE") %>%
+  inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
+
+temp_f_eli <-temp_f_eli%>%
+  filter(year.x != year.y)
+
+#data_set_d <- data_set %>%
+#  anti_join(temp_f_eli)
+    
+#### NON ELIGIBLE TO ELIGIBLE
+t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
+            exactDOF = TRUE)
+```
+
+```sos kernel="R"
+##### ONLY 17% 
+t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(vat_m==17),
+            exactDOF = TRUE)
+
+##### EXCLUDE 0%
+t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(vat_reb_m != 0),
+            exactDOF = TRUE)
+```
+
+```sos kernel="Python 3"
+import os
+try:
+    os.remove("Tables/table_4.txt")
+except:
+    pass
+try:
+    os.remove("Tables/table_4.tex")
+except:
+    pass
+try:
+    os.remove("Tables/table_4.pdf")
+except:
+    pass
+```
+
+```sos kernel="R"
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    c("City-product-regime fixed effects","Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    
+    c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    
+    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    
+    c("product-year-destination fixed effects", "Yes", "No", "No", "No","No","No")
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4, t_5
+),
+    title="VAT export tax and firm’s quality upgrading, Robustness checks",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name="Tables/table_4.txt"
+)
+```
+
+```sos kernel="Python 3"
+tbe1  = """
+This table estimates eq(3). 
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
+
+multicolumn ={
+    'Shocks': 1,
+    'Balance': 1,
+    'Eligible to non eligible': 1,
+    'Non eligible to eligible': 1,
+    'Only 17\%': 1,
+    'No zero rebate': 1
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+#new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
+lb.beautify(table_number = 4,
+            #multi_lines_dep = None,
+            multi_lines_dep = multi_lines_dep,
+            new_row= False,
+            multicolumn = multicolumn,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 200)
+```
+
+<!-- #region kernel="Python 3" -->
+## Table 6: Density, Tax level, with covariates city, regime, product
+
+* Column 1 add shocks with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj` 
+  * Shocks: `hs6` + `country_en` + `year` 
+* Column 2 add shocks with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+  * Shocks: `hs6` + `country_en` + `year` 
+* Column 3 includes cities presents full years with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 4 includes cities presents full years with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-regime-year: `fe_csrt`
+  * product-year: `fe_kt` 
+* Column 5 switch eligible to non eligle with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 6 switch eligible to non eligle with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-regime-year: `fe_csrt`
+  * product-year: `fe_kt` 
+* Column 7 switch non eligible to eligible with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 8 switch non eligible to eligible with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+* Column 9 keep rebates 17% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 10 keep rebates 17% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+* Column 11 exclude rebates 0% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj`
+* Column 12 exclude rebates 0% with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+<!-- #endregion -->
+
+```sos kernel="R"
+path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010_temp.csv'
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(vat)%>%
+inner_join(density_city)
+
+# Dataset `switch eligible to non eligle` and `switch non eligible to eligible`
+temp <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE) %>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==1)
+
+temp_2 <- df_final %>%
+  group_by(geocode4_corr, hs6, year) %>%
+  select(c("geocode4_corr","hs6","regime","year")) %>%
+  arrange(geocode4_corr, hs6, year) %>%
+  distinct(.keep_all = TRUE)%>%
+  ungroup() %>%
+  group_by(geocode4_corr, hs6) %>%
+  filter(row_number()==2) 
+```
+
+```sos kernel="R"
+#### SHOCKS
+t_0 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime + 
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_pj + fe_group_shock|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_0<- change_import_tax_order(t_0)
+t_1<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_kt + fe_group_shock|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_1 <- change_import_tax_order(t_1)
+#### BALANCE
+t_2 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
+  mutate(length = length(unique(year))) %>%
+  filter(length ==8),
+            exactDOF = TRUE)
+t_2<- change_import_tax_order(t_2)
+t_3<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
+  mutate(length = length(unique(year))) %>%
+  filter(length ==8),
+            exactDOF = TRUE)
+t_3 <- change_import_tax_order(t_3)
+```
+
+```sos kernel="R"
+#### ELIGIBLE TO NON ELIGIBLE
+temp_f_no_eli <- temp_2 %>%
+  filter(regime =="NOT_ELIGIBLE")
+
+temp_f_eli <- temp %>%
+  filter(regime =="ELIGIBLE") %>%
+  inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
+
+temp_f_eli <-temp_f_eli%>%
+  filter(year.x != year.y)   
+
+
+t_4 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% anti_join(temp_f_eli),
+            exactDOF = TRUE)
+t_4<- change_import_tax_order(t_4)
+t_5<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
+            exactDOF = TRUE)
+t_5 <- change_import_tax_order(t_5)
+```
+
+```sos kernel="R"
+#### NON ELIGIBLE TO ELIGIBLE
+temp_f_no_eli <- temp_2 %>%
+  filter(regime =="ELIGIBLE")
+
+temp_f_eli <- temp %>%
+  filter(regime =="NOT_ELIGIBLE") %>%
+  inner_join(temp_f_no_eli, by = c("geocode4_corr","hs6")) 
+
+temp_f_eli <-temp_f_eli%>%
+  filter(year.x != year.y)
+    
+t_6 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% anti_join(temp_f_eli),
+            exactDOF = TRUE)
+t_6<- change_import_tax_order(t_6)
+t_7<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% anti_join(temp_f_eli),
+            exactDOF = TRUE)
+t_7 <- change_import_tax_order(t_7)
+```
+
+```sos kernel="R"
+##### ONLY 17% 
+t_8 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(vat_m==17),
+            exactDOF = TRUE)
+t_8<- change_import_tax_order(t_8)
+t_9<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(vat_m==17),
+            exactDOF = TRUE)
+t_9 <- change_import_tax_order(t_9)
+
+##### EXCLUDE 0%
+t_10 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(vat_reb_m != 0),
+            exactDOF = TRUE)
+t_10<- change_import_tax_order(t_10)
+t_11<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(vat_reb_m != 0),
+            exactDOF = TRUE)
+t_11 <- change_import_tax_order(t_11)
+```
+
+```sos kernel="Python 3"
+import os
+try:
+    os.remove("Tables/table_5.txt")
+except:
+    pass
+try:
+    os.remove("Tables/table_5.tex")
+except:
+    pass
+try:
+    os.remove("Tables/table_5.pdf")
+except:
+    pass
+```
+
+```sos kernel="R"
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    
+    c("City-product-regime fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    
+    c("City-sector-year fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    
+    c("Product-destination fixed effect","Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No"),
+        
+    c("product-year fixed effects", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8, t_9, t_10, t_11
+),
+    title="VAT export tax and firm’s quality upgrading, Robustness checks",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name="Tables/table_5.txt"
+)
+```
+
+```sos kernel="Python 3"
+reorder = {
+    # Old, New
+    4:2, ## Density * eligible
+    8:3, ## comp * eligibile
+}
+
+tbe1  = """
+This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
+
+multicolumn ={
+    'Shocks': 2,
+    'Balance': 2,
+    'Eligible to non eligible': 2,
+    'Non eligible to eligible': 2,
+    'Only 17\%': 2,
+    'No zero rebate': 2
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+#new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
+lb.beautify(table_number = 5,
+            #multi_lines_dep = None,
+            multi_lines_dep = multi_lines_dep,
+            new_row= False,
+            multicolumn = multicolumn,
+            reorder_var = None,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 300)
 ```
 
 ```sos kernel="Python 3"
