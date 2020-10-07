@@ -1,4 +1,5 @@
 import re, os, tex2pix
+import numpy as np
 from PyPDF2 import PdfFileMerger
 from wand.image import Image as WImage
 
@@ -9,9 +10,17 @@ multi_lines_dep = None,
 new_row = False,
 multicolumn = None,
 table_nte = None,
+reorder_var = None,
 jupyter_preview = True,
 resolution = 150):
     """
+    reorder_var -> a dic
+    ## old position: new position. Should  be ordered. Start at 0
+dic_ = {
+    # Old, New
+    8:4
+}
+Does not work for first two vars
     """
     #table_number = 1
     table_in = "Tables/table_{}.txt".format(table_number)
@@ -162,12 +171,11 @@ resolution = 150):
         lines = lines.replace('regimeELIGIBLE:ln\_lag\_import\_tax',
                               'ln\_lag\_import\_tax:regimeELIGIBLE')
 
-
         lines = lines.replace('ln\\_lag\\_tax\\_rebate',
                               'Ln VAT export tax_{k,t-1}')
 
         lines = lines.replace('ln\\_lag\\_import\\_tax',
-                              'Ln VAT import tax_{k,t-1}')
+                              '\\text{Ln VAT import tax}_{k,t-1}')
 
         lines = lines.replace('regimeELIGIBLE',
                               '\\text{Eligible}^R')
@@ -189,7 +197,6 @@ resolution = 150):
 
         lines = lines.replace('balassa',
                               '\\text{Comp Adv}_{ck}')
-
 
 
         #### very risky
@@ -266,6 +273,60 @@ resolution = 150):
         for x, line in enumerate(lines):
             if x not in list_lines_to_remove:
                 f.write(line)
+
+
+
+    #### Reorder variables
+    if reorder_var != None:
+
+        with open(table_out, 'r') as f:
+            lines = f.readlines()
+
+        regex = r"\((\d+)\)"
+        found = False
+        for x, line in enumerate(lines):
+            matches = re.search(regex, line)
+            if matches  and found != True:
+                found = True
+                coef_rows = x + 2
+        top_text = lines[:coef_rows]
+        vars_text = lines[coef_rows:]
+
+        regex = r"\((\d+)\)"
+        found = False
+        for x, line in enumerate(lines):
+            matches = re.search(regex, line)
+            if matches  and found != True:
+                found = True
+                coef_rows = x + 2
+        top_text = lines[:coef_rows]
+        vars_text = lines[coef_rows:]
+
+        regex= r"\((\d+)"
+        count_var = -1
+        for x, line in enumerate(vars_text):
+            matches = re.search(regex, line)
+            if matches:
+                count_var+=1
+        bottom_text = vars_text[count_var*2:]
+
+        new_order = [None] * count_var
+        for key, value in reorder_var.items():
+            new_order[value] = key * 2
+        for i in range(0, count_var * 2, 2):
+            if i not in new_order:
+                position = next(i for i, j in enumerate(new_order) if j == None)
+                new_order[position] = i
+        reorder_full = []
+        for order in new_order:
+            reorder_full.append(vars_text[order])
+            reorder_full.append(vars_text[order+1])
+        new_table = top_text + reorder_full + bottom_text
+
+        with open(table_out, "w") as f:
+            for x, line in enumerate(new_table):
+                f.write(line)
+
 
     ### add table #
     if table_nte != None:
