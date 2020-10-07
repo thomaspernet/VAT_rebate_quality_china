@@ -3,7 +3,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
 
-\begin{document}% Date and time \times  Tue, Oct 06, 2020 - 08 \times 07 \times 21
+\begin{document}% Date and time \times  Wed, Oct 07, 2020 - 09 \times 04 \times 04
 \begin{table}[!htbp] \centering 
   \caption{VAT export tax and firm’s quality upgrading, characteristics of sensible sectors} 
 \label{}
@@ -19,20 +19,20 @@
             &\multicolumn{1}{c}{No rare-earth}&\multicolumn{1}{c}{No energy intensive}&\multicolumn{1}{c}{No high tech}&\multicolumn{1}{c}{No RD oriented}&\multicolumn{1}{c}{No high skilled oriented}\\
 \\[-1.8ex] & (1) & (2) & (3) & (4) & (5)\\ 
 \hline \\[-1.8ex] 
-  \text{lag foreign export share}_{ckr}^R & 0.020$^{**}$ & 0.024$^{*}$ & 0.021$^{**}$ & 0.019$^{**}$ & 0.020$^{**}$ \\ 
-  & (0.009) & (0.012) & (0.009) & (0.009) & (0.009) \\ 
-  \text{lag SOE export share}_{ckr}^R & 0.038$^{***}$ & 0.041$^{***}$ & 0.038$^{***}$ & 0.038$^{***}$ & 0.038$^{***}$ \\ 
-  & (0.009) & (0.012) & (0.009) & (0.009) & (0.009) \\ 
-  Ln VAT export tax_{k,t-1} \times \text{Eligible}^R & $-$0.150$^{*}$ & $-$0.172$^{*}$ & $-$0.163$^{*}$ & $-$0.148$^{*}$ & $-$0.151$^{*}$ \\ 
-  & (0.086) & (0.093) & (0.085) & (0.085) & (0.085) \\ 
-  Ln VAT import tax_{k,t-1} \times \text{Eligible}^R & 0.057 & 0.149 & 0.034 & 0.063 & 0.057 \\ 
-  & (0.105) & (0.106) & (0.105) & (0.105) & (0.105) \\ 
+  \text{lag foreign export share}_{ckjr}^R & 0.392$^{***}$ & 0.363$^{***}$ & 0.389$^{***}$ & 0.394$^{***}$ & 0.392$^{***}$ \\ 
+  & (0.031) & (0.038) & (0.032) & (0.032) & (0.031) \\ 
+  \text{lag SOE export share}_{ckjr}^R & 0.573$^{***}$ & 0.590$^{***}$ & 0.569$^{***}$ & 0.567$^{***}$ & 0.572$^{***}$ \\ 
+  & (0.022) & (0.027) & (0.022) & (0.022) & (0.022) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Eligible}^R & $-$0.150$^{*}$ & $-$0.173$^{*}$ & $-$0.159$^{*}$ & $-$0.148$^{*}$ & $-$0.151$^{*}$ \\ 
+  & (0.085) & (0.092) & (0.085) & (0.085) & (0.084) \\ 
+  \text{Ln VAT import tax}_{k,t-1} \times \text{Eligible}^R & 0.058 & 0.148 & 0.033 & 0.064 & 0.058 \\ 
+  & (0.104) & (0.106) & (0.104) & (0.105) & (0.104) \\ 
  \hline \\[-1.8ex] 
 City-product-regime fixed effects & Yes & Yes & Yes & Yes & Yes \\ 
 City-sector-regime-year fixed effects & Yes & Yes & Yes & Yes & Yes \\ 
 product-year fixed effects & Yes & Yes & Yes & Yes & Yes \\ 
 Observations & 5,827,366 & 4,162,528 & 5,780,615 & 5,693,323 & 5,832,345 \\ 
-R$^{2}$ & 0.321 & 0.324 & 0.321 & 0.318 & 0.321 \\ 
+R$^{2}$ & 0.324 & 0.327 & 0.324 & 0.321 & 0.324 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular}
@@ -42,6 +42,7 @@ R$^{2}$ & 0.321 & 0.324 & 0.321 & 0.318 & 0.321 \\
  \item \\ 
 
 This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
 Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
 Sectors are defined following the Chinese 4-digit GB/T industry
 classification and regroup several products.
