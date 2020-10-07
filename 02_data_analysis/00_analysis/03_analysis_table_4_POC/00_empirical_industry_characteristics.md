@@ -109,6 +109,38 @@ if pandas_setting:
     pd.set_option('display.max_colwidth', None)
 ```
 
+```sos kernel="R"
+#density\_china\_ville:ln\_lag\_import\_tax
+change_import_tax_order <- function(table){
+    check_three_int <- grep("density_china_ville:regimeELIGIBLE:ln_lag_import_tax$", rownames(table$coef))
+    check_two_int <- grep("density_china_ville:ln_lag_import_tax$", rownames(table$coef))
+    check_two_eligible <- grep("^regimeELIGIBLE:balassa$", rownames(table$coef))
+    
+    if (length(check_three_int) !=0) {
+    rownames(table$coefficients)[check_three_int] <- 'ln_lag_import_tax:density_china_ville:regimeELIGIBLE'
+    rownames(table$beta)[check_three_int] <- 'ln_lag_import_tax:density_china_ville:regimeELIGIBLE'
+}
+    if (length(check_two_int) !=0) {
+    rownames(table$coefficients)[check_two_int] <- 'ln_lag_import_tax:density_china_ville'
+    rownames(table$beta)[check_two_int] <- 'ln_lag_import_tax:density_china_ville'
+}
+    if (length(check_two_eligible) !=0) {
+    rownames(table$coefficients)[check_two_eligible] <- 'balassa:regimeELIGIBLE'
+    rownames(table$beta)[check_two_eligible] <- 'balassa:regimeELIGIBLE'
+}
+    
+    return (table)
+}
+```
+
+```sos kernel="R"
+loadRData <- function(fileName){
+#loads an RData file, and returns it
+    load(fileName)
+    get(ls()[ls() != "fileName"])
+}
+```
+
 <!-- #region kernel="SoS" -->
 # Load tables
 
@@ -126,18 +158,20 @@ Since we load the data as a Pandas DataFrame, we want to pass the `dtypes`. We l
 <!-- #endregion -->
 
 ```sos kernel="Python 3"
-list(
-    map(
-        lambda x:
-        
-    s3.download_file(
-        key = 'ADDITIONAL_DATA/INDUSTRY_CHARACTERISTICS/{}'.format(x),
-    path_local = os.path.join(str(Path(path).parent.parent.parent), 
-                              "00_data_catalogue/temporary_local_data")
-    ), 
-        ['energy.csv','high_tech.csv', 'test_es.csv', 'test_rd.csv']
+to_download = False
+if to_download:
+    list(
+        map(
+            lambda x:
+
+        s3.download_file(
+            key = 'ADDITIONAL_DATA/INDUSTRY_CHARACTERISTICS/{}'.format(x),
+        path_local = os.path.join(str(Path(path).parent.parent.parent), 
+                                  "00_data_catalogue/temporary_local_data")
+        ), 
+            ['energy.csv','high_tech.csv', 'test_es.csv', 'test_rd.csv']
+        )
     )
-)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -220,15 +254,14 @@ table(rd$rd)
 ```
 
 ```sos kernel="R"
+path_density = '../../../00_Data_catalogue/temporary_local_data/density.Rda'
+density_city <- loadRData(file = path_density) 
+density_city <- density_city %>% ungroup() %>% mutate(
+    hs6 = as.double(hs6), geocode4_corr = as.double(geocode4_corr))
+```
+
+```sos kernel="R"
 path = '../../../00_Data_catalogue/temporary_local_data/quality_vat_export_covariate_2003_2010.csv'
-df_final <- read_csv(path) %>%
-mutate_if(is.character, as.factor) %>%
-    mutate_at(vars(starts_with("fe")), as.factor) %>%
-mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
-left_join(energy, by= "hs6") %>%
-left_join(high_tech, by= "hs6") %>%
-left_join(skilled, by= c("hs4" = "gbt")) %>%
-left_join(rd, by= c("hs4" = "gbt"))
 ```
 
 <!-- #region kernel="SoS" -->
@@ -264,6 +297,17 @@ $$
   
 Sector is defined as the GBT 4 digits
 <!-- #endregion -->
+
+```sos kernel="R"
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+    mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(energy, by= "hs6") %>%
+left_join(high_tech, by= "hs6") %>%
+left_join(skilled, by= c("hs4" = "gbt")) %>%
+left_join(rd, by= c("hs4" = "gbt"))
+```
 
 ```sos kernel="R"
 #### RARE HEARTH
@@ -360,81 +404,147 @@ lb.beautify(table_number = 0,
 ```
 
 <!-- #region kernel="Python 3" -->
-## Table 2: Industry characteristics, with covariates city, regime destination, product
-
-$$
-\begin{aligned}
-\operatorname{Quality}_{c,k,j, t}^{R} &=\alpha \ln \operatorname{VAT} \operatorname{Export} \operatorname{tax}_{k, t-1} \times \text { Eligibility }^{R} \\
-&+F E_{c,k}^{R}+F E_{c,s,t}^{R}+ F E_{k, t}+\epsilon_{ck,j, t}^{R}
-\end{aligned}
-$$
+## Table 2: Density, Industry characteristics, no covariates 
 
 * Column 1 excludes rare earth products with the main fixed effect:
   * city-product-regime: `fe_ckr`
-  * city-sector-regime-year: `fe_csrt` 
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj` 
+* Column 2 excludes rare earth products with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
   * product-year: `fe_kt` 
-* Column 2 excludes energy intensive industries with the main fixed effect:
+* Column 3 excludes energy intensive industries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-destination: `fe_pj` 
+* Column 4 excludes energy intensive industries with the main fixed effect:
   * city-product-regime: `fe_ckr` 
   * city-sector-regime-year: `fe_csrt` 
   * product-year: `fe_kt` 
-* Column 3 excludes high tech industries with the main fixed effect:
+* Column 5 excludes high tech industries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-destination: `fe_pj` 
+* Column 6 excludes high tech industries with the main fixed effect:
   * city-product-regime: `fe_ckr` 
   * city-sector-regime-year: `fe_csrt` 
   * product-year: `fe_kt` 
-* Column 4 excludes RD oriented indusrtries with the main fixed effect:
+* Column 7 excludes RD oriented indusrtries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-destination: `fe_pj` 
+* Column 8 excludes RD oriented indusrtries with the main fixed effect:
   * city-product-regime: `fe_ckr` 
   * city-sector-regime-year: `fe_csrt` 
   * product-year: `fe_kt` 
-* Column 5 excludes High skilled oriented with the main fixed effect:
+* Column 9 excludes High skilled oriented with the main fixed effect:
   * city-product-regime: `fe_ckr` 
   * city-sector-regime-year: `fe_csrt` 
-  * product-year: `fe_kt`
-
-Sector is defined as the GBT 4 digits
+  * product-destination: `fe_pj` 
+* Column 10 excludes High skilled oriented with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
 <!-- #endregion -->
 
 ```sos kernel="R"
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+    mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(energy, by= "hs6") %>%
+left_join(high_tech, by= "hs6") %>%
+left_join(skilled, by= c("hs4" = "gbt")) %>%
+left_join(rd, by= c("hs4" = "gbt")) %>%
+inner_join(density_city)
+```
+
+```sos kernel="R"
 #### RARE HEARTH
-t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(hs6 != 850511),
+t_0 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(hs6 != 850511),
             exactDOF = TRUE)
+t_0<- change_import_tax_order(t_0)
+t_1<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(hs6 != 850511),
+            exactDOF = TRUE)
+t_1 <- change_import_tax_order(t_1)
+
 #### ENERGY
-t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter( is.na(energy)),
+
+t_2 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter( is.na(energy)),
             exactDOF = TRUE)
+t_2<- change_import_tax_order(t_2)
+t_3<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter( is.na(energy)),
+            exactDOF = TRUE)
+t_3 <- change_import_tax_order(t_3)
 
 #### HIGH TECH
-t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(high_tech)),
+t_4 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(is.na(high_tech)),
             exactDOF = TRUE)
+t_4<- change_import_tax_order(t_4)
+t_5<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(is.na(high_tech)),
+            exactDOF = TRUE)
+t_5 <- change_import_tax_order(t_5)
 
-#### SKILLED 
-t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(skilled)),
+#### SKILLED
+t_6 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(is.na(skilled)),
             exactDOF = TRUE)
+t_6<- change_import_tax_order(t_6)
+t_7<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(is.na(skilled)),
+            exactDOF = TRUE)
+t_7 <- change_import_tax_order(t_7)
+
 ##### RD
-t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(rd)), 
+t_8 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(is.na(rd)),
             exactDOF = TRUE)
+t_8<- change_import_tax_order(t_8)
+t_9<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(is.na(rd)),
+            exactDOF = TRUE)
+t_9 <- change_import_tax_order(t_9)
 ```
 
 ```sos kernel="Python 3"
 import os
 try:
-    os.remove("Tables/table_1.txt")
+    os.remove("Tables/table_2.txt")
 except:
     pass
 try:
-    os.remove("Tables/table_1.tex")
+    os.remove("Tables/table_2.tex")
 except:
     pass
 try:
-    os.remove("Tables/table_1.pdf")
+    os.remove("Tables/table_2.pdf")
 except:
     pass
 ```
@@ -442,26 +552,35 @@ except:
 ```sos kernel="R"
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
-    c("City-product-regime fixed effects","Yes", "Yes", "Yes", "Yes","Yes"),
     
-    c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes"),
+    c("City-product-regime fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
     
-    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes")
+    c("City-sector-year fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    
+    c("Product-destination fixed effect","Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No"),
+        
+    c("product-year fixed effects", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes")
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4
+    t_0,t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8, t_9
 ),
-    title="VAT export tax and firm’s quality upgrading, characteristics of sensible sectors",
+    title="VAT export tax and firm’s quality upgrading, Effect of density",
     dep_var = dep,
     addFE=fe1,
     save=TRUE,
     note = FALSE,
-    name="Tables/table_1.txt"
+    name="Tables/table_2.txt"
 )
 ```
 
 ```sos kernel="Python 3"
+reorder = {
+    # Old, New
+    4:2, ## Density * eligible
+    8:3, ## comp * eligibile
+}
+
 tbe1  = """
 This table estimates eq(3). 
 Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
@@ -473,26 +592,27 @@ clustered at the product level appear inparentheses.
 \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
 
 multicolumn ={
-    'No rare-earth': 1,
-    'No energy intensive': 1,
-    'No high tech': 1,
-    'No RD oriented': 1,
-    'No high skilled oriented': 1,
+    'Rare earth': 2,
+    'Energy': 2,
+    'High tech': 2,
+    'Skilled': 2,
+    'RD':2
 }
 multi_lines_dep = '(city/product/trade regime/year)'
 #new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
-lb.beautify(table_number = 1,
+lb.beautify(table_number = 2,
             #multi_lines_dep = None,
             multi_lines_dep = multi_lines_dep,
             new_row= False,
             multicolumn = multicolumn,
+            reorder_var = None,
             table_nte = tbe1,
             jupyter_preview = True,
             resolution = 200)
 ```
 
 <!-- #region kernel="Python 3" -->
-## Table 3: Industry characteristics, with covariates city, regime, product
+## Table 3: Industry characteristics, with covariates city, regime destination, product
 
 $$
 \begin{aligned}
@@ -500,7 +620,6 @@ $$
 &+F E_{c,k}^{R}+F E_{c,s,t}^{R}+ F E_{k, t}+\epsilon_{ck,j, t}^{R}
 \end{aligned}
 $$
-
 
 * Column 1 excludes rare earth products with the main fixed effect:
   * city-product-regime: `fe_ckr`
@@ -527,32 +646,42 @@ Sector is defined as the GBT 4 digits
 <!-- #endregion -->
 
 ```sos kernel="R"
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+    mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(energy, by= "hs6") %>%
+left_join(high_tech, by= "hs6") %>%
+left_join(skilled, by= c("hs4" = "gbt")) %>%
+left_join(rd, by= c("hs4" = "gbt"))
+```
+
+```sos kernel="R"
 #### RARE HEARTH
 t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(hs6 != 850511),
             exactDOF = TRUE)
-
 #### ENERGY
 t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter( is.na(energy)),
             exactDOF = TRUE)
 
 #### HIGH TECH
 t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(high_tech)),
             exactDOF = TRUE)
 
 #### SKILLED 
 t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(skilled)),
             exactDOF = TRUE)
 ##### RD
 t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(rd)), 
             exactDOF = TRUE)
 ```
@@ -598,6 +727,7 @@ table_1 <- go_latex(list(
 ```sos kernel="Python 3"
 tbe1  = """
 This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
 Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
 Sectors are defined following the Chinese 4-digit GB/T industry
 classification and regroup several products.
@@ -619,6 +749,585 @@ lb.beautify(table_number = 2,
             multi_lines_dep = multi_lines_dep,
             new_row= False,
             multicolumn = multicolumn,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 200)
+```
+
+<!-- #region kernel="Python 3" -->
+## Table 4: Density, industry characteristics, with covariates city, regime destination, product
+
+* Column 1 excludes rare earth products with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj` 
+* Column 2 excludes rare earth products with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+* Column 3 excludes energy intensive industries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-destination: `fe_pj` 
+* Column 4 excludes energy intensive industries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
+* Column 5 excludes high tech industries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-destination: `fe_pj` 
+* Column 6 excludes high tech industries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
+* Column 7 excludes RD oriented indusrtries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-destination: `fe_pj` 
+* Column 8 excludes RD oriented indusrtries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
+* Column 9 excludes High skilled oriented with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-destination: `fe_pj` 
+* Column 10 excludes High skilled oriented with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
+<!-- #endregion -->
+
+```sos kernel="R"
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+    mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(energy, by= "hs6") %>%
+left_join(high_tech, by= "hs6") %>%
+left_join(skilled, by= c("hs4" = "gbt")) %>%
+left_join(rd, by= c("hs4" = "gbt")) %>%
+inner_join(density_city)
+```
+
+```sos kernel="R"
+#### RARE HEARTH
+t_0 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(hs6 != 850511),
+            exactDOF = TRUE)
+t_0<- change_import_tax_order(t_0)
+t_1<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(hs6 != 850511),
+            exactDOF = TRUE)
+t_1 <- change_import_tax_order(t_1)
+
+#### ENERGY
+
+t_2 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter( is.na(energy)),
+            exactDOF = TRUE)
+t_2<- change_import_tax_order(t_2)
+t_3<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter( is.na(energy)),
+            exactDOF = TRUE)
+t_3 <- change_import_tax_order(t_3)
+
+#### HIGH TECH
+t_4 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(is.na(high_tech)),
+            exactDOF = TRUE)
+t_4<- change_import_tax_order(t_4)
+t_5<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(is.na(high_tech)),
+            exactDOF = TRUE)
+t_5 <- change_import_tax_order(t_5)
+
+#### SKILLED
+t_6 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(is.na(skilled)),
+            exactDOF = TRUE)
+t_6<- change_import_tax_order(t_6)
+t_7<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(is.na(skilled)),
+            exactDOF = TRUE)
+t_7 <- change_import_tax_order(t_7)
+
+##### RD
+t_8 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(is.na(rd)),
+            exactDOF = TRUE)
+t_8<- change_import_tax_order(t_8)
+t_9<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(is.na(rd)),
+            exactDOF = TRUE)
+t_9 <- change_import_tax_order(t_9)
+```
+
+```sos kernel="Python 3"
+import os
+try:
+    os.remove("Tables/table_3.txt")
+except:
+    pass
+try:
+    os.remove("Tables/table_3.tex")
+except:
+    pass
+try:
+    os.remove("Tables/table_3.pdf")
+except:
+    pass
+```
+
+```sos kernel="R"
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    
+    c("City-product-regime fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    
+    c("City-sector-year fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    
+    c("Product-destination fixed effect","Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No"),
+        
+    c("product-year fixed effects", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8, t_9
+),
+    title="VAT export tax and firm’s quality upgrading, Effect of density",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name="Tables/table_3.txt"
+)
+```
+
+```sos kernel="Python 3"
+reorder = {
+    # Old, New
+    6:4, ## Density * eligible
+    10:5, ## comp * eligibile
+}
+
+tbe1  = """
+This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
+
+multicolumn ={
+    'Rare earth': 2,
+    'Energy': 2,
+    'High tech': 2,
+    'Skilled': 2,
+    'RD':2
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+#new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
+lb.beautify(table_number = 3,
+            #multi_lines_dep = None,
+            multi_lines_dep = multi_lines_dep,
+            new_row= False,
+            multicolumn = multicolumn,
+            reorder_var = None,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 200)
+```
+
+<!-- #region kernel="Python 3" -->
+## Table 5: Industry characteristics, with covariates city, regime, product
+
+$$
+\begin{aligned}
+\operatorname{Quality}_{c,k,j, t}^{R} &=\alpha \ln \operatorname{VAT} \operatorname{Export} \operatorname{tax}_{k, t-1} \times \text { Eligibility }^{R} \\
+&+F E_{c,k}^{R}+F E_{c,s,t}^{R}+ F E_{k, t}+\epsilon_{ck,j, t}^{R}
+\end{aligned}
+$$
+
+
+* Column 1 excludes rare earth products with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
+* Column 2 excludes energy intensive industries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
+* Column 3 excludes high tech industries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
+* Column 4 excludes RD oriented indusrtries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
+* Column 5 excludes High skilled oriented with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt`
+
+Sector is defined as the GBT 4 digits
+<!-- #endregion -->
+
+```sos kernel="R"
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+    mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(energy, by= "hs6") %>%
+left_join(high_tech, by= "hs6") %>%
+left_join(skilled, by= c("hs4" = "gbt")) %>%
+left_join(rd, by= c("hs4" = "gbt"))
+```
+
+```sos kernel="R"
+#### RARE HEARTH
+t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(hs6 != 850511),
+            exactDOF = TRUE)
+
+#### ENERGY
+t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter( is.na(energy)),
+            exactDOF = TRUE)
+
+#### HIGH TECH
+t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(high_tech)),
+            exactDOF = TRUE)
+
+#### SKILLED 
+t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(skilled)),
+            exactDOF = TRUE)
+##### RD
+t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(is.na(rd)), 
+            exactDOF = TRUE)
+```
+
+```sos kernel="Python 3"
+import os
+try:
+    os.remove("Tables/table_4.txt")
+except:
+    pass
+try:
+    os.remove("Tables/table_4.tex")
+except:
+    pass
+try:
+    os.remove("Tables/table_4.pdf")
+except:
+    pass
+```
+
+```sos kernel="R"
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    c("City-product-regime fixed effects","Yes", "Yes", "Yes", "Yes","Yes"),
+    
+    c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes"),
+    
+    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4
+),
+    title="VAT export tax and firm’s quality upgrading, characteristics of sensible sectors",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name="Tables/table_4.txt"
+)
+```
+
+```sos kernel="Python 3"
+tbe1  = """
+This table estimates eq(3). 
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
+
+multicolumn ={
+    'No rare-earth': 1,
+    'No energy intensive': 1,
+    'No high tech': 1,
+    'No RD oriented': 1,
+    'No high skilled oriented': 1,
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+#new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
+lb.beautify(table_number = 4,
+            #multi_lines_dep = None,
+            multi_lines_dep = multi_lines_dep,
+            new_row= False,
+            multicolumn = multicolumn,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 200)
+```
+
+<!-- #region kernel="Python 3" -->
+## Table 6: Density, Industry characteristics, with covariates city, regime, product
+
+* Column 1 excludes rare earth products with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-destination: `fe_pj` 
+* Column 2 excludes rare earth products with the main fixed effect:
+  * city-product-regime: `fe_ckr`
+  * city-sector-year: `fe_cst` 
+  * product-year: `fe_kt` 
+* Column 3 excludes energy intensive industries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-destination: `fe_pj` 
+* Column 4 excludes energy intensive industries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
+* Column 5 excludes high tech industries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-destination: `fe_pj` 
+* Column 6 excludes high tech industries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
+* Column 7 excludes RD oriented indusrtries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-destination: `fe_pj` 
+* Column 8 excludes RD oriented indusrtries with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
+* Column 9 excludes High skilled oriented with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-destination: `fe_pj` 
+* Column 10 excludes High skilled oriented with the main fixed effect:
+  * city-product-regime: `fe_ckr` 
+  * city-sector-regime-year: `fe_csrt` 
+  * product-year: `fe_kt` 
+<!-- #endregion -->
+
+```sos kernel="R"
+df_final <- read_csv(path) %>%
+mutate_if(is.character, as.factor) %>%
+    mutate_at(vars(starts_with("fe")), as.factor) %>%
+mutate(regime = relevel(regime, ref='NOT_ELIGIBLE')) %>%
+left_join(energy, by= "hs6") %>%
+left_join(high_tech, by= "hs6") %>%
+left_join(skilled, by= c("hs4" = "gbt")) %>%
+left_join(rd, by= c("hs4" = "gbt")) %>%
+inner_join(density_city)
+```
+
+```sos kernel="R"
+#### RARE HEARTH
+t_0 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(hs6 != 850511),
+            exactDOF = TRUE)
+t_0<- change_import_tax_order(t_0)
+t_1<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(hs6 != 850511),
+            exactDOF = TRUE)
+t_1 <- change_import_tax_order(t_1)
+
+#### ENERGY
+
+t_2 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter( is.na(energy)),
+            exactDOF = TRUE)
+t_2<- change_import_tax_order(t_2)
+t_3<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter( is.na(energy)),
+            exactDOF = TRUE)
+t_3 <- change_import_tax_order(t_3)
+
+#### HIGH TECH
+t_4 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(is.na(high_tech)),
+            exactDOF = TRUE)
+t_4<- change_import_tax_order(t_4)
+t_5<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(is.na(high_tech)),
+            exactDOF = TRUE)
+t_5 <- change_import_tax_order(t_5)
+
+#### SKILLED
+t_6 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(is.na(skilled)),
+            exactDOF = TRUE)
+t_6<- change_import_tax_order(t_6)
+t_7<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(is.na(skilled)),
+            exactDOF = TRUE)
+t_7 <- change_import_tax_order(t_7)
+
+##### RD
+t_8 <- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_pj|0 | hs6, df_final %>% filter(is.na(rd)),
+            exactDOF = TRUE)
+t_8<- change_import_tax_order(t_8)
+t_9<- felm(kandhelwal_quality ~
+            ln_lag_tax_rebate * density_china_ville * regime + 
+            ln_lag_import_tax * density_china_ville * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst+fe_kt|0 | hs6, df_final %>% filter(is.na(rd)),
+            exactDOF = TRUE)
+t_9 <- change_import_tax_order(t_9)
+```
+
+```sos kernel="Python 3"
+import os
+try:
+    os.remove("Tables/table_5.txt")
+except:
+    pass
+try:
+    os.remove("Tables/table_5.tex")
+except:
+    pass
+try:
+    os.remove("Tables/table_5.pdf")
+except:
+    pass
+```
+
+```sos kernel="R"
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    
+    c("City-product-regime fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    
+    c("City-sector-year fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    
+    c("Product-destination fixed effect","Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No"),
+        
+    c("product-year fixed effects", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "No", "Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8, t_9
+),
+    title="VAT export tax and firm’s quality upgrading, Effect of density",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name="Tables/table_5.txt"
+)
+```
+
+```sos kernel="Python 3"
+reorder = {
+    # Old, New
+    6:4, ## Density * eligible
+    10:5, ## comp * eligibile
+}
+
+tbe1  = """
+This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
+
+multicolumn ={
+    'Rare earth': 2,
+    'Energy': 2,
+    'High tech': 2,
+    'Skilled': 2,
+    'RD':2
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+#new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
+lb.beautify(table_number = 5,
+            #multi_lines_dep = None,
+            multi_lines_dep = multi_lines_dep,
+            new_row= False,
+            multicolumn = multicolumn,
+            reorder_var = None,
             table_nte = tbe1,
             jupyter_preview = True,
             resolution = 200)
