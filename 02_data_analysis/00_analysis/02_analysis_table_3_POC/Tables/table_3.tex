@@ -3,7 +3,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
 
-\begin{document}% Date and time \times  Tue, Oct 06, 2020 - 19 \times 20 \times 07
+\begin{document}% Date and time \times  Tue, Oct 06, 2020 - 20 \times 18 \times 08
 \begin{table}[!htbp] \centering 
   \caption{VAT export tax and firm’s quality upgrading, Effect of density} 
 \label{}
@@ -19,25 +19,27 @@
             &\multicolumn{1}{c}{}&\multicolumn{1}{c}{Eligible}&\multicolumn{1}{c}{Non-Eligible}\\
 \\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
 \hline \\[-1.8ex] 
- Ln VAT export tax_{k,t-1} &  & $-$0.357$^{***}$ & $-$0.053 &  \\ 
-  &  & (0.101) & (0.163) &  \\ 
-  \text{Ln VAT import tax}_{k,t-1} &  & $-$0.090 & 0.201 &  \\ 
-  &  & (0.078) & (0.261) &  \\ 
-  Ln VAT export tax_{k,t-1} \times \text{Density}_{ck} & 1.108 & 0.434 & $-$0.045 & 1.192 \\ 
-  & (0.856) & (0.315) & (0.817) & (0.865) \\ 
-  Ln VAT export tax_{k,t-1} \times \text{Eligible}^R & 0.004 &  &  & 0.014 \\ 
-  & (0.193) &  &  & (0.193) \\ 
-  \text{Ln VAT import tax}_{k,t-1} \times \text{Eligible}^R & $-$0.117 &  &  & 0.047 \\ 
-  & (0.297) &  &  & (0.127) \\ 
-  \text{Density}_{ck} \times \text{Ln VAT import tax}_{k,t-1} & $-$0.685 & 0.583 & $-$1.714 &  \\ 
-  & (1.360) & (0.366) & (1.630) &  \\ 
-  Ln VAT export tax_{k,t-1} \times \text{Comp Adv}_{ck} &  &  &  & $-$0.053$^{*}$ \\ 
-  &  &  &  & (0.028) \\ 
-  Ln VAT export tax_{k,t-1} \times \text{Density}_{ck} \times \text{Eligible}^R & $-$0.897 &  &  & $-$0.875 \\ 
-  & (0.960) &  &  & (0.971) \\ 
-  \text{Density}_{ck} \times \text{Ln VAT import tax}_{k,t-1} \times \text{Eligible}^R & 0.978 &  &  &  \\ 
-  & (1.485) &  &  &  \\ 
-  Ln VAT export tax_{k,t-1} \times \text{Eligible}^R \times \text{Comp Adv}_{ck} &  &  &  & $-$0.030 \\ 
+ Ln VAT export tax_{k,t-1} &  & $-$0.364$^{***}$ & $-$0.058 &  \\ 
+  &  & (0.101) & (0.162) &  \\ 
+  \text{Ln VAT import tax}_{k,t-1} &  & $-$0.090 & 0.219 &  \\ 
+  &  & (0.077) & (0.261) &  \\ 
+  \text{lag foreign export share}_{ckjr}^R & 0.394$^{***}$ & 0.132$^{***}$ & 0.052$^{***}$ & 0.394$^{***}$ \\ 
+  & (0.033) & (0.013) & (0.017) & (0.033) \\ 
+  \text{lag SOE export share}_{ckjr}^R & 0.577$^{***}$ & 0.434$^{***}$ & 0.311$^{***}$ & 0.576$^{***}$ \\ 
+  & (0.023) & (0.020) & (0.017) & (0.023) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Density}_{ck} & 1.101 & 0.493 & $-$0.016 & 1.173 \\ 
+  & (0.852) & (0.314) & (0.816) & (0.862) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Eligible}^R & $-$0.005 &  &  & 0.002 \\ 
+  & (0.191) &  &  & (0.191) \\ 
+  \text{Ln VAT import tax}_{k,t-1} \times \text{Eligible}^R & 0.054 &  &  & 0.054 \\ 
+  & (0.127) &  &  & (0.127) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Comp Adv}_{ck} &  &  &  & $-$0.052$^{*}$ \\ 
+  &  &  &  & (0.029) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Density}_{ck} \times \text{Eligible}^R & $-$0.841 &  &  & $-$0.818 \\ 
+  & (0.957) &  &  & (0.966) \\ 
+  \text{Density}_{ck} \times \text{Ln VAT import tax}_{k,t-1} &  & 0.566 & $-$1.827 &  \\ 
+  &  & (0.368) & (1.633) &  \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Eligible}^R \times \text{Comp Adv}_{ck} &  &  &  & $-$0.024 \\ 
   &  &  &  & (0.030) \\ 
  \hline \\[-1.8ex] 
 City-product fixed effects & No & Yes & Yes & No \\ 
@@ -47,7 +49,7 @@ City-sector-regime-year fixed effects & Yes & No & No & Yes \\
 Product-destination fixed effect & No & Yes & Yes & No \\ 
 product-year fixed effects & Yes & No & No & Yes \\ 
 Observations & 4,744,218 & 3,998,921 & 745,297 & 4,744,218 \\ 
-R$^{2}$ & 0.280 & 0.408 & 0.607 & 0.280 \\ 
+R$^{2}$ & 0.284 & 0.409 & 0.608 & 0.284 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular}

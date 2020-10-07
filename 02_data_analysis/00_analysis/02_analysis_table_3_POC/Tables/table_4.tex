@@ -3,7 +3,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
 
-\begin{document}% Date and time \times  Tue, Oct 06, 2020 - 19 \times 41 \times 25
+\begin{document}% Date and time \times  Tue, Oct 06, 2020 - 20 \times 23 \times 50
 \begin{table}[!htbp] \centering 
   \caption{VAT export tax and firm’s quality upgrading, Effect of density} 
 \label{}
@@ -19,21 +19,25 @@
             &\multicolumn{2}{c}{Eligible}&\multicolumn{2}{c}{Non-Eligible}\\
 \\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
 \hline \\[-1.8ex] 
- Ln VAT export tax_{k,t-1} & $-$0.357$^{***}$ &  & $-$0.053 &  \\ 
-  & (0.101) &  & (0.163) &  \\ 
-  \text{Ln VAT import tax}_{k,t-1} & $-$0.090 &  & 0.201 &  \\ 
-  & (0.078) &  & (0.261) &  \\ 
-  Ln VAT export tax_{k,t-1} \times \text{Density}_{ck} & 0.434 & 0.228 & $-$0.045 & 0.888 \\ 
-  & (0.315) & (0.269) & (0.817) & (0.696) \\ 
-  \text{Density}_{ck} \times \text{Ln VAT import tax}_{k,t-1} & 0.583 & 0.268 & $-$1.714 & $-$0.036 \\ 
-  & (0.366) & (0.320) & (1.630) & (1.262) \\ 
+ Ln VAT export tax_{k,t-1} & $-$0.364$^{***}$ &  & $-$0.058 &  \\ 
+  & (0.101) &  & (0.162) &  \\ 
+  \text{Ln VAT import tax}_{k,t-1} & $-$0.090 &  & 0.219 &  \\ 
+  & (0.077) &  & (0.261) &  \\ 
+  \text{lag foreign export share}_{ckjr}^R & 0.132$^{***}$ & 0.351$^{***}$ & 0.052$^{***}$ & 0.538$^{***}$ \\ 
+  & (0.013) & (0.032) & (0.017) & (0.053) \\ 
+  \text{lag SOE export share}_{ckjr}^R & 0.434$^{***}$ & 0.566$^{***}$ & 0.311$^{***}$ & 0.626$^{***}$ \\ 
+  & (0.020) & (0.025) & (0.017) & (0.030) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Density}_{ck} & 0.493 & 0.279 & $-$0.016 & 0.814 \\ 
+  & (0.314) & (0.267) & (0.816) & (0.692) \\ 
+  \text{Density}_{ck} \times \text{Ln VAT import tax}_{k,t-1} & 0.566 & 0.233 & $-$1.827 & $-$0.098 \\ 
+  & (0.368) & (0.320) & (1.633) & (1.253) \\ 
  \hline \\[-1.8ex] 
 City-product fixed effects & Yes & Yes & Yes & Yes \\ 
 City-sector-year fixed effects & Yes & Yes & Yes & Yes \\ 
 Product-destination fixed effect & Yes & No & Yes & No \\ 
 product-year fixed effects & No & Yes & No & Yes \\ 
 Observations & 3,998,921 & 3,998,921 & 745,297 & 745,297 \\ 
-R$^{2}$ & 0.408 & 0.260 & 0.607 & 0.359 \\ 
+R$^{2}$ & 0.409 & 0.264 & 0.608 & 0.363 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular}
