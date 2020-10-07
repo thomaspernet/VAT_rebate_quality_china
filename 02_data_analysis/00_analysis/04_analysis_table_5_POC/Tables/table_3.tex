@@ -1,0 +1,68 @@
+
+\documentclass[preview]{standalone} 
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
+
+\begin{document}% Date and time \times  Wed, Oct 07, 2020 - 16 \times 07 \times 51
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm’s quality upgrading, Robustness checks} 
+\label{}
+\begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
+\begin{tabular}{@{\extracolsep{5pt}}lcccccccccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+& \multicolumn{12}{c}{Dependent variable: Product quality} \\
+&\multicolumn{12}{c}{(city/product/trade regime/year)} \\ 
+\cline{2-13}
+            
+\\[-1.8ex]
+            &\multicolumn{2}{c}{Shocks}&\multicolumn{2}{c}{Balance}&\multicolumn{2}{c}{Eligible to non eligible}&\multicolumn{2}{c}{Non eligible to eligible}&\multicolumn{2}{c}{Only 17\%}&\multicolumn{2}{c}{No zero rebate}\\
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) & (10) & (11) & (12)\\ 
+\hline \\[-1.8ex] 
+ Ln VAT export tax_{k,t-1} &  &  & $-$0.521$^{***}$ &  & $-$0.508$^{***}$ &  & $-$0.524$^{***}$ &  & $-$0.552$^{***}$ &  & $-$0.450$^{***}$ &  \\ 
+  &  &  & (0.097) &  & (0.091) &  & (0.097) &  & (0.104) &  & (0.087) &  \\ 
+  \text{Ln VAT import tax}_{k,t-1} &  &  & 0.413$^{***}$ &  & 0.387$^{***}$ &  & 0.408$^{***}$ &  & 0.410$^{***}$ &  & 0.392$^{***}$ &  \\ 
+  &  &  & (0.135) &  & (0.140) &  & (0.138) &  & (0.136) &  & (0.135) &  \\ 
+  \text{lag foreign export share}_{ckjr}^R & 0.117$^{***}$ & 0.117$^{***}$ & 0.117$^{***}$ & 0.372$^{***}$ & 0.118$^{***}$ & 0.374$^{***}$ & 0.118$^{***}$ & 0.373$^{***}$ & 0.119$^{***}$ & 0.376$^{***}$ & 0.117$^{***}$ & 0.373$^{***}$ \\ 
+  & (0.011) & (0.011) & (0.011) & (0.031) & (0.011) & (0.031) & (0.011) & (0.031) & (0.011) & (0.032) & (0.011) & (0.031) \\ 
+  \text{lag SOE export share}_{ckjr}^R & 0.465$^{***}$ & 0.465$^{***}$ & 0.453$^{***}$ & 0.585$^{***}$ & 0.454$^{***}$ & 0.586$^{***}$ & 0.454$^{***}$ & 0.585$^{***}$ & 0.459$^{***}$ & 0.590$^{***}$ & 0.454$^{***}$ & 0.586$^{***}$ \\ 
+  & (0.022) & (0.022) & (0.019) & (0.024) & (0.019) & (0.024) & (0.019) & (0.024) & (0.020) & (0.024) & (0.019) & (0.024) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Density}_{ck} & 1.013$^{***}$ & 1.013$^{***}$ & 0.991$^{***}$ & 0.856$^{***}$ & 0.917$^{***}$ & 0.873$^{***}$ & 1.005$^{***}$ & 0.845$^{***}$ & 1.078$^{***}$ & 0.946$^{***}$ & 0.738$^{**}$ & 0.782$^{***}$ \\ 
+  & (0.312) & (0.312) & (0.323) & (0.267) & (0.311) & (0.269) & (0.323) & (0.270) & (0.342) & (0.277) & (0.300) & (0.274) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Eligible}^R & 0.200$^{***}$ & 0.200$^{***}$ & 0.213$^{***}$ & 0.237$^{***}$ & 0.215$^{***}$ & 0.245$^{***}$ & 0.213$^{***}$ & 0.238$^{***}$ & 0.211$^{***}$ & 0.238$^{***}$ & 0.216$^{***}$ & 0.240$^{***}$ \\ 
+  & (0.034) & (0.034) & (0.033) & (0.034) & (0.034) & (0.035) & (0.034) & (0.034) & (0.034) & (0.034) & (0.034) & (0.034) \\ 
+  \text{Ln VAT import tax}_{k,t-1} \times \text{Density}_{ck} & $-$0.211 & $-$0.211 & $-$0.359 & $-$0.077 & $-$0.179 & 0.196 & $-$0.355 & $-$0.077 & $-$0.358 & $-$0.086 & $-$0.286 & $-$0.025 \\ 
+  & (0.667) & (0.667) & (0.715) & (0.700) & (0.730) & (0.706) & (0.729) & (0.715) & (0.716) & (0.701) & (0.716) & (0.703) \\ 
+  \text{Ln VAT import tax}_{k,t-1} \times \text{Eligible}^R & $-$0.527$^{***}$ & $-$0.527$^{***}$ & $-$0.576$^{***}$ & $-$0.475$^{***}$ & $-$0.557$^{***}$ & $-$0.442$^{***}$ & $-$0.572$^{***}$ & $-$0.467$^{***}$ & $-$0.580$^{***}$ & $-$0.478$^{***}$ & $-$0.570$^{***}$ & $-$0.467$^{***}$ \\ 
+  & (0.113) & (0.113) & (0.119) & (0.106) & (0.124) & (0.113) & (0.120) & (0.108) & (0.119) & (0.106) & (0.119) & (0.106) \\ 
+  Ln VAT export tax_{k,t-1} \times \text{Density}_{ck} \times \text{Eligible}^R & $-$0.625$^{***}$ & $-$0.625$^{***}$ & $-$0.637$^{***}$ & $-$0.621$^{***}$ & $-$0.643$^{***}$ & $-$0.651$^{***}$ & $-$0.640$^{***}$ & $-$0.624$^{***}$ & $-$0.627$^{***}$ & $-$0.617$^{***}$ & $-$0.656$^{***}$ & $-$0.642$^{***}$ \\ 
+  & (0.159) & (0.159) & (0.159) & (0.154) & (0.161) & (0.158) & (0.160) & (0.155) & (0.160) & (0.155) & (0.161) & (0.156) \\ 
+  \text{Ln VAT import tax}_{k,t-1} \times \text{Density}_{ck} \times \text{Eligible}^R & 0.579 & 0.579 & 1.019 & 0.480 & 0.857 & 0.200 & 1.014 & 0.449 & 1.043 & 0.507 & 0.990 & 0.436 \\ 
+  & (0.671) & (0.671) & (0.687) & (0.665) & (0.700) & (0.670) & (0.696) & (0.674) & (0.687) & (0.664) & (0.690) & (0.668) \\ 
+ \hline \\[-1.8ex] 
+City-product-regime fixed effects & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+City-sector-year fixed effects & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Product-destination fixed effect & Yes & No & Yes & No & Yes & No & Yes & No & Yes & No & Yes & No \\ 
+product-year fixed effects & No & Yes & No & Yes & No & Yes & No & Yes & No & Yes & No & Yes \\ 
+Observations & 4,744,218 & 4,744,218 & 4,737,048 & 4,737,048 & 4,659,037 & 4,659,037 & 4,725,009 & 4,725,009 & 4,561,160 & 4,561,160 & 4,675,720 & 4,675,720 \\ 
+R$^{2}$ & 0.537 & 0.537 & 0.406 & 0.268 & 0.405 & 0.267 & 0.406 & 0.268 & 0.405 & 0.267 & 0.405 & 0.266 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular}
+\end{adjustbox}
+\begin{tablenotes} 
+ \small 
+ \item \\ 
+
+This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%. 
+\end{tablenotes}
+\end{table}
+
+\end{document}

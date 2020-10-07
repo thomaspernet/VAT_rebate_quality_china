@@ -1,6 +1,6 @@
 
 % Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-% Date and time: Wed, Oct 07, 2020 - 11:55:35
+% Date and time: Wed, Oct 07, 2020 - 16:55:07
 \begin{table}[!htbp] \centering 
   \caption{VAT export tax and firm’s quality upgrading, Robustness checks} 
   \label{} 
@@ -17,9 +17,13 @@
   & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
   ln\_lag\_import\_tax &  &  &  &  &  &  \\ 
   & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
-  ln\_lag\_tax\_rebate:regimeELIGIBLE & $-$0.147$^{*}$ & $-$0.152$^{*}$ & $-$0.147$^{*}$ & $-$0.159$^{*}$ & $-$0.144$^{*}$ & $-$0.176$^{**}$ \\ 
+  lag\_foreign\_export\_share\_ckr & 0.021$^{**}$ & 0.020$^{**}$ & 0.023$^{**}$ & 0.021$^{**}$ & 0.020$^{**}$ & 0.020$^{**}$ \\ 
+  & (0.010) & (0.009) & (0.010) & (0.009) & (0.009) & (0.009) \\ 
+  lag\_soe\_export\_share\_ckr & 0.035$^{***}$ & 0.038$^{***}$ & 0.038$^{***}$ & 0.038$^{***}$ & 0.040$^{***}$ & 0.038$^{***}$ \\ 
+  & (0.010) & (0.009) & (0.010) & (0.009) & (0.010) & (0.010) \\ 
+  ln\_lag\_tax\_rebate:regimeELIGIBLE & $-$0.146$^{*}$ & $-$0.151$^{*}$ & $-$0.146$^{*}$ & $-$0.158$^{*}$ & $-$0.143$^{*}$ & $-$0.175$^{**}$ \\ 
   & (0.084) & (0.085) & (0.085) & (0.086) & (0.087) & (0.086) \\ 
-  regimeELIGIBLE:ln\_lag\_import\_tax & $-$0.003 & 0.056 & 0.058 & 0.044 & 0.058 & 0.055 \\ 
+  regimeELIGIBLE:ln\_lag\_import\_tax & $-$0.003 & 0.057 & 0.058 & 0.045 & 0.058 & 0.055 \\ 
   & (0.094) & (0.105) & (0.110) & (0.106) & (0.105) & (0.105) \\ 
  \hline \\[-1.8ex] 
 City-product-regime fixed effects & Yes & Yes & Yes & Yes & Yes & Yes \\ 
