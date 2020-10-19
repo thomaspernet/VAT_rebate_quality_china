@@ -297,6 +297,7 @@ One or more notebooks in the folder `01_prepare_tables` are used to create the r
 new_table = [{
     "database": "world_bank",
     "name": "world_gdp_per_capita",
+    "s3_location": "ATHENA/MAIN",
     "output_id": "",
     "separator": ",",
     "s3URI": "s3://chinese-data/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD",
@@ -455,7 +456,7 @@ for key, value in parameters["TABLES"]["CREATION"].items():
                 output = s3.run_query(
                             query=query,
                             database=table_info["database"],
-                            s3_output=s3_output,
+                            s3_output=table_info['s3_location'],
                             filename=None,  ## Add filename to print dataframe
                             destination_key=None,  ### Add destination key if need to copy output
                         )

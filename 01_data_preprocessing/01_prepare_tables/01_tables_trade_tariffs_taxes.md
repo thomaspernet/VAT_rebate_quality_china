@@ -314,6 +314,7 @@ new_tables = [
     {
         "database": "chinese_trade",
         "name": "base_hs6_VAT_2002_2012",
+        "s3_location": "ATHENA/MAIN",
         "output_id": "",
         "separator": ",",
         "s3URI": "s3://chinese-data/TAX_DATA/TRANSFORMED/VAT_REBATE/",
@@ -321,14 +322,16 @@ new_tables = [
             {"Name": "hs6", "Type": "string", "Comment": ""},
             {"Name": "year", "Type": "string", "Comment": ""},
             {"Name": "tax_rebate", "Type": "float", "Comment": ""},
-            {"Name": "ln_vat_rebate", "Type": "float", "Comment": ""},
+            {"Name": "ln_vat_rebate", "Type": "float", "Comment": "log (1 + tax_rebate)"},
             {"Name": "vat_m", "Type": "float", "Comment": ""},
             {"Name": "vat_reb_m", "Type": "float", "Comment": ""},
+            {"Name": "ln_vat_rebate_m", "Type": "float", "Comment": "log (1 + vat_reb_m)"},
         ],
     },
     {
         "database": "chinese_trade",
         "name": "applied_mfn_tariffs_hs02_china_2002_2010",
+        "s3_location": "ATHENA/MAIN",
         "output_id": "",
         "separator": ",",
         "s3URI": "s3://chinese-data/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS/",
@@ -342,6 +345,7 @@ new_tables = [
     {
         "database": "chinese_trade",
         "name": "sigma_industry",
+        "s3_location": "ATHENA/MAIN",
         "output_id": "",
         "separator": ",",
         "s3URI": "s3://chinese-data/ADDITIONAL_DATA/SIGMAS_HS3/",
@@ -355,6 +359,7 @@ new_tables = [
     {
         "database": "chinese_lookup",
         "name": "country_cn_en",
+        "s3_location": "ATHENA/LOOKUP",
         "output_id": "",
         "separator": ",",
         "s3URI": "s3://chinese-data/LOOKUP_DATA/COUNTRY_NAME/",
@@ -376,6 +381,7 @@ new_tables = [
     {
         "database": "chinese_lookup",
         "name": "city_cn_en",
+        "s3_location": "ATHENA/LOOKUP",
         "output_id": "",
         "separator": ",",
         "s3URI": "s3://chinese-data/LOOKUP_DATA/CITY_NAME/",
@@ -399,6 +405,7 @@ new_tables = [
     {
         "database": "chinese_trade",
         "name": "import_export",
+        "s3_location": "ATHENA/MAIN",
         "output_id": "",
         "separator": ",",
         "s3URI": "s3://chinese-data/TRADE_DATA/TRANSFORMED/",
@@ -426,7 +433,7 @@ To remove an item from the list, use `pop` with the index to remove. Exemple `pa
 ```python
 to_remove = False
 if to_remove:
-    parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(0)
+    parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(-1)
 ```
 
 ```python
@@ -434,7 +441,7 @@ parameters['TABLES']['CREATION']['ALL_SCHEMA'].extend(new_tables)
 ```
 
 ```python
-print(json.dumps(parameters, indent=4, sort_keys=False, ensure_ascii=False))
+#print(json.dumps(parameters, indent=4, sort_keys=False, ensure_ascii=False))
 ```
 
 ```python
@@ -510,7 +517,7 @@ for key, value in parameters["TABLES"]["CREATION"].items():
                         table_info["database"], table_info["name"]
                     )
             table_bottom = parameters["TABLES"]["CREATION"]["template"][
-                        "bottom"
+                        "bottom_Lazyserde"
                     ].format(table_info["separator"], table_info["s3URI"])
 
             ### Create middle
@@ -540,7 +547,7 @@ for key, value in parameters["TABLES"]["CREATION"].items():
             output = s3.run_query(
                         query=query,
                         database=table_info["database"],
-                        s3_output=s3_output,
+                        s3_output=table_info['s3_location'],
                         filename=None,  ## Add filename to print dataframe
                         destination_key=None,  ### Add destination key if need to copy output
                     )

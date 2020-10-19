@@ -405,6 +405,17 @@ df_quality = df_quality.assign(
 
 Create the following fixed effect for the baseline regression:
 
+**index**
+
+* city: `c`
+* product: `k`
+* sector: `s`
+* year: `t`
+* Destination: `j`
+* regime: `r`
+
+**FE**
+
 * city-product: `FE_ck`
 * City-sector-year: `FE_cst`
 * City-product-regime: `FE_ckr`
@@ -444,13 +455,19 @@ df_quality["FE_kt"] = pd.factorize(df_quality["hs6"].astype('str') +
                                    )[0]
 
 ## Product-destination
-df_quality["FE_pj"] = pd.factorize(df_quality["hs6"].astype('str') + 
+df_quality["FE_kj"] = pd.factorize(df_quality["hs6"].astype('str') + 
                                     df_quality["country_en"].astype('str')
                                    )[0]
 
 ## Destination-year
 df_quality["FE_jt"] = pd.factorize(df_quality["country_en"].astype('str') + 
                                     df_quality["year"].astype('str')
+                                   )[0]
+
+## city-product-destination
+df_quality["FE_ckj"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
+                                    df_quality["hs6"].astype('str') + 
+                                    df_quality["country_en"].astype('str')
                                    )[0]
 
 #df_quality["FE_ct"] = pd.factorize(df_quality["geocode4_corr"].astype('str') + 
@@ -467,9 +484,11 @@ reindex = [
     'country_en','iso_alpha',
     'quantity', 'value', 'unit_price', 
     'kandhelwal_quality','price_adjusted_quality',
-    'lag_tax_rebate', 'ln_lag_tax_rebate', 'lag_import_tax', 'ln_lag_import_tax', 
+    'lag_tax_rebate', 'ln_lag_tax_rebate',
+    'lag_vat_reb_m', 'ln_lag_vat_reb_m', 
+    'lag_import_tax', 'ln_lag_import_tax', 
     'sigma', 'sigma_price', 'y', 'prediction', 'residual', 
-    'FE_ck','FE_cst','FE_ckr', 'FE_csrt', 'FE_kt', 'FE_pj', 'FE_jt', 'FE_ct',
+    'FE_ck','FE_cst','FE_ckr', 'FE_csrt', 'FE_kt', 'FE_kj', 'FE_jt', 'FE_ckj',
     #'FE_ct', 'FE_fpr', 'FE_str','FE_dt', 'FE_pt'
 ]
 
@@ -527,7 +546,7 @@ df_quality.to_csv('quality_vat_export_2003_2010.csv', index = False)
 ```python
 s3.upload_file(
 'quality_vat_export_2003_2010.csv',
-    'DATA/TRANSFORMED'
+    'DATA/TRANSFORMED/QUALITY/BASELINE'
 )
 ```
 

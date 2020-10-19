@@ -13,7 +13,6 @@
 - [city_cn_en](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-city_cn_en)
 - [import_export](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-import_export)
 - [quality_vat_export_2003_2010](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-quality_vat_export_2003_2010)
-- [world_gdp_per_capita](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-world_gdp_per_capita)
 - [VAT_export_2003_2010](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-VAT_export_2003_2010)
 - [lag_foreign_export_ckjr](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-lag_foreign_export_ckjr)
 - [lag_foreign_export_ckr](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-lag_foreign_export_ckr)
@@ -32,14 +31,15 @@
 - S3uri: `s3://chinese-data/TAX_DATA/TRANSFORMED/VAT_REBATE`
 
 
-|    | Name          | Type   | Comment   |
-|---:|:--------------|:-------|:----------|
-|  0 | hs6           | string |           |
-|  1 | year          | string |           |
-|  2 | tax_rebate    | float  |           |
-|  3 | ln_vat_rebate | float  |           |
-|  4 | vat_m         | float  |           |
-|  5 | vat_reb_m     | float  |           |
+|    | Name            | Type   | Comment              |
+|---:|:----------------|:-------|:---------------------|
+|  0 | hs6             | string |                      |
+|  1 | year            | string |                      |
+|  2 | tax_rebate      | float  |                      |
+|  3 | ln_vat_rebate   | float  | log (1 + tax_rebate) |
+|  4 | vat_m           | float  |                      |
+|  5 | vat_reb_m       | float  |                      |
+|  6 | ln_vat_rebate_m | float  | log (1 + vat_reb_m)  |
 
     
 
@@ -149,8 +149,8 @@
 - Owner: hadoop 
 - Database: chinese_trade
 - Filename: quality_vat_export_2003_2010
-- Location: https://s3.console.aws.amazon.com/s3/buckets/vat-rebate-quality/DATA/TRANSFORMED
-- S3uri: `s3://vat-rebate-quality/DATA/TRANSFORMED`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/vat-rebate-quality/DATA/TRANSFORMED/QUALITY/BASELINE
+- S3uri: `s3://vat-rebate-quality/DATA/TRANSFORMED/QUALITY/BASELINE`
 
 
 |    | Name                   | Type   | Comment                                                                                                                                                              |
@@ -171,42 +171,23 @@
 | 13 | price_adjusted_quality | float  | price adjusted quality. https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md |
 | 14 | lag_tax_rebate         | float  |                                                                                                                                                                      |
 | 15 | ln_lag_tax_rebate      | float  |                                                                                                                                                                      |
-| 16 | lag_import_tax         | float  |                                                                                                                                                                      |
-| 17 | ln_lag_import_tax      | float  |                                                                                                                                                                      |
-| 18 | sigma                  | float  |                                                                                                                                                                      |
-| 19 | sigma_price            | float  |                                                                                                                                                                      |
-| 20 | y                      | float  | log quantity plus sigma                                                                                                                                              |
-| 21 | prediction             | float  |                                                                                                                                                                      |
-| 22 | residual               | float  |                                                                                                                                                                      |
-| 23 | fe_ck                  | string | nan                                                                                                                                                                  |
-| 24 | fe_cst                 | string | nan                                                                                                                                                                  |
-| 25 | fe_ckr                 | string | nan                                                                                                                                                                  |
-| 26 | fe_csrt                | string | nan                                                                                                                                                                  |
-| 27 | fe_kt                  | string | nan                                                                                                                                                                  |
-| 28 | fe_pj                  | string | nan                                                                                                                                                                  |
-| 29 | fe_jt                  | string | nan                                                                                                                                                                  |
-| 30 | fe_ct                  | string | nan                                                                                                                                                                  |
-
-    
-
-## Table world_gdp_per_capita
-
-- Owner: hadoop 
-- Database: world_bank
-- Filename: world_gdp_per_capita
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD
-- S3uri: `s3://chinese-data/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD`
-
-
-|    | Name           | Type   | Comment                                                                                                                                                               |
-|---:|:---------------|:-------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|  0 | country        | string | Country name                                                                                                                                                          |
-|  1 | iso_alpha      | string | Country code                                                                                                                                                          |
-|  2 | iso_alpha03    | string | Country code, iso 03                                                                                                                                                  |
-|  3 | year           | string | Year                                                                                                                                                                  |
-|  4 | gni_per_capita | float  | GDP per capita is gross domestic product divided by midyear population                                                                                                |
-|  5 | gpd_per_capita | float  | GNI per capita (formerly GNP per capita) is the gross national income, converted to U.S. dollars using the World Bank Atlas method, divided by the midyear population |
-|  6 | income_group   | string | One of 'Others', 'Low income', 'Upper middle income','High income: nonOECD', 'Lower middle income', 'High income: OECD'                                               |
+| 16 | lag_vat_reb_m          | float  |                                                                                                                                                                      |
+| 17 | ln_lag_vat_reb_m       | float  |                                                                                                                                                                      |
+| 18 | lag_import_tax         | float  |                                                                                                                                                                      |
+| 19 | ln_lag_import_tax      | float  |                                                                                                                                                                      |
+| 20 | sigma                  | float  |                                                                                                                                                                      |
+| 21 | sigma_price            | float  |                                                                                                                                                                      |
+| 22 | y                      | float  | log quantity plus sigma                                                                                                                                              |
+| 23 | prediction             | float  |                                                                                                                                                                      |
+| 24 | residual               | float  |                                                                                                                                                                      |
+| 25 | fe_ck                  | string | nan                                                                                                                                                                  |
+| 26 | fe_cst                 | string | nan                                                                                                                                                                  |
+| 27 | fe_ckr                 | string | nan                                                                                                                                                                  |
+| 28 | fe_csrt                | string | nan                                                                                                                                                                  |
+| 29 | fe_kt                  | string | nan                                                                                                                                                                  |
+| 30 | fe_kj                  | string | nan                                                                                                                                                                  |
+| 31 | fe_jt                  | string | nan                                                                                                                                                                  |
+| 32 | fe_ckj                 | string | nan                                                                                                                                                                  |
 
     
 
@@ -215,8 +196,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: vat_export_2003_2010
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/afd99920-592b-4910-b280-f84b68eb7d3f/
-- S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/afd99920-592b-4910-b280-f84b68eb7d3f/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ATHENA/MAIN/tables/2e1926c3-cb90-41f6-b149-295185a69253/
+- S3uri: `s3://chinese-data/ATHENA/MAIN/tables/2e1926c3-cb90-41f6-b149-295185a69253/`
 
 
 |    | Name              | Type          | Comment   |
@@ -233,8 +214,10 @@
 |  9 | unit_price        | decimal(21,5) |           |
 | 10 | lag_tax_rebate    | float         |           |
 | 11 | ln_lag_tax_rebate | double        |           |
-| 12 | lag_import_tax    | float         |           |
-| 13 | ln_lag_import_tax | double        |           |
+| 12 | lag_vat_reb_m     | float         |           |
+| 13 | ln_lag_vat_reb_m  | double        |           |
+| 14 | lag_import_tax    | float         |           |
+| 15 | ln_lag_import_tax | double        |           |
 
     
 
@@ -243,8 +226,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_foreign_export_ckjr
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/12175656-527f-41f2-a378-978b2000bcb8/
-- S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/12175656-527f-41f2-a378-978b2000bcb8/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ATHENA/MAIN/tables/85fdd28e-e03b-437a-8ae3-2c46376c175f/
+- S3uri: `s3://chinese-data/ATHENA/MAIN/tables/85fdd28e-e03b-437a-8ae3-2c46376c175f/`
 
 
 |    | Name                          | Type          | Comment      |
@@ -268,8 +251,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_foreign_export_ckr
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/a12f488d-78df-4a70-9f94-a9f10c153698/
-- S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/a12f488d-78df-4a70-9f94-a9f10c153698/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ATHENA/MAIN/tables/e1337fa3-3766-4a2a-a0b0-755d7a570fd2/
+- S3uri: `s3://chinese-data/ATHENA/MAIN/tables/e1337fa3-3766-4a2a-a0b0-755d7a570fd2/`
 
 
 |    | Name                         | Type          | Comment   |
@@ -292,8 +275,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_soe_export_ckjr
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/6c8101c9-2713-4843-8fcc-7e093240714d/
-- S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/6c8101c9-2713-4843-8fcc-7e093240714d/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ATHENA/MAIN/tables/ed3ec47f-831a-4508-bb28-970ceebe84a2/
+- S3uri: `s3://chinese-data/ATHENA/MAIN/tables/ed3ec47f-831a-4508-bb28-970ceebe84a2/`
 
 
 |    | Name                      | Type          | Comment   |
@@ -317,8 +300,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_soe_export_ckr
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/b354a1ec-6c1e-4e95-838e-67b4cba3ac63/
-- S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/b354a1ec-6c1e-4e95-838e-67b4cba3ac63/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ATHENA/MAIN/tables/96119386-12f3-465c-ab9d-134e8bfb0f64/
+- S3uri: `s3://chinese-data/ATHENA/MAIN/tables/96119386-12f3-465c-ab9d-134e8bfb0f64/`
 
 
 |    | Name                     | Type          | Comment   |
@@ -341,8 +324,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: quality_vat_export_covariate_2003_2010
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/SQL_OUTPUT_ATHENA/tables/f6d8ca3a-4726-4d65-b6b1-09afe033041d/
-- S3uri: `s3://chinese-data/SQL_OUTPUT_ATHENA/tables/f6d8ca3a-4726-4d65-b6b1-09afe033041d/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ATHENA/MAIN/tables/04661edc-a7bc-4da8-a412-1a67d7073904/
+- S3uri: `s3://chinese-data/ATHENA/MAIN/tables/04661edc-a7bc-4da8-a412-1a67d7073904/`
 
 
 |    | Name                          | Type          | Comment   |
@@ -366,24 +349,26 @@
 | 16 | price_adjusted_quality        | float         |           |
 | 17 | lag_tax_rebate                | float         |           |
 | 18 | ln_lag_tax_rebate             | float         |           |
-| 19 | lag_import_tax                | float         |           |
-| 20 | ln_lag_import_tax             | float         |           |
-| 21 | lag_soe_export_share_ckr      | decimal(21,5) |           |
-| 22 | lag_foreign_export_share_ckr  | decimal(21,5) |           |
-| 23 | lag_soe_export_share_ckjr     | decimal(21,5) |           |
-| 24 | lag_foreign_export_share_ckjr | decimal(21,5) |           |
-| 25 | sigma                         | float         |           |
-| 26 | sigma_price                   | float         |           |
-| 27 | y                             | float         |           |
-| 28 | prediction                    | float         |           |
-| 29 | residual                      | float         |           |
-| 30 | fe_ck                         | string        |           |
-| 31 | fe_cst                        | string        |           |
-| 32 | fe_ckr                        | string        |           |
-| 33 | fe_csrt                       | string        |           |
-| 34 | fe_kt                         | string        |           |
-| 35 | fe_pj                         | string        |           |
-| 36 | fe_jt                         | string        |           |
-| 37 | fe_ct                         | string        |           |
+| 19 | lag_vat_reb_m                 | float         |           |
+| 20 | ln_lag_vat_reb_m              | float         |           |
+| 21 | lag_import_tax                | float         |           |
+| 22 | ln_lag_import_tax             | float         |           |
+| 23 | lag_soe_export_share_ckr      | decimal(21,5) |           |
+| 24 | lag_foreign_export_share_ckr  | decimal(21,5) |           |
+| 25 | lag_soe_export_share_ckjr     | decimal(21,5) |           |
+| 26 | lag_foreign_export_share_ckjr | decimal(21,5) |           |
+| 27 | sigma                         | float         |           |
+| 28 | sigma_price                   | float         |           |
+| 29 | y                             | float         |           |
+| 30 | prediction                    | float         |           |
+| 31 | residual                      | float         |           |
+| 32 | fe_ck                         | string        |           |
+| 33 | fe_cst                        | string        |           |
+| 34 | fe_ckr                        | string        |           |
+| 35 | fe_csrt                       | string        |           |
+| 36 | fe_kt                         | string        |           |
+| 37 | fe_kj                         | string        |           |
+| 38 | fe_jt                         | string        |           |
+| 39 | fe_ckj                        | string        |           |
 
     

@@ -24,6 +24,13 @@ jupyter:
 * Please, update the Source URL by clicking on the button after the information have been pasted
   * US 02 create baseline tables Modify rows
   * Delete tables and Github related to the US: Delete rows
+  
+[Update] US ,  https://coda.io/d/_di6Ik05Tjwm/US-02-create-baseline-tables_su8VQ
+* the notebook associated is: 
+https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/01_prepare_tables/02_create_quality_tariff_tax_table.md
+
+Add the following fixed effect:
+* city-product-destination: FE_ckj 
 
 # Metadata
 
@@ -289,9 +296,10 @@ One or more notebooks in the folder `01_prepare_tables` are used to create the r
 new_table = [{
     "database": "chinese_trade",
     "name": "quality_vat_export_2003_2010",
+    "s3_location": "ATHENA/MAIN",
     "output_id": "",
     "separator": ",",
-    "s3URI": "s3://vat-rebate-quality/DATA/TRANSFORMED/",
+    "s3URI": "s3://vat-rebate-quality/DATA/TRANSFORMED/QUALITY/BASELINE/",
     "schema": [{'Name': 'cityen', 'Type': 'string', 'Comment': ''},
  {'Name': 'geocode4_corr', 'Type': 'string', 'Comment': ''},
  {'Name': 'year', 'Type': 'string', 'Comment': ''},
@@ -314,6 +322,8 @@ new_table = [{
   'Comment': 'price adjusted quality. https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md'},
  {'Name': 'lag_tax_rebate', 'Type': 'float', 'Comment': ''},
  {'Name': 'ln_lag_tax_rebate', 'Type': 'float', 'Comment': ''},
+ {'Name': 'lag_vat_reb_m', 'Type': 'float', 'Comment': ''},
+ {'Name': 'ln_lag_vat_reb_m', 'Type': 'float', 'Comment': ''},
  {'Name': 'lag_import_tax', 'Type': 'float', 'Comment': ''},
  {'Name': 'ln_lag_import_tax', 'Type': 'float', 'Comment': ''},
  {'Name': 'sigma', 'Type': 'float', 'Comment': ''},
@@ -328,9 +338,9 @@ new_table = [{
   'Type': 'string',
   'Comment': 'City sector regime year FE'},
  {'Name': 'FE_kt', 'Type': 'string', 'Comment': 'Product year FE'},
- {'Name': 'FE_pj', 'Type': 'string', 'Comment': 'Product destination FE'},
+ {'Name': 'FE_kj', 'Type': 'string', 'Comment': 'Product destination FE'},
  {'Name': 'FE_jt', 'Type': 'string', 'Comment': 'Destination year FE'},
- {'Name': 'FE_ct', 'Type': 'string', 'Comment': 'City year FE'}]
+ {'Name': 'FE_ckj', 'Type': 'string', 'Comment': 'City product destination FE'}]
 }]
 #len(parameters['TABLES']['CREATION']['ALL_SCHEMA'])
 ```
@@ -338,9 +348,9 @@ new_table = [{
 To remove an item from the list, use `pop` with the index to remove. Exemple `parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(6)` will remove the 5th item
 
 ```python
-to_remove = False
+to_remove = True
 if to_remove:
-    parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(0)
+    parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(-1)
 ```
 
 ```python
@@ -348,7 +358,7 @@ parameters['TABLES']['CREATION']['ALL_SCHEMA'].extend(new_table)
 ```
 
 ```python
-print(json.dumps(parameters, indent=4, sort_keys=False, ensure_ascii=False))
+parameters['TABLES']['CREATION']['ALL_SCHEMA'][-1]
 ```
 
 ```python
@@ -435,7 +445,7 @@ for key, value in parameters["TABLES"]["CREATION"].items():
                         table_info["database"], table_info["name"]
                     )
                 table_bottom = parameters["TABLES"]["CREATION"]["template"][
-                        "bottom"
+                        "bottom_Lazyserde"
                     ].format(table_info["separator"], table_info["s3URI"])
 
                     ### Create middle
@@ -464,7 +474,7 @@ for key, value in parameters["TABLES"]["CREATION"].items():
                 output = s3.run_query(
                         query=query,
                         database=table_info["database"],
-                        s3_output=s3_output,
+                        s3_output=table_info['s3_location'],
                         filename=None,  ## Add filename to print dataframe
                         destination_key=None,  ### Add destination key if need to copy output
                     )
