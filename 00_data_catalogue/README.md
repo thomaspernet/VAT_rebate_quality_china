@@ -13,6 +13,7 @@
 - [city_cn_en](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-city_cn_en)
 - [import_export](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-import_export)
 - [quality_vat_export_2003_2010](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-quality_vat_export_2003_2010)
+- [world_gdp_per_capita](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-world_gdp_per_capita)
 - [VAT_export_2003_2010](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-VAT_export_2003_2010)
 - [lag_foreign_export_ckjr](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-lag_foreign_export_ckjr)
 - [lag_foreign_export_ckr](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-lag_foreign_export_ckr)
@@ -191,6 +192,27 @@
 
     
 
+## Table world_gdp_per_capita
+
+- Owner: hadoop 
+- Database: world_bank
+- Filename: world_gdp_per_capita
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD`
+
+
+|    | Name           | Type   | Comment                                                                                                                                                               |
+|---:|:---------------|:-------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|  0 | country        | string | Country name                                                                                                                                                          |
+|  1 | iso_alpha      | string | Country code                                                                                                                                                          |
+|  2 | iso_alpha03    | string | Country code, iso 03                                                                                                                                                  |
+|  3 | year           | string | Year                                                                                                                                                                  |
+|  4 | gni_per_capita | float  | GDP per capita is gross domestic product divided by midyear population                                                                                                |
+|  5 | gpd_per_capita | float  | GNI per capita (formerly GNP per capita) is the gross national income, converted to U.S. dollars using the World Bank Atlas method, divided by the midyear population |
+|  6 | income_group   | string | One of 'Others', 'Low income', 'Upper middle income','High income: nonOECD', 'Lower middle income', 'High income: OECD'                                               |
+
+    
+
 ## Table vat_export_2003_2010
 
 - Owner: 468786073381 
@@ -226,8 +248,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_foreign_export_ckjr
-- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT_DEST/tables/1f6c1690-d774-453f-9c08-141875454dc3
-- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT_DEST/tables/1f6c1690-d774-453f-9c08-141875454dc3`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT_DEST/tables/b04763e4-bfdc-451b-bc0f-41f330a975af
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT_DEST/tables/b04763e4-bfdc-451b-bc0f-41f330a975af`
 
 
 |    | Name                          | Type          | Comment      |
@@ -251,8 +273,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_foreign_export_ckr
-- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT/tables/59d50563-0a46-4f8e-81d1-75fab4aa7d91
-- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT/tables/59d50563-0a46-4f8e-81d1-75fab4aa7d91`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT/tables/82aba5ea-e107-4efe-8cb7-d9166f6650d0
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT/tables/82aba5ea-e107-4efe-8cb7-d9166f6650d0`
 
 
 |    | Name                         | Type          | Comment   |
@@ -275,8 +297,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_soe_export_ckjr
-- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT_DEST/tables/afbc24f7-3388-4690-9b9d-e810a981f270
-- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT_DEST/tables/afbc24f7-3388-4690-9b9d-e810a981f270`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT_DEST/tables/b68f0cba-5daf-4daf-b110-65b6a8bde035
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT_DEST/tables/b68f0cba-5daf-4daf-b110-65b6a8bde035`
 
 
 |    | Name                      | Type          | Comment   |
@@ -300,8 +322,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_soe_export_ckr
-- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT/tables/57c1b952-9574-40cf-b56f-dcdd0afa11ae
-- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT/tables/57c1b952-9574-40cf-b56f-dcdd0afa11ae`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT/tables/19382ea7-5ee6-4f68-b93f-df8971a4d458
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT/tables/19382ea7-5ee6-4f68-b93f-df8971a4d458`
 
 
 |    | Name                     | Type          | Comment   |
@@ -324,8 +346,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: quality_vat_export_covariate_2003_2010
-- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/QUALITY_EXPORT_TARIFF_TAX_LAG_X/tables/da5d3441-100f-4d72-8170-dddd16f0fae7
-- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/QUALITY_EXPORT_TARIFF_TAX_LAG_X/tables/da5d3441-100f-4d72-8170-dddd16f0fae7`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/QUALITY_EXPORT_TARIFF_TAX_LAG_X/tables/504be6f9-0cb8-41cc-a99c-177c6331e932
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/QUALITY_EXPORT_TARIFF_TAX_LAG_X/tables/504be6f9-0cb8-41cc-a99c-177c6331e932`
 
 
 |    | Name                          | Type          | Comment   |
@@ -342,33 +364,38 @@
 |  9 | gni_per_capita                | float         |           |
 | 10 | gpd_per_capita                | float         |           |
 | 11 | income_group                  | string        |           |
-| 12 | quantity                      | int           |           |
-| 13 | value                         | int           |           |
-| 14 | unit_price                    | float         |           |
-| 15 | kandhelwal_quality            | float         |           |
-| 16 | price_adjusted_quality        | float         |           |
-| 17 | lag_tax_rebate                | float         |           |
-| 18 | ln_lag_tax_rebate             | float         |           |
-| 19 | lag_vat_reb_m                 | float         |           |
-| 20 | ln_lag_vat_reb_m              | float         |           |
-| 21 | lag_import_tax                | float         |           |
-| 22 | ln_lag_import_tax             | float         |           |
-| 23 | lag_soe_export_share_ckr      | decimal(21,5) |           |
-| 24 | lag_foreign_export_share_ckr  | decimal(21,5) |           |
-| 25 | lag_soe_export_share_ckjr     | decimal(21,5) |           |
-| 26 | lag_foreign_export_share_ckjr | decimal(21,5) |           |
-| 27 | sigma                         | float         |           |
-| 28 | sigma_price                   | float         |           |
-| 29 | y                             | float         |           |
-| 30 | prediction                    | float         |           |
-| 31 | residual                      | float         |           |
-| 32 | fe_ck                         | string        |           |
-| 33 | fe_cst                        | string        |           |
-| 34 | fe_ckr                        | string        |           |
-| 35 | fe_csrt                       | string        |           |
-| 36 | fe_kt                         | string        |           |
-| 37 | fe_kj                         | string        |           |
-| 38 | fe_jt                         | string        |           |
-| 39 | fe_ckj                        | string        |           |
+| 12 | income_group_ldc_dc           | varchar(3)    |           |
+| 13 | quantity                      | int           |           |
+| 14 | value                         | int           |           |
+| 15 | unit_price                    | float         |           |
+| 16 | kandhelwal_quality            | float         |           |
+| 17 | price_adjusted_quality        | float         |           |
+| 18 | lag_tax_rebate                | float         |           |
+| 19 | ln_lag_tax_rebate             | float         |           |
+| 20 | lag_import_tax                | float         |           |
+| 21 | ln_lag_import_tax             | float         |           |
+| 22 | lag_soe_export_share_ckr      | decimal(21,5) |           |
+| 23 | lag_foreign_export_share_ckr  | decimal(21,5) |           |
+| 24 | lag_soe_export_share_ckjr     | decimal(21,5) |           |
+| 25 | lag_foreign_export_share_ckjr | decimal(21,5) |           |
+| 26 | sigma                         | float         |           |
+| 27 | sigma_price                   | float         |           |
+| 28 | y                             | float         |           |
+| 29 | prediction                    | float         |           |
+| 30 | residual                      | float         |           |
+| 31 | fe_ck                         | string        |           |
+| 32 | fe_cst                        | string        |           |
+| 33 | fe_ckr                        | string        |           |
+| 34 | fe_csrt                       | string        |           |
+| 35 | fe_kt                         | string        |           |
+| 36 | fe_kj                         | string        |           |
+| 37 | fe_jt                         | string        |           |
+| 38 | fe_ckj                        | string        |           |
+| 39 | count_hs6                     | bigint        |           |
+| 40 | sum_quantity                  | bigint        |           |
+| 41 | city_average_hs6              | double        |           |
+| 42 | city_average_quantity         | double        |           |
+| 43 | size_quantity                 | varchar(14)   |           |
+| 44 | size_product                  | varchar(11)   |           |
 
     
