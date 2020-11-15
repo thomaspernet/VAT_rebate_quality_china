@@ -97,7 +97,7 @@ parent_path = str(Path(path).parent.parent)
 
 name_credential = 'thomas_vat_credentials.csv'
 region = 'eu-west-3'
-bucket = 'chinese-data'
+bucket = 'vat-rebate-quality'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 ```
 
@@ -380,7 +380,7 @@ s3 = service_s3.connect_S3(client = client,
 ```python
 from datetime import date
 import joblib
-today = date.today().strftime('%Y%M%d')
+today = date.today().strftime('%Y%m%d')
 model_ols_output_path = 'OLS_MODEL.sav'
 
 joblib.dump(MODEL, model_ols_output_path)
@@ -478,21 +478,52 @@ df_quality["FE_ckj"] = pd.factorize(df_quality["geocode4_corr"].astype('str') +
 ```
 
 ```python
-reindex = [
-    'cityen', 'geocode4_corr', 'year', 'regime',
-    'hs6','hs4','hs3',
-    'country_en','iso_alpha',
-    'quantity', 'value', 'unit_price', 
-    'kandhelwal_quality','price_adjusted_quality',
-    'lag_tax_rebate', 'ln_lag_tax_rebate',
-    'lag_vat_reb_m', 'ln_lag_vat_reb_m', 
-    'lag_import_tax', 'ln_lag_import_tax', 
-    'sigma', 'sigma_price', 'y', 'prediction', 'residual', 
-    'FE_ck','FE_cst','FE_ckr', 'FE_csrt', 'FE_kt', 'FE_kj', 'FE_jt', 'FE_ckj',
-    #'FE_ct', 'FE_fpr', 'FE_str','FE_dt', 'FE_pt'
+df_quality.columns
+```
+
+```python
+
+```
+
+```python
+reindex =[
+    "cityen",
+    "geocode4_corr",
+    "year",
+    "regime",
+    "hs6",
+    "hs4",
+    "hs3",
+    "country_en",
+    "iso_alpha",
+    "quantity",
+    "value",
+    "unit_price",
+    "price_adjusted_quality",
+    "kandhelwal_quality",
+    "lag_vat_reb_m",
+    "lag_tax_rebate",
+    "ln_lag_tax_rebate",
+    "ln_lag_vat_reb_m",
+    "lag_import_tax",
+    "ln_lag_import_tax",
+    "sigma",
+    "sigma_price",
+    "y",
+    "prediction",
+    "residual",
+    "FE_ct",
+    "FE_ck",
+    "FE_cst",
+    "FE_ckr",
+    "FE_csrt",
+    "FE_kt",
+    "FE_kj",
+    "FE_jt",
+    "FE_ckj"
 ]
 
-df_quality = df_quality.reindex(columns = reindex)
+df_quality = df_quality.reindex(columns=reindex)
 ```
 
 ```python
@@ -544,9 +575,14 @@ df_quality.to_csv('quality_vat_export_2003_2010.csv', index = False)
 ```
 
 ```python
+s3 = service_s3.connect_S3(client = client,
+                      bucket = 'datalake-datascience', verbose = True) 
+```
+
+```python
 s3.upload_file(
 'quality_vat_export_2003_2010.csv',
-    'DATA/TRANSFORMED/QUALITY/BASELINE'
+    'DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/QUALITY_EXPORT_TARIFF_TAX'
 )
 ```
 
