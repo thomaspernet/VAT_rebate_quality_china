@@ -31,11 +31,11 @@ vat = (
         sheetID=spreadsheet_id,
         sheetName="base_hs6_VAT_2002_2012.csv",
         to_dataframe=True)
-    .assign(
-        ln_tax_rebate=lambda x:
-        np.log(1 + pd.to_numeric(x['vat_reb_m'])
-               )
-    )
+    #.assign(
+    #    ln_tax_rebate=lambda x:
+    #    np.log(1 + pd.to_numeric(x['vat_reb_m'])
+    #           )
+    #)
 
 )
 
