@@ -39,8 +39,8 @@ client= con.client_boto()
 s3 = service_s3.connect_S3(client = client,
                       bucket = bucket, verbose = True)
 
-sigmas.to_csv('sigmas.csv', index = False)
+sigmas.to_csv('sigmas_china.csv', index = False)
 s3.upload_file(file_to_upload = 'sigmas.csv',
 destination_in_s3 = 'DATA/ECON/INDUSTRY/ADDITIONAL_DATA/SIGMAS_HS3')
 
-os.remove('sigmas.csv')
+os.remove('sigmas_china.csv')
