@@ -317,15 +317,14 @@ new_tables = [
         "s3_location": "ATHENA/MAIN",
         "output_id": "",
         "separator": ",",
-        "s3URI": "s3://chinese-data/TAX_DATA/TRANSFORMED/VAT_REBATE/",
+        "s3URI": "s3://datalake-datascience/DATA/ECON/TAX_DATA/TRANSFORMED/CHINA_VAT_REBATE/",
         "schema": [
-            {"Name": "hs6", "Type": "string", "Comment": ""},
+            {"Name": "hs6", "Type": "string", "Comment": "6 digits product line"},
             {"Name": "year", "Type": "string", "Comment": ""},
-            {"Name": "tax_rebate", "Type": "float", "Comment": ""},
-            {"Name": "ln_vat_rebate", "Type": "float", "Comment": "log (1 + tax_rebate)"},
-            {"Name": "vat_m", "Type": "float", "Comment": ""},
-            {"Name": "vat_reb_m", "Type": "float", "Comment": ""},
-            {"Name": "ln_vat_rebate_m", "Type": "float", "Comment": "log (1 + vat_reb_m)"},
+            {"Name": "vat_m", "Type": "float", "Comment": "6 digits product line tax"},
+            {"Name": "vat_reb_m", "Type": "float", "Comment": "Percentage of tax refunded"},
+            {"Name": "tax_rebate", "Type": "float", "Comment": "Effective tax level: vat_m - vat_reb_m "},
+            {"Name": "ln_tax_rebate", "Type": "float", "Comment": "log (1 + vat_reb_m)"},
         ],
     },
     {
@@ -334,7 +333,7 @@ new_tables = [
         "s3_location": "ATHENA/MAIN",
         "output_id": "",
         "separator": ",",
-        "s3URI": "s3://chinese-data/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS/",
+        "s3URI": "s3://datalake-datascience/DATA/ECON/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS_HS2/",
         "schema": [
             {"Name": "reporter", "Type": "string", "Comment": ""},
             {"Name": "year", "Type": "string", "Comment": ""},
@@ -348,7 +347,7 @@ new_tables = [
         "s3_location": "ATHENA/MAIN",
         "output_id": "",
         "separator": ",",
-        "s3URI": "s3://chinese-data/ADDITIONAL_DATA/SIGMAS_HS3/",
+        "s3URI": "s3://datalake-datascience/DATA/ECON/INDUSTRY/ADDITIONAL_DATA/SIGMAS_HS3/",
         "schema": [
             {"Name": "ccode", "Type": "string", "Comment": "Country code"},
             {"Name": "cname", "Type": "string", "Comment": "countr name"},
@@ -362,7 +361,7 @@ new_tables = [
         "s3_location": "ATHENA/LOOKUP",
         "output_id": "",
         "separator": ",",
-        "s3URI": "s3://chinese-data/LOOKUP_DATA/COUNTRY_NAME/",
+        "s3URI": "s3://datalake-datascience/DATA/ECON/LOOKUP_DATA/COUNTRY_NAME_CHINESE/",
         "schema": [
             {
                 "Name": "country_cn",
@@ -384,7 +383,7 @@ new_tables = [
         "s3_location": "ATHENA/LOOKUP",
         "output_id": "",
         "separator": ",",
-        "s3URI": "s3://chinese-data/LOOKUP_DATA/CITY_NAME/",
+        "s3URI": "s3://datalake-datascience/DATA/ECON/LOOKUP_DATA/CITY_NAME_CHINESE/",
         "schema": [
             {"Name": "extra_code", "Type": "string", "Comment": "Correspondence code"},
             {"Name": "geocode4_corr", "Type": "string", "Comment": "Official code"},
@@ -408,7 +407,7 @@ new_tables = [
         "s3_location": "ATHENA/MAIN",
         "output_id": "",
         "separator": ",",
-        "s3URI": "s3://chinese-data/TRADE_DATA/TRANSFORMED/",
+        "s3URI": "s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/",
         "schema": [
             {"Name": "date", "Type": "string", "Comment": ""},
             {"Name": "ID", "Type": "string", "Comment": ""},
@@ -438,6 +437,10 @@ if to_remove:
 
 ```python
 parameters['TABLES']['CREATION']['ALL_SCHEMA'].extend(new_tables)
+```
+
+```python
+parameters['TABLES']['CREATION']['ALL_SCHEMA'][-1]
 ```
 
 ```python
