@@ -34,7 +34,7 @@ parent_path = str(Path(path).parent.parent.parent)
 
 name_credential = 'thomas_vat_credentials.csv'
 region = 'eu-west-3'
-bucket = 'chinese-data'
+bucket = 'datalake-datascience'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 
 con = aws_connector.aws_instantiate(credential = path_cred,
@@ -44,6 +44,6 @@ s3 = service_s3.connect_S3(client = client,
                       bucket = bucket, verbose = True)
 df_final.to_csv('gdp_gni_per_capita.csv', index = False)
 
-s3.upload_file('gdp_gni_per_capita.csv', 'TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD')
+s3.upload_file('gdp_gni_per_capita.csv', 'DATA/ECON/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD')
 
 os.remove('gdp_gni_per_capita.csv')
