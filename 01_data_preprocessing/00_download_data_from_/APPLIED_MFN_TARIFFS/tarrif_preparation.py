@@ -2,6 +2,28 @@ import pandas as pd
 import numpy as np
 import glob
 import os
+from pathlib import Path
+from awsPy.aws_s3 import service_s3
+from awsPy.aws_authorization import aws_connector
+
+path = os.getcwd()
+parent_path = str(Path(path).parent.parent.parent)
+name_credential = 'thomas_vat_credentials.csv'
+region = 'eu-west-3'
+bucket = 'datalake-datascience'
+path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
+
+con = aws_connector.aws_instantiate(credential=path_cred,
+                                    region=region)
+client = con.client_boto()
+s3 = service_s3.connect_S3(client=client,
+                           bucket=bucket, verbose=True)
+
+### Download data
+
+tarrifs = s3.list_all_files_with_prefix('DATA/TAX_DATA/RAW_DATA/APPLIED_MFN_TARIFFS')
+
+list( map(lambda x: s3.download_file(x), tarrifs))
 
 concordance = (pd.read_csv('Product_correspondance.txt',
                            sep='\t', lineterminator='\r',
@@ -14,9 +36,6 @@ concordance = (pd.read_csv('Product_correspondance.txt',
     HS_used=lambda x: x['HS_used'].str.replace('\n|\"', '')
 )
     .rename(columns={'TL_used': 'HS07', 'TL_selected': 'HS02'})
-    #.drop(columns=['HS_used', 'HS_selected'])
-    #.drop_duplicates(subset=['HS07'], keep='first')
-    #.drop_duplicates(subset=['HS02'], keep='first')
 )
 
 hs_constant = concordance.loc[lambda x: x['HS07'] == x['HS02']]['HS07'].unique()
@@ -93,9 +112,19 @@ test = (tarrif_HS2
 .rename(columns= {'AVDuty average': 'import_taxe', 'Year': 'year'})
 .drop(columns=['index_tarrif'])
 .sort_values(by = ['HS02', 'year'])
-.to_csv('Applied_MFN_Tariffs_hs02_china_2002_2010.csv', index = False)
+#.to_csv('Applied_MFN_Tariffs_hs02_china_2002_2010.csv', index = False)
 )
 
+test.to_csv('Applied_MFN_Tariffs_hs02_china_2002_2010.csv', index = False)
+
+s3.upload_file(file_to_upload='Applied_MFN_Tariffs_hs02_china_2002_2010.csv',
+               destination_in_s3='DATA/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS_HS2')
+
+os.remove('Applied_MFN_Tariffs_hs02_china_2002_2010.csv')
+
+
+
+test['Reporter'].unique()
 
 #tarrif_HS2.loc[lambda x: x['HS02'].isin(['121190'])]
 test.shape
