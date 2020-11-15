@@ -30,7 +30,7 @@ from awsPy.aws_s3 import service_s3
 
 name_credential = 'thomas_vat_credentials.csv'
 region = 'eu-west-3'
-bucket = 'chinese-data'
+bucket = 'datalake-datascience'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 
 con = aws_connector.aws_instantiate(credential = path_cred,
@@ -41,6 +41,6 @@ s3 = service_s3.connect_S3(client = client,
 
 sigmas.to_csv('sigmas.csv', index = False)
 s3.upload_file(file_to_upload = 'sigmas.csv',
-destination_in_s3 = 'ADDITIONAL_DATA/SIGMAS_HS3')
+destination_in_s3 = 'DATA/ECON/INDUSTRY/ADDITIONAL_DATA/SIGMAS_HS3')
 
 os.remove('sigmas.csv')
