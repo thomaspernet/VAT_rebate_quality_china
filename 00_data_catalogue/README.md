@@ -27,19 +27,18 @@
 - Owner: hadoop 
 - Database: chinese_trade
 - Filename: base_hs6_vat_2002_2012
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/TAX_DATA/TRANSFORMED/VAT_REBATE
-- S3uri: `s3://chinese-data/TAX_DATA/TRANSFORMED/VAT_REBATE`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TAX_DATA/TRANSFORMED/CHINA_VAT_REBATE
+- S3uri: `s3://datalake-datascience/DATA/ECON/TAX_DATA/TRANSFORMED/CHINA_VAT_REBATE`
 
 
-|    | Name            | Type   | Comment              |
-|---:|:----------------|:-------|:---------------------|
-|  0 | hs6             | string |                      |
-|  1 | year            | string |                      |
-|  2 | tax_rebate      | float  |                      |
-|  3 | ln_vat_rebate   | float  | log (1 + tax_rebate) |
-|  4 | vat_m           | float  |                      |
-|  5 | vat_reb_m       | float  |                      |
-|  6 | ln_vat_rebate_m | float  | log (1 + vat_reb_m)  |
+|    | Name          | Type   | Comment                                |
+|---:|:--------------|:-------|:---------------------------------------|
+|  0 | hs6           | string | 6 digits product line                  |
+|  1 | year          | string |                                        |
+|  2 | vat_m         | float  | 6 digits product line tax              |
+|  3 | vat_reb_m     | float  | Percentage of tax refunded             |
+|  4 | tax_rebate    | float  | Effective tax level: vat_m - vat_reb_m |
+|  5 | ln_tax_rebate | float  | log (1 + vat_reb_m)                    |
 
     
 
@@ -48,8 +47,8 @@
 - Owner: hadoop 
 - Database: chinese_trade
 - Filename: applied_mfn_tariffs_hs02_china_2002_2010
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS
-- S3uri: `s3://chinese-data/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS_HS2
+- S3uri: `s3://datalake-datascience/DATA/ECON/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS_HS2`
 
 
 |    | Name       | Type   | Comment   |
@@ -66,8 +65,8 @@
 - Owner: hadoop 
 - Database: chinese_trade
 - Filename: sigma_industry
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ADDITIONAL_DATA/SIGMAS_HS3
-- S3uri: `s3://chinese-data/ADDITIONAL_DATA/SIGMAS_HS3`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/INDUSTRY/ADDITIONAL_DATA/SIGMAS_HS3
+- S3uri: `s3://datalake-datascience/DATA/ECON/INDUSTRY/ADDITIONAL_DATA/SIGMAS_HS3`
 
 
 |    | Name   | Type   | Comment      |
@@ -84,8 +83,8 @@
 - Owner: hadoop 
 - Database: chinese_lookup
 - Filename: country_cn_en
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/LOOKUP_DATA/COUNTRY_NAME
-- S3uri: `s3://chinese-data/LOOKUP_DATA/COUNTRY_NAME`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/LOOKUP_DATA/COUNTRY_NAME_CHINESE
+- S3uri: `s3://datalake-datascience/DATA/ECON/LOOKUP_DATA/COUNTRY_NAME_CHINESE`
 
 
 |    | Name       | Type   | Comment                 |
@@ -102,8 +101,8 @@
 - Owner: hadoop 
 - Database: chinese_lookup
 - Filename: city_cn_en
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/LOOKUP_DATA/CITY_NAME
-- S3uri: `s3://chinese-data/LOOKUP_DATA/CITY_NAME`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/LOOKUP_DATA/CITY_NAME_CHINESE
+- S3uri: `s3://datalake-datascience/DATA/ECON/LOOKUP_DATA/CITY_NAME_CHINESE`
 
 
 |    | Name          | Type   | Comment                  |
@@ -122,8 +121,8 @@
 - Owner: hadoop 
 - Database: chinese_trade
 - Filename: import_export
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/TRADE_DATA/TRANSFORMED
-- S3uri: `s3://chinese-data/TRADE_DATA/TRANSFORMED`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/IMPORT_EXPORT
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/IMPORT_EXPORT`
 
 
 |    | Name                  | Type   | Comment   |
@@ -149,8 +148,8 @@
 - Owner: hadoop 
 - Database: chinese_trade
 - Filename: quality_vat_export_2003_2010
-- Location: https://s3.console.aws.amazon.com/s3/buckets/vat-rebate-quality/DATA/TRANSFORMED/QUALITY/BASELINE
-- S3uri: `s3://vat-rebate-quality/DATA/TRANSFORMED/QUALITY/BASELINE`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/QUALITY_EXPORT_TARIFF_TAX
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/QUALITY_EXPORT_TARIFF_TAX`
 
 
 |    | Name                   | Type   | Comment                                                                                                                                                              |
@@ -167,12 +166,12 @@
 |  9 | quantity               | int    |                                                                                                                                                                      |
 | 10 | value                  | int    |                                                                                                                                                                      |
 | 11 | unit_price             | float  |                                                                                                                                                                      |
-| 12 | kandhelwal_quality     | float  | kandhelwal quality. cf https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md  |
-| 13 | price_adjusted_quality | float  | price adjusted quality. https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md |
-| 14 | lag_tax_rebate         | float  |                                                                                                                                                                      |
-| 15 | ln_lag_tax_rebate      | float  |                                                                                                                                                                      |
-| 16 | lag_vat_reb_m          | float  |                                                                                                                                                                      |
-| 17 | ln_lag_vat_reb_m       | float  |                                                                                                                                                                      |
+| 12 | price_adjusted_quality | float  | price adjusted quality. https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md |
+| 13 | kandhelwal_quality     | float  | kandhelwal quality. cf https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md  |
+| 14 | lag_vat_reb_m          | float  | Lag Percentage of tax refunded                                                                                                                                       |
+| 15 | lag_tax_rebate         | float  |                                                                                                                                                                      |
+| 16 | ln_lag_vat_reb_m       | float  |                                                                                                                                                                      |
+| 17 | ln_lag_tax_rebate      | float  |                                                                                                                                                                      |
 | 18 | lag_import_tax         | float  |                                                                                                                                                                      |
 | 19 | ln_lag_import_tax      | float  |                                                                                                                                                                      |
 | 20 | sigma                  | float  |                                                                                                                                                                      |
@@ -180,14 +179,15 @@
 | 22 | y                      | float  | log quantity plus sigma                                                                                                                                              |
 | 23 | prediction             | float  |                                                                                                                                                                      |
 | 24 | residual               | float  |                                                                                                                                                                      |
-| 25 | fe_ck                  | string | nan                                                                                                                                                                  |
-| 26 | fe_cst                 | string | nan                                                                                                                                                                  |
-| 27 | fe_ckr                 | string | nan                                                                                                                                                                  |
-| 28 | fe_csrt                | string | nan                                                                                                                                                                  |
-| 29 | fe_kt                  | string | nan                                                                                                                                                                  |
-| 30 | fe_kj                  | string | nan                                                                                                                                                                  |
-| 31 | fe_jt                  | string | nan                                                                                                                                                                  |
-| 32 | fe_ckj                 | string | nan                                                                                                                                                                  |
+| 25 | fe_ct                  | string | nan                                                                                                                                                                  |
+| 26 | fe_ck                  | string | nan                                                                                                                                                                  |
+| 27 | fe_cst                 | string | nan                                                                                                                                                                  |
+| 28 | fe_ckr                 | string | nan                                                                                                                                                                  |
+| 29 | fe_csrt                | string | nan                                                                                                                                                                  |
+| 30 | fe_kt                  | string | nan                                                                                                                                                                  |
+| 31 | fe_kj                  | string | nan                                                                                                                                                                  |
+| 32 | fe_jt                  | string | nan                                                                                                                                                                  |
+| 33 | fe_ckj                 | string | nan                                                                                                                                                                  |
 
     
 
@@ -196,8 +196,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: vat_export_2003_2010
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ATHENA/MAIN/tables/2e1926c3-cb90-41f6-b149-295185a69253/
-- S3uri: `s3://chinese-data/ATHENA/MAIN/tables/2e1926c3-cb90-41f6-b149-295185a69253/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/EXPORT_TARIFF_TAX/tables/58945010-8b1d-4105-a8e1-73e34a632f98
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/EXPORT_TARIFF_TAX/tables/58945010-8b1d-4105-a8e1-73e34a632f98`
 
 
 |    | Name              | Type          | Comment   |
@@ -226,8 +226,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_foreign_export_ckjr
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ATHENA/MAIN/tables/85fdd28e-e03b-437a-8ae3-2c46376c175f/
-- S3uri: `s3://chinese-data/ATHENA/MAIN/tables/85fdd28e-e03b-437a-8ae3-2c46376c175f/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT_DEST/tables/1f6c1690-d774-453f-9c08-141875454dc3
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT_DEST/tables/1f6c1690-d774-453f-9c08-141875454dc3`
 
 
 |    | Name                          | Type          | Comment      |
@@ -251,8 +251,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_foreign_export_ckr
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ATHENA/MAIN/tables/e1337fa3-3766-4a2a-a0b0-755d7a570fd2/
-- S3uri: `s3://chinese-data/ATHENA/MAIN/tables/e1337fa3-3766-4a2a-a0b0-755d7a570fd2/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT/tables/59d50563-0a46-4f8e-81d1-75fab4aa7d91
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT/tables/59d50563-0a46-4f8e-81d1-75fab4aa7d91`
 
 
 |    | Name                         | Type          | Comment   |
@@ -275,8 +275,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_soe_export_ckjr
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ATHENA/MAIN/tables/ed3ec47f-831a-4508-bb28-970ceebe84a2/
-- S3uri: `s3://chinese-data/ATHENA/MAIN/tables/ed3ec47f-831a-4508-bb28-970ceebe84a2/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT_DEST/tables/afbc24f7-3388-4690-9b9d-e810a981f270
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT_DEST/tables/afbc24f7-3388-4690-9b9d-e810a981f270`
 
 
 |    | Name                      | Type          | Comment   |
@@ -300,8 +300,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: lag_soe_export_ckr
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ATHENA/MAIN/tables/96119386-12f3-465c-ab9d-134e8bfb0f64/
-- S3uri: `s3://chinese-data/ATHENA/MAIN/tables/96119386-12f3-465c-ab9d-134e8bfb0f64/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT/tables/57c1b952-9574-40cf-b56f-dcdd0afa11ae
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT/tables/57c1b952-9574-40cf-b56f-dcdd0afa11ae`
 
 
 |    | Name                     | Type          | Comment   |
@@ -324,8 +324,8 @@
 - Owner: 468786073381 
 - Database: chinese_trade
 - Filename: quality_vat_export_covariate_2003_2010
-- Location: https://s3.console.aws.amazon.com/s3/buckets/chinese-data/ATHENA/MAIN/tables/04661edc-a7bc-4da8-a412-1a67d7073904/
-- S3uri: `s3://chinese-data/ATHENA/MAIN/tables/04661edc-a7bc-4da8-a412-1a67d7073904/`
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/QUALITY_EXPORT_TARIFF_TAX_LAG_X/tables/da5d3441-100f-4d72-8170-dddd16f0fae7
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/QUALITY_EXPORT_TARIFF_TAX_LAG_X/tables/da5d3441-100f-4d72-8170-dddd16f0fae7`
 
 
 |    | Name                          | Type          | Comment   |
