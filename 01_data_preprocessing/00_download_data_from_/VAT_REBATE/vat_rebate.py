@@ -55,6 +55,6 @@ s3 = service_s3.connect_S3(client=client,
 
 vat.to_csv('base_hs6_VAT_2002_2012.csv', index=False)
 s3.upload_file(file_to_upload='base_hs6_VAT_2002_2012.csv',
-               destination_in_s3='DATA/TAX_DATA/TRANSFORMED/CHINA_VAT_REBATE')
+               destination_in_s3='DATA/ECON/TAX_DATA/TRANSFORMED/CHINA_VAT_REBATE')
 
 os.remove('base_hs6_VAT_2002_2012.csv')

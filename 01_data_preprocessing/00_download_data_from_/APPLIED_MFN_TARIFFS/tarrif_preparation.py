@@ -118,7 +118,7 @@ test = (tarrif_HS2
 test.to_csv('Applied_MFN_Tariffs_hs02_china_2002_2010.csv', index = False)
 
 s3.upload_file(file_to_upload='Applied_MFN_Tariffs_hs02_china_2002_2010.csv',
-               destination_in_s3='DATA/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS_HS2')
+               destination_in_s3='DATA/ECON/TAX_DATA/TRANSFORMED/APPLIED_MFN_TARIFFS_HS2')
 
 os.remove('Applied_MFN_Tariffs_hs02_china_2002_2010.csv')
 
