@@ -81,7 +81,7 @@ parent_path = str(Path(path).parent.parent)
 
 name_credential = 'thomas_vat_credentials.csv'
 region = 'eu-west-3'
-bucket = 'chinese-data'
+bucket = 'datalake-datascience'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 ```
 
@@ -300,7 +300,7 @@ new_table = [{
     "s3_location": "ATHENA/MAIN",
     "output_id": "",
     "separator": ",",
-    "s3URI": "s3://chinese-data/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD",
+    "s3URI": "s3://datalake-datascience/DATA/ECON/TRADE_DATA/RAW/WORLD_BANK/NY.GNP.PCAP.CD_NY.GDP.PCAP.KD/",
     "schema": [
         {'Name': 'country', 'Type': 'string', 'Comment': 'Country name'},
         {'Name': 'iso_alpha', 'Type': 'string', 'Comment': 'Country code'},
@@ -318,7 +318,7 @@ new_table = [{
 To remove an item from the list, use `pop` with the index to remove. Exemple `parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(6)` will remove the 5th item
 
 ```python
-to_remove = True
+to_remove = False
 if to_remove:
     parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(-1)
 ```
