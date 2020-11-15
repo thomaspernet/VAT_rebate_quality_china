@@ -407,7 +407,7 @@ new_tables = [
         "s3_location": "ATHENA/MAIN",
         "output_id": "",
         "separator": ",",
-        "s3URI": "s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/",
+        "s3URI": "s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/IMPORT_EXPORT/",
         "schema": [
             {"Name": "date", "Type": "string", "Comment": ""},
             {"Name": "ID", "Type": "string", "Comment": ""},
@@ -430,7 +430,7 @@ new_tables = [
 To remove an item from the list, use `pop` with the index to remove. Exemple `parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(6)` will remove the 5th item
 
 ```python
-to_remove = False
+to_remove = True
 if to_remove:
     parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(-1)
 ```
