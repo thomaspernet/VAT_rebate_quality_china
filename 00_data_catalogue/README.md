@@ -16,6 +16,11 @@
 - [quality_vat_export_2003_2010](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-quality_vat_export_2003_2010)
 - [world_gdp_per_capita](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-world_gdp_per_capita)
 - [VAT_export_2003_2010](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-VAT_export_2003_2010)
+- [lag_foreign_export_ckjr](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-lag_foreign_export_ckjr)
+- [lag_foreign_export_ckr](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-lag_foreign_export_ckr)
+- [lag_soe_export_ckjr](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-lag_soe_export_ckjr)
+- [lag_soe_export_ckr](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-lag_soe_export_ckr)
+- [quality_vat_export_covariate_2003_2010](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalogue#table-quality_vat_export_covariate_2003_2010)
 
     
 
@@ -289,5 +294,166 @@
 | 15 | ln_lag_tax_rebate | double        |           |
 | 16 | lag_import_tax    | float         |           |
 | 17 | ln_lag_import_tax | double        |           |
+
+    
+
+## Table lag_foreign_export_ckjr
+
+- Owner: 468786073381 
+- Database: chinese_trade
+- Filename: lag_foreign_export_ckjr
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT_DEST/tables/d897046c-34c1-438c-9b48-728586bea4f4
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT_DEST/tables/d897046c-34c1-438c-9b48-728586bea4f4`
+
+
+|    | Name                          | Type          | Comment      |
+|---:|:------------------------------|:--------------|:-------------|
+|  0 | year                          | string        |              |
+|  1 | year_lag                      | string        |              |
+|  2 | regime                        | varchar(12)   |              |
+|  3 | foreign_ownership             | varchar(10)   | Only FOREIGN |
+|  4 | geocode4_corr                 | string        |              |
+|  5 | iso_alpha                     | string        |              |
+|  6 | hs6                           | string        |              |
+|  7 | quantities                    | bigint        |              |
+|  8 | quantities_lag                | bigint        |              |
+|  9 | total_quantities_lag          | bigint        |              |
+| 10 | lag_foreign_export_share_ckjr | decimal(21,5) |              |
+
+    
+
+## Table lag_foreign_export_ckr
+
+- Owner: 468786073381 
+- Database: chinese_trade
+- Filename: lag_foreign_export_ckr
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT/tables/74d8971a-7c08-420b-a8f5-70a7135b3cc8
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_FOREIGN_CITY_PRODUCT/tables/74d8971a-7c08-420b-a8f5-70a7135b3cc8`
+
+
+|    | Name                         | Type          | Comment   |
+|---:|:-----------------------------|:--------------|:----------|
+|  0 | year                         | string        |           |
+|  1 | year_lag                     | string        |           |
+|  2 | regime                       | varchar(12)   |           |
+|  3 | foreign_ownership            | varchar(10)   |           |
+|  4 | geocode4_corr                | string        |           |
+|  5 | hs6                          | string        |           |
+|  6 | quantities                   | bigint        |           |
+|  7 | quantities_lag               | bigint        |           |
+|  8 | total_quantities_lag         | bigint        |           |
+|  9 | lag_foreign_export_share_ckr | decimal(21,5) |           |
+
+    
+
+## Table lag_soe_export_ckjr
+
+- Owner: 468786073381 
+- Database: chinese_trade
+- Filename: lag_soe_export_ckjr
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT_DEST/tables/1cb36336-4dd7-4847-ba31-e6dccc43efce
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT_DEST/tables/1cb36336-4dd7-4847-ba31-e6dccc43efce`
+
+
+|    | Name                      | Type          | Comment   |
+|---:|:--------------------------|:--------------|:----------|
+|  0 | year                      | string        |           |
+|  1 | year_lag                  | string        |           |
+|  2 | regime                    | varchar(12)   |           |
+|  3 | soe_ownership             | varchar(6)    |           |
+|  4 | geocode4_corr             | string        |           |
+|  5 | iso_alpha                 | string        |           |
+|  6 | hs6                       | string        |           |
+|  7 | quantities                | bigint        |           |
+|  8 | quantities_lag            | bigint        |           |
+|  9 | total_quantities_lag      | bigint        |           |
+| 10 | lag_soe_export_share_ckjr | decimal(21,5) |           |
+
+    
+
+## Table lag_soe_export_ckr
+
+- Owner: 468786073381 
+- Database: chinese_trade
+- Filename: lag_soe_export_ckr
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT/tables/3bfea78b-cb62-4d24-b3a6-542883275465
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/LAG_X_SOE_CITY_PRODUCT/tables/3bfea78b-cb62-4d24-b3a6-542883275465`
+
+
+|    | Name                     | Type          | Comment   |
+|---:|:-------------------------|:--------------|:----------|
+|  0 | year                     | string        |           |
+|  1 | year_lag                 | string        |           |
+|  2 | regime                   | varchar(12)   |           |
+|  3 | soe_ownership            | varchar(6)    |           |
+|  4 | geocode4_corr            | string        |           |
+|  5 | hs6                      | string        |           |
+|  6 | quantities               | bigint        |           |
+|  7 | quantities_lag           | bigint        |           |
+|  8 | total_quantities_lag     | bigint        |           |
+|  9 | lag_soe_export_share_ckr | decimal(21,5) |           |
+
+    
+
+## Table quality_vat_export_covariate_2003_2010
+
+- Owner: 468786073381 
+- Database: chinese_trade
+- Filename: quality_vat_export_covariate_2003_2010
+- Location: https://s3.console.aws.amazon.com/s3/buckets/datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/QUALITY_EXPORT_TARIFF_TAX_LAG_X/tables/e3650e36-7da6-4af3-86e5-d064b829444f
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/QUALITY_EXPORT_TARIFF_TAX_LAG_X/tables/e3650e36-7da6-4af3-86e5-d064b829444f`
+
+
+|    | Name                          | Type          | Comment   |
+|---:|:------------------------------|:--------------|:----------|
+|  0 | cityen                        | string        |           |
+|  1 | geocode4_corr                 | string        |           |
+|  2 | year                          | string        |           |
+|  3 | regime                        | string        |           |
+|  4 | hs6                           | string        |           |
+|  5 | hs4                           | string        |           |
+|  6 | hs3                           | string        |           |
+|  7 | country_en                    | string        |           |
+|  8 | iso_alpha                     | string        |           |
+|  9 | gni_per_capita                | float         |           |
+| 10 | gpd_per_capita                | float         |           |
+| 11 | income_group                  | string        |           |
+| 12 | income_group_ldc_dc           | varchar(3)    |           |
+| 13 | quantity                      | int           |           |
+| 14 | value                         | int           |           |
+| 15 | unit_price                    | float         |           |
+| 16 | kandhelwal_quality            | float         |           |
+| 17 | price_adjusted_quality        | float         |           |
+| 18 | lag_vat_m                     | float         |           |
+| 19 | lag_vat_reb_m                 | float         |           |
+| 20 | lag_tax_rebate                | float         |           |
+| 21 | ln_lag_vat_m                  | float         |           |
+| 22 | ln_lag_vat_reb_m              | float         |           |
+| 23 | ln_lag_tax_rebate             | float         |           |
+| 24 | lag_import_tax                | float         |           |
+| 25 | ln_lag_import_tax             | float         |           |
+| 26 | lag_soe_export_share_ckr      | decimal(21,5) |           |
+| 27 | lag_foreign_export_share_ckr  | decimal(21,5) |           |
+| 28 | lag_soe_export_share_ckjr     | decimal(21,5) |           |
+| 29 | lag_foreign_export_share_ckjr | decimal(21,5) |           |
+| 30 | sigma                         | float         |           |
+| 31 | sigma_price                   | float         |           |
+| 32 | y                             | float         |           |
+| 33 | prediction                    | float         |           |
+| 34 | residual                      | float         |           |
+| 35 | fe_ck                         | string        |           |
+| 36 | fe_cst                        | string        |           |
+| 37 | fe_ckr                        | string        |           |
+| 38 | fe_csrt                       | string        |           |
+| 39 | fe_kt                         | string        |           |
+| 40 | fe_kj                         | string        |           |
+| 41 | fe_jt                         | string        |           |
+| 42 | fe_ckj                        | string        |           |
+| 43 | count_hs6                     | bigint        |           |
+| 44 | sum_quantity                  | bigint        |           |
+| 45 | city_average_hs6              | double        |           |
+| 46 | city_average_quantity         | double        |           |
+| 47 | size_quantity                 | varchar(14)   |           |
+| 48 | size_product                  | varchar(11)   |           |
 
     
