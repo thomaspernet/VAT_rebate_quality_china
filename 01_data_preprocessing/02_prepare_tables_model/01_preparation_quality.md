@@ -478,11 +478,7 @@ df_quality["FE_ckj"] = pd.factorize(df_quality["geocode4_corr"].astype('str') +
 ```
 
 ```python
-df_quality.columns
-```
-
-```python
-
+list(df_quality.columns)
 ```
 
 ```python
@@ -501,12 +497,14 @@ reindex =[
     "unit_price",
     "price_adjusted_quality",
     "kandhelwal_quality",
-    "lag_vat_reb_m",
-    "lag_tax_rebate",
-    "ln_lag_tax_rebate",
-    "ln_lag_vat_reb_m",
-    "lag_import_tax",
-    "ln_lag_import_tax",
+    'lag_vat_m',
+    'lag_vat_reb_m',
+    'lag_tax_rebate',
+    'ln_lag_vat_m',
+    'ln_lag_vat_reb_m',
+    'ln_lag_tax_rebate',
+    'lag_import_tax',
+    'ln_lag_import_tax',
     "sigma",
     "sigma_price",
     "y",

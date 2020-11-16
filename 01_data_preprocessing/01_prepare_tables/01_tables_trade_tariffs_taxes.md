@@ -323,8 +323,7 @@ new_tables = [
             {"Name": "year", "Type": "string", "Comment": ""},
             {"Name": "vat_m", "Type": "float", "Comment": "6 digits product line tax"},
             {"Name": "vat_reb_m", "Type": "float", "Comment": "Percentage of tax refunded"},
-            {"Name": "tax_rebate", "Type": "float", "Comment": "Effective tax level: vat_m - vat_reb_m "},
-            {"Name": "ln_tax_rebate", "Type": "float", "Comment": "log (1 + vat_reb_m)"},
+            {"Name": "tax_rebate", "Type": "float", "Comment": "Effective tax level: vat_m - vat_reb_m "}
         ],
     },
     {
@@ -430,7 +429,7 @@ new_tables = [
 To remove an item from the list, use `pop` with the index to remove. Exemple `parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(6)` will remove the 5th item
 
 ```python
-to_remove = True
+to_remove = False
 if to_remove:
     parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(-1)
 ```

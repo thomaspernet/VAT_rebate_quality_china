@@ -293,7 +293,32 @@ This part usually starts with raw/transformed data in S3. The typical architectu
 One or more notebooks in the folder `01_prepare_tables` are used to create the raw tables. Please, use the notebook named `XX_template_table_creation_AWS` to create table using the key `TABLES.CREATION`
 
 ```python
-
+list_ = []
+for i in ["cityen",
+    "geocode4_corr",
+    "year",
+    "regime",
+    "hs6",
+    "hs4",
+    "hs3",
+    "country_en",
+    "iso_alpha",
+    "quantity",
+    "value",
+    "unit_price",
+    "price_adjusted_quality",
+    "kandhelwal_quality",
+    'lag_vat_m',
+    'lag_vat_reb_m',
+    'lag_tax_rebate',
+    'ln_lag_vat_m',
+    'ln_lag_vat_reb_m',
+    'ln_lag_tax_rebate',
+    'lag_import_tax',
+    'ln_lag_import_tax',
+    "sigma",
+    "sigma_price",
+    "y",
     "prediction",
     "residual",
     "FE_ct",
@@ -304,7 +329,10 @@ One or more notebooks in the folder `01_prepare_tables` are used to create the r
     "FE_kt",
     "FE_kj",
     "FE_jt",
-    "FE_ckj"
+    "FE_ckj"]:
+    
+    list_.append({'Name': i, 'Type': 'string', 'Comment': ''})
+list_    
 ```
 
 ```python
@@ -315,49 +343,42 @@ new_table = [{
     "output_id": "",
     "separator": ",",
     "s3URI": "s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/TRANSFORMED/QUALITY_EXPORT_TARIFF_TAX/",
-    "schema": [
-        {'Name': 'cityen', 'Type': 'string', 'Comment': ''},
-        {'Name': 'geocode4_corr', 'Type': 'string', 'Comment': ''},
-        {'Name': 'year', 'Type': 'string', 'Comment': ''},
-        {'Name': 'regime',
-            'Type': 'string',
-            'Comment': 'Eligible to the rebate or not'},
-        {'Name': 'hs6', 'Type': 'string', 'Comment': ''},
-        {'Name': 'hs4', 'Type': 'string', 'Comment': ''},
-        {'Name': 'hs3', 'Type': 'string', 'Comment': ''},
-        {'Name': 'country_en', 'Type': 'string', 'Comment': ''},
-        {'Name': 'iso_alpha', 'Type': 'string', 'Comment': ''},
-        {'Name': 'quantity', 'Type': 'int', 'Comment': ''},
-        {'Name': 'value', 'Type': 'int', 'Comment': ''},
-        {'Name': 'unit_price', 'Type': 'float', 'Comment': ''},
-        {'Name': 'price_adjusted_quality',
-            'Type': 'float',
-            'Comment': 'price adjusted quality. https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md'},
-        {'Name': 'kandhelwal_quality',
-            'Type': 'float',
-            'Comment': 'kandhelwal quality. cf https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md'},
-        {'Name': 'lag_vat_reb_m', 'Type': 'float', 'Comment': 'Lag Percentage of tax refunded'},
-        {'Name': 'lag_tax_rebate', 'Type': 'float', 'Comment': ''},
-        {'Name': 'ln_lag_vat_reb_m', 'Type': 'float', 'Comment': ''},
-        {'Name': 'ln_lag_tax_rebate', 'Type': 'float', 'Comment': ''},   
-        {'Name': 'lag_import_tax', 'Type': 'float', 'Comment': ''},
-        {'Name': 'ln_lag_import_tax', 'Type': 'float', 'Comment': ''},
-        {'Name': 'sigma', 'Type': 'float', 'Comment': ''},
-        {'Name': 'sigma_price', 'Type': 'float', 'Comment': ''},
-        {'Name': 'y', 'Type': 'float', 'Comment': ' log quantity plus sigma '},
-        {'Name': 'prediction', 'Type': 'float', 'Comment': ''},
-        {'Name': 'residual', 'Type': 'float', 'Comment': ''},
-        {'Name': 'FE_ct', 'Type': 'string', 'Comment': 'city year FE'},
-        {'Name': 'FE_ck', 'Type': 'string', 'Comment': 'city product FE'},
-        {'Name': 'FE_cst', 'Type': 'string', 'Comment': 'City sector year FE'},
-        {'Name': 'FE_ckr', 'Type': 'string', 'Comment': 'City product regime FE'},
-        {'Name': 'FE_csrt',
-            'Type': 'string',
-            'Comment': 'City sector regime year FE'},
-        {'Name': 'FE_kt', 'Type': 'string', 'Comment': 'Product year FE'},
-        {'Name': 'FE_kj', 'Type': 'string', 'Comment': 'Product destination FE'},
-        {'Name': 'FE_jt', 'Type': 'string', 'Comment': 'Destination year FE'},
-        {'Name': 'FE_ckj', 'Type': 'string', 'Comment': 'City product destination FE'}]
+    "schema": [{'Name': 'cityen', 'Type': 'string', 'Comment': ''},
+ {'Name': 'geocode4_corr', 'Type': 'string', 'Comment': ''},
+ {'Name': 'year', 'Type': 'string', 'Comment': ''},
+ {'Name': 'regime', 'Type': 'string', 'Comment': 'Eligible to the rebate or not'},
+ {'Name': 'hs6', 'Type': 'string', 'Comment': ''},
+ {'Name': 'hs4', 'Type': 'string', 'Comment': ''},
+ {'Name': 'hs3', 'Type': 'string', 'Comment': ''},
+ {'Name': 'country_en', 'Type': 'string', 'Comment': ''},
+ {'Name': 'iso_alpha', 'Type': 'string', 'Comment': ''},
+ {'Name': 'quantity', 'Type': 'int', 'Comment': ''},
+ {'Name': 'value', 'Type': 'int', 'Comment': ''},
+ {'Name': 'unit_price', 'Type': 'float', 'Comment': ''},
+ {'Name': 'price_adjusted_quality', 'Type': 'float', 'Comment': 'price adjusted quality. https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md'},
+ {'Name': 'kandhelwal_quality', 'Type': 'float', 'Comment': 'Kandhelwal quality. cf https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_prepare_tables_model/01_preparation_quality.md'},
+ {'Name': 'lag_vat_m', 'Type': 'float', 'Comment': 'Lag Percentage of tax'},
+ {'Name': 'lag_vat_reb_m', 'Type': 'float', 'Comment': 'Lag Percentage of tax refunded'},
+ {'Name': 'lag_tax_rebate', 'Type': 'float', 'Comment': 'Lag effective tax rebate (vat_m-vat_reb_m). Larger values imply higher tax'},
+ {'Name': 'ln_lag_vat_m', 'Type': 'float', 'Comment': ''},
+ {'Name': 'ln_lag_vat_reb_m', 'Type': 'float', 'Comment': ''},
+ {'Name': 'ln_lag_tax_rebate', 'Type': 'float', 'Comment': ''},
+ {'Name': 'lag_import_tax', 'Type': 'float', 'Comment': ''},
+ {'Name': 'ln_lag_import_tax', 'Type': 'float', 'Comment': ''},
+ {'Name': 'sigma', 'Type': 'float', 'Comment': ''},
+ {'Name': 'sigma_price', 'Type': 'float', 'Comment': ''},
+ {'Name': 'y', 'Type': 'float', 'Comment': ' log quantity plus sigma '},
+ {'Name': 'prediction', 'Type': 'float', 'Comment': ''},
+ {'Name': 'residual', 'Type': 'float', 'Comment': ''},
+ {'Name': 'FE_ct', 'Type': 'string', 'Comment': 'city year FE'},
+ {'Name': 'FE_ck', 'Type': 'string', 'Comment': 'city product FE'},
+ {'Name': 'FE_cst', 'Type': 'string', 'Comment': 'City sector year FE'},
+ {'Name': 'FE_ckr', 'Type': 'string', 'Comment': 'City product regime FE'},
+ {'Name': 'FE_csrt', 'Type': 'string', 'Comment': 'City sector regime year FE'},
+ {'Name': 'FE_kt', 'Type': 'string', 'Comment': 'Product year FE'},
+ {'Name': 'FE_kj', 'Type': 'string', 'Comment': 'Product destination FE'},
+ {'Name': 'FE_jt', 'Type': 'string', 'Comment': 'Destination year FE'},
+ {'Name': 'FE_ckj', 'Type': 'string', 'Comment': 'City product destination FE'}]
 }]
 # len(parameters['TABLES']['CREATION']['ALL_SCHEMA'])
 ```
@@ -365,7 +386,7 @@ new_table = [{
 To remove an item from the list, use `pop` with the index to remove. Exemple `parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(6)` will remove the 5th item
 
 ```python
-to_remove = False
+to_remove = True
 if to_remove:
     parameters['TABLES']['CREATION']['ALL_SCHEMA'].pop(-1)
 ```
