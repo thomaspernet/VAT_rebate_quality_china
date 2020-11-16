@@ -102,6 +102,10 @@ if pandas_setting:
     pd.set_option('display.max_colwidth', None)
 ```
 
+```sos kernel="Python 3"
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
+```
+
 <!-- #region kernel="SoS" -->
 # Load tables
 
@@ -148,82 +152,8 @@ if download_data:
     s3 = service_s3.connect_S3(client = client,
                           bucket = 'vat-rebate-quality', verbose = False)
     query = """
-    WITH count_n_sum AS (
-  SELECT 
-    year, 
-    cityen, 
-    COUNT(
-      DISTINCT(hs6)
-    ) as count_hs6, 
-    SUM(quantity) as sum_quantity 
-  FROM 
-    quality_vat_export_covariate_2003_2010 
-  WHERE 
-    year = '2003' 
-  GROUP BY 
-    cityen, 
-    year
-) 
-SELECT 
-  quality_vat_export_covariate_2003_2010.cityen, 
-  geocode4_corr, 
-  quality_vat_export_covariate_2003_2010.year, 
-  regime, 
-  hs6, 
-  hs4, 
-  hs3, 
-  country_en, 
-  iso_alpha, 
-  gni_per_capita, 
-  gpd_per_capita, 
-  income_group,
-  CASE WHEN 
-income_group = 'Low income' OR income_group = 'Low Lower middle income' 
-OR (income_group IS NULL AND ISO_alpha != 'HKG') then 
-'LDC' ELSE 'DC' END AS income_group_ldc_dc,
-  quantity, 
-  value, 
-  unit_price, 
-  kandhelwal_quality, 
-  price_adjusted_quality, 
-  lag_tax_rebate, 
-  ln_lag_tax_rebate, 
-  lag_import_tax, 
-  ln_lag_import_tax, 
-  lag_soe_export_share_ckr, 
-  lag_foreign_export_share_ckr, 
-  lag_soe_export_share_ckjr, 
-  lag_foreign_export_share_ckjr, 
-  sigma, 
-  sigma_price, 
-  y, 
-  prediction, 
-  residual, 
-  fe_ck, 
-  fe_cst, 
-  fe_ckr, 
-  fe_csrt, 
-  fe_kt, 
-  fe_pj, 
-  fe_jt, 
-  fe_ct, 
-  count_hs6, 
-  sum_quantity, 
-  city_average_hs6, 
-  city_average_quantity, 
-  CASE WHEN sum_quantity > city_average_quantity THEN 'LARGE_QUANTITY' ELSE 'SMALL_QUANTITY' END AS size_quantity, 
-  CASE WHEN count_hs6 > city_average_hs6 THEN 'LARGE_COUNT' ELSE 'SMALL_COUNT' END AS size_product 
-FROM 
-  count_n_sum 
-  LEFT JOIN (
-    SELECT 
-      MIN(year) as year, 
-      AVG(count_hs6) as city_average_hs6, 
-      AVG(sum_quantity) as city_average_quantity 
-    FROM 
-      count_n_sum
-  ) as city_avg ON count_n_sum.year = city_avg.year 
-  LEFT JOIN quality_vat_export_covariate_2003_2010 ON quality_vat_export_covariate_2003_2010.cityen = count_n_sum.cityen
+SELECT *
+FROM chinese_trade.quality_vat_export_covariate_2003_2010  
     """
     output = s3.run_query(
         query=query,
@@ -233,22 +163,28 @@ FROM
         destination_key=None # Add destination key if need to copy output
     )
     print(output)
-```
-
-```sos kernel="Python 3"
-s3.copy_object_s3(
-    source_key = os.path.join('SQL_OUTPUT_ATHENA', "{}.csv".format(output['QueryID'])),
-    destination_key = "DATA/TRANSFORMED/quality_vat_export_covariate_2003_2010.csv",
-    remove = True
-)
-```
-
-```sos kernel="Python 3"
-s3.download_file(
-        key = 'DATA/TRANSFORMED/quality_vat_export_covariate_2003_2010.csv',
+    
+    s3.download_file(
+        key =os.path.join('SQL_OUTPUT_ATHENA', "{}.csv".format(output['QueryID'])),
     path_local = os.path.join(str(Path(path).parent.parent.parent), 
                               "00_data_catalogue/temporary_local_data")
 )
+    
+    os.rename(
+    os.path.join(str(Path(path).parent.parent.parent), 
+                              "00_data_catalogue/temporary_local_data", output['QueryID']+ ".csv")
+    
+    , os.path.join(str(Path(path).parent.parent.parent), 
+                              "00_data_catalogue/temporary_local_data", "quality_vat_export_covariate_2003_2010.csv")
+)
+```
+
+```sos kernel="Python 3"
+#s3.copy_object_s3(
+#    source_key = os.path.join('SQL_OUTPUT_ATHENA', "{}.csv".format(output['QueryID'])),
+#    destination_key = "DATA/TRANSFORMED/quality_vat_export_covariate_2003_2010.csv",
+#    remove = True
+#)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -343,19 +279,34 @@ Sector is defined as the GBT 4 digits
 
 ```sos kernel="R"
 t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate+ ln_lag_import_tax  
-            | fe_ck + fe_cst+fe_pj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
             exactDOF = TRUE)
 
 t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate + ln_lag_import_tax 
-            | fe_ck + fe_cst+fe_pj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
             exactDOF = TRUE)
 
 t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt + fe_pj|0 | hs6, df_final,
+            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
             exactDOF = TRUE)
 
 t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate+ ln_lag_import_tax  
+            | fe_ck + fe_cst+fe_kj+ fe_ckj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+            exactDOF = TRUE)
+
+t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate + ln_lag_import_tax 
+            | fe_ck + fe_cst+fe_kj+ fe_ckj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+            exactDOF = TRUE)
+
+t_6 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+            | fe_ckr + fe_csrt + fe_kj+ fe_ckj|0 | hs6, df_final,
+            exactDOF = TRUE)
+
+t_7 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+            | fe_ckr + fe_csrt+fe_kt+ fe_ckj|0 | hs6, df_final,
             exactDOF = TRUE)
 ```
 
@@ -378,21 +329,24 @@ except:
 ```sos kernel="R"
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
-    c("City-product fixed effects", "Yes", "Yes", "No", "No"),
+    c("City-product fixed effects", "Yes", "Yes", "No", "No", "Yes", "Yes", "No", "No"),
     
-    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No"),
+    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No", "Yes", "Yes", "No", "No"),
     
-    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No"),
+    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No","Yes", "Yes", "Yes", "No"),
     
-    c("City-product-regime fixed effects","No", "No", "Yes", "Yes"),
+    c("City-product-regime fixed effects","No", "No", "Yes", "Yes","No", "No", "Yes", "Yes"),
     
-    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes"),
+    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes","No", "No", "Yes", "Yes"),
     
-    c("product-year fixed effects", "No", "No", "No", "Yes")
+    c("Product-year fixed effects", "No", "No", "No", "Yes", "No", "No", "No", "Yes"),
+    
+    c("City-product-destination fixed effects", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes")
+    
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3
+    t_0,t_1, t_2, t_3, t_4, t_5, t_6, t_7
 ),
     title="VAT export tax and product's quality upgrading, baseline regression",
     dep_var = dep,
@@ -414,6 +368,10 @@ tbe1  = "This table estimates eq(3). " \
 "\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."
 
 multicolumn ={
+    'Eligible': 1,
+    'Non-Eligible': 1,
+    'All': 1,
+    'All benchmark': 1,
     'Eligible': 1,
     'Non-Eligible': 1,
     'All': 1,
@@ -469,22 +427,41 @@ Sector is defined as the GBT 4 digits
 ```sos kernel="R"
 t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate+ ln_lag_import_tax  +
             lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ck + fe_cst+fe_pj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
             exactDOF = TRUE)
 
 t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate + ln_lag_import_tax +
             lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ck + fe_cst+fe_pj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
             exactDOF = TRUE)
 
 t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
             lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
-            | fe_ckr + fe_csrt + fe_pj|0 | hs6, df_final,
+            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
             exactDOF = TRUE)
 
 t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
             lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate+ ln_lag_import_tax  +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ck + fe_cst+fe_kj+ fe_ckj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+            exactDOF = TRUE)
+
+t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate + ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ck + fe_cst+fe_kj+ fe_ckj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+            exactDOF = TRUE)
+
+t_6 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt + fe_kj+ fe_ckj|0 | hs6, df_final,
+            exactDOF = TRUE)
+
+t_7 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckjr + lag_soe_export_share_ckjr
+            | fe_ckr + fe_csrt+fe_kt+ fe_ckj|0 | hs6, df_final,
             exactDOF = TRUE)
 ```
 
@@ -507,21 +484,24 @@ except:
 ```sos kernel="R"
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
-    c("City-product fixed effects", "Yes", "Yes", "No", "No"),
+    c("City-product fixed effects", "Yes", "Yes", "No", "No", "Yes", "Yes", "No", "No"),
     
-    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No"),
+    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No", "Yes", "Yes", "No", "No"),
     
-    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No"),
+    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No","Yes", "Yes", "Yes", "No"),
     
-    c("City-product-regime fixed effects","No", "No", "Yes", "Yes"),
+    c("City-product-regime fixed effects","No", "No", "Yes", "Yes","No", "No", "Yes", "Yes"),
     
-    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes"),
+    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes","No", "No", "Yes", "Yes"),
     
-    c("product-year fixed effects", "No", "No", "No", "Yes")
+    c("Product-year fixed effects", "No", "No", "No", "Yes", "No", "No", "No", "Yes"),
+    
+    c("City-product-destination fixed effects", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes")
+    
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3
+    t_0,t_1, t_2, t_3, t_4, t_5, t_6, t_7
 ),
     title="VAT export tax and product's quality upgrading, baseline regression - covariates",
     dep_var = dep,
@@ -547,6 +527,10 @@ multicolumn ={
     'Non-Eligible': 1,
     'All': 1,
     'All benchmark': 1,
+    'Eligible': 1,
+    'Non-Eligible': 1,
+    'All': 1,
+    'All benchmark': 1,
 }
 multi_lines_dep = '(city/product/trade regime/year)'
 #new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
@@ -557,7 +541,7 @@ lb.beautify(table_number = 1,
             multicolumn = multicolumn,
             table_nte = tbe1,
             jupyter_preview = True,
-            resolution = 150)
+            resolution = 200)
 ```
 
 <!-- #region kernel="R" -->
@@ -598,22 +582,41 @@ Sector is defined as the GBT 4 digits
 ```sos kernel="R"
 t_0 <- felm(kandhelwal_quality ~ln_lag_tax_rebate+ ln_lag_import_tax  +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ck + fe_cst+fe_pj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
             exactDOF = TRUE)
 
 t_1 <- felm(kandhelwal_quality ~ln_lag_tax_rebate + ln_lag_import_tax +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ck + fe_cst+fe_pj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
             exactDOF = TRUE)
 
 t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_csrt + fe_pj|0 | hs6, df_final,
+            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
             exactDOF = TRUE)
 
 t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate+ ln_lag_import_tax  +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ck + fe_cst+fe_kj+ fe_ckj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+            exactDOF = TRUE)
+
+t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate + ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ck + fe_cst+fe_kj+ fe_ckj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+            exactDOF = TRUE)
+
+t_6 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt + fe_kj+ fe_ckj|0 | hs6, df_final,
+            exactDOF = TRUE)
+
+t_7 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt+ fe_ckj|0 | hs6, df_final,
             exactDOF = TRUE)
 ```
 
@@ -636,21 +639,24 @@ except:
 ```sos kernel="R"
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
-    c("City-product fixed effects", "Yes", "Yes", "No", "No"),
+    c("City-product fixed effects", "Yes", "Yes", "No", "No", "Yes", "Yes", "No", "No"),
     
-    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No"),
+    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No", "Yes", "Yes", "No", "No"),
     
-    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No"),
+    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No","Yes", "Yes", "Yes", "No"),
     
-    c("City-product-regime fixed effects","No", "No", "Yes", "Yes"),
+    c("City-product-regime fixed effects","No", "No", "Yes", "Yes","No", "No", "Yes", "Yes"),
     
-    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes"),
+    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes","No", "No", "Yes", "Yes"),
     
-    c("product-year fixed effects", "No", "No", "No", "Yes")
+    c("Product-year fixed effects", "No", "No", "No", "Yes", "No", "No", "No", "Yes"),
+    
+    c("City-product-destination fixed effects", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes")
+    
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3
+    t_0,t_1, t_2, t_3, t_4, t_5, t_6, t_7
 ),
     title="VAT export tax and product's quality upgrading, baseline regression - covariates",
     dep_var = dep,
@@ -676,6 +682,10 @@ multicolumn ={
     'Non-Eligible': 1,
     'All': 1,
     'All benchmark': 1,
+    'Eligible': 1,
+    'Non-Eligible': 1,
+    'All': 1,
+    'All benchmark': 1,
 }
 multi_lines_dep = '(city/product/trade regime/year)'
 #new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
@@ -686,7 +696,7 @@ lb.beautify(table_number = 2,
             multicolumn = multicolumn,
             table_nte = tbe1,
             jupyter_preview = True,
-            resolution = 150)
+            resolution = 200)
 ```
 
 <!-- #region nteract={"transient": {"deleting": false}} kernel="SoS" -->
