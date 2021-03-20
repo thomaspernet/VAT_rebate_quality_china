@@ -12,13 +12,28 @@ __pycache__/
 data
 *.csv
 *.gz
-#*.txt
-#*.tex
 
 *.pickle
 token_coda.json
+*/dask-worker-space
+creds/*
 ### test -> install jupytex easier for versioning
 #*.ipynb
+01_data_preprocessing/01_prepare_tables/00_POC_prepare_tables/XX_template_POC_prepare_table_AWS.md
+01_data_preprocessing/01_prepare_tables/00_POC_prepare_tables/XX_template_POC_prepare_table_AWS.ipynb
+01_data_preprocessing/XX_transform_table_from_S3.md
+01_data_preprocessing/XX_transform_table_from_S3.ipynb
+01_data_preprocessing/XX_template_table_preprocessing_from_Athena.md
+01_data_preprocessing/XX_template_table_preprocessing_from_Athena.ipynb
+01_data_preprocessing/XX_template_table_creation_from_Athena.md
+01_data_preprocessing/XX_template_table_creation_from_Athena.ipynb
+01_data_preprocessing/XX_document_and_analyse_tables_from_S3.md
+01_data_preprocessing/XX_document_and_analyse_tables_from_S3.ipynb
+01_data_preprocessing/02_prepare_tables_model/00_POC_prepare_tables_model/XX_template_POC_preprocessing_AWS.md
+01_data_preprocessing/02_prepare_tables_model/00_POC_prepare_tables_model/XX_template_POC_preprocessing_AWS.ipynb
+02_data_analysis/01_model_estimation/XX_template_econometrics_AWS.ipynb
+02_data_analysis/01_model_estimation/XX_template_econometrics_AWS.md
+Template/*
 
 # Distribution / packaging
 .Python
@@ -40,6 +55,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.virtual_documents
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -90,6 +106,8 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.virtual_documents
+*.ipynb.py
 
 # IPython
 profile_default/
@@ -141,33 +159,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-creds/credentials.json
-creds/service.json
-01_Data_preprocessing/.virtual_documents/01_preparation_quality.ipynb.py
-01_Data_preprocessing/.virtual_documents/00_preparation_baseline_db.ipynb.py
-01_Data_preprocessing/.virtual_documents/02_preparation_covariates_export.ipynb.py
-01_Data_preprocessing/.virtual_documents/00_preparation_baseline_db.ipynb.py
-02_Data_analysis/02_new_baseline_table/.virtual_documents/00_baseline_empirical_analysis.ipynb.py
-02_Data_analysis/02_new_baseline_table/.virtual_documents/XX_template_empiracal_analysis.ipynb.py
-01_Data_preprocessing/XX__template_creation_table_AWS.ipynb
-01_Data_preprocessing/XX__template_creation_table_AWS.md
-01_Data_preprocessing/XX_template_preprocessing_AWS.ipynb
-01_Data_preprocessing/XX_template_preprocessing_AWS.ipynb
-01_Data_preprocessing/XX_template_preprocessing_AWS.md
-02_data_analysis/00_template_Analysis_AWS.ipynb
-02_data_analysis/00_template_Analysis_AWS.md
-01_data_preprocessing/XX_template_table_creation_AWS.ipynb
-01_data_preprocessing/XX_template_table_creation_AWS.md
-01_data_preprocessing/XX_template_table_preprocessing_AWS.ipynb
-01_data_preprocessing/XX_template_table_preprocessing_AWS.md
-01_data_preprocessing/02_prepare_tables_model/00_POC_prepare_tables_model/XX_template_POC_preprocessing_AWS.ipynb
-01_data_preprocessing/02_prepare_tables_model/00_POC_prepare_tables_model/XX_template_POC_preprocessing_AWS.md
-01_data_preprocessing/02_prepare_tables_model/00_POC_prepare_tables_model/parameters_ETL.json
-01_data_preprocessing/01_prepare_tables/Archive/*
-02_data_analysis/00_analysis/00_analysis_table_1_POC/XX_template_Analysis_AWS_POC.ipynb
-02_data_analysis/00_analysis/00_analysis_table_1_POC/XX_template_Analysis_AWS_POC.md
-02_data_analysis/00_analysis/00_analysis_table_1_POC/XX_template_Analysis_Econometrics_AWS_POC.ipynb
-02_data_analysis/00_analysis/00_analysis_table_1_POC/XX_template_Analysis_Econometrics_AWS_POC.md
-02_data_analysis/XX_template_Analysis_AWS.ipynb
-02_data_analysis/XX_template_Analysis_AWS.md
-00_data_catalogue/temporary_local_data/density.Rda
