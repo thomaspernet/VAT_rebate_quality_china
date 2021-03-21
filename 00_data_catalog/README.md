@@ -6,7 +6,6 @@
 ## Table of Content
 
     
-- [china_sigmas_hs3](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_sigmas_hs3)
 - [world_bank_gdp_per_capita](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-world_bank_gdp_per_capita)
 - [hs6_homogeneous](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-hs6_homogeneous)
 - [china_density](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_density)
@@ -15,23 +14,9 @@
 - [china_import_export](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_import_export)
 - [china_country_name](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_country_name)
 - [china_applied_mfn_tariffs_hs2](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_applied_mfn_tariffs_hs2)
+- [china_sigmas_hs3](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_sigmas_hs3)
 - [china_export_tariff_tax](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_export_tariff_tax)
-
-    
-
-## Table china_sigmas_hs3
-
-- Database: chinese_trade
-- S3uri: `s3://datalake-datascience/DATA/ECON/INDUSTRY/ADDITIONAL_DATA/SIGMAS_HS3`
-- Partitition: []
-- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/01_data_preprocessing/00_download_data/SIGMA/sigma.py
-
-|    | Name   | Type   | Comment       |
-|---:|:-------|:-------|:--------------|
-|  0 | ccode  | string | Country code  |
-|  1 | cname  | string | countr name   |
-|  2 | sigma  | float  | sigma         |
-|  3 | HS3    | string | industry code |
+- [china_product_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_product_quality)
 
     
 
@@ -177,6 +162,22 @@
 
     
 
+## Table china_sigmas_hs3
+
+- Database: chinese_trade
+- S3uri: `s3://datalake-datascience/DATA/ECON/INDUSTRY/ADDITIONAL_DATA/SIGMAS_HS3`
+- Partitition: []
+- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/01_data_preprocessing/00_download_data/SIGMA/sigma.py
+
+|    | Name   | Type   | Comment       |
+|---:|:-------|:-------|:--------------|
+|  0 | ccode  | string | Country code  |
+|  1 | cname  | string | countr name   |
+|  2 | sigma  | float  | sigma         |
+|  3 | hs3    | string | industry code |
+
+    
+
 ## Table china_export_tariff_tax
 
 - Database: chinese_trade
@@ -205,5 +206,38 @@
 | 16 | lag_import_tax    | float         | lag import tax                        |
 | 17 | ln_lag_import_tax | double        | log lag import tax                    |
 | 18 | cnt               | bigint        | remove duplicate                      |
+
+    
+
+## Table china_product_quality
+
+- Database: chinese_trade
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/PRODUCT_QUALITY`
+- Partitition: ['geocode4_corr', 'year', 'regime', 'hs6', 'country_en']
+- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/01_preparation_quality.md
+
+|    | Name                   | Type   | Comment                |
+|---:|:-----------------------|:-------|:-----------------------|
+|  0 | ccode                  | string | country code           |
+|  1 | cname                  | string | country name           |
+|  2 | country_en             | string | country name english   |
+|  3 | iso_alpha              | string |                        |
+|  4 | geocode4_corr          | string | city code              |
+|  5 | year                   | string | year                   |
+|  6 | regime                 | string | eligible to vat rebate |
+|  7 | hs6                    | string | HS6 6 digits           |
+|  8 | hs3                    | string | HS3 3 digits           |
+|  9 | hs4                    | string | HS4 4 digits           |
+| 10 | quantity               | float  | Export quantity        |
+| 11 | value                  | float  | Export value           |
+| 12 | unit_price             | float  | Export unit price      |
+| 13 | sigma                  | float  | sigma                  |
+| 14 | sigma_price            | float  |                        |
+| 15 | y                      | float  |                        |
+| 16 | FE_ct                  | int    | city year fixed effect |
+| 17 | prediction             | float  | prediction OLS         |
+| 18 | residual               | float  | residual OLS           |
+| 19 | price_adjusted_quality | float  | price adjusted         |
+| 20 | kandhelwal_quality     | float  | Kandhelwal quality     |
 
     

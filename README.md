@@ -38,9 +38,11 @@ This paper studies the effect of industrial policy in China, the VAT export tax,
        - [gdp_per_capita.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/WORLD_BANK/gdp_per_capita.py)
    - **02_transform_tables/**
      - [00_export_vat.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/00_export_vat.md)
+     - [01_preparation_quality.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/01_preparation_quality.md)
      - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/README.md)
      - **Reports/**
        - [00_export_vat.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/Reports/00_export_vat.html)
+       - [01_preparation_quality.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/Reports/01_preparation_quality.html)
        - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/Reports/README.md)
  - **utils/**
    - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/README.md)
