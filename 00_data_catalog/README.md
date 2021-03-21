@@ -1,5 +1,5 @@
 
-# Data Catalog
+# Data Catalogue
 
 
 
@@ -12,9 +12,10 @@
 - [china_density](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_density)
 - [baci_export](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-baci_export)
 - [hs6_china_vat_rebate](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-hs6_china_vat_rebate)
-- [china_applied_mfn_tariffs_hs2](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_applied_mfn_tariffs_hs2)
 - [china_import_export](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_import_export)
 - [china_country_name](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_country_name)
+- [china_applied_mfn_tariffs_hs2](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_applied_mfn_tariffs_hs2)
+- [china_export_tariff_tax](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_export_tariff_tax)
 
     
 
@@ -118,22 +119,6 @@
 
     
 
-## Table china_applied_mfn_tariffs_hs2
-
-- Database: chinese_trade
-- S3uri: `s3://datalake-datascience/DATA/ECON/TAX_DATA/CHINA/APPLIED_MFN_TARIFFS_HS2`
-- Partitition: []
-- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/01_data_preprocessing/00_download_data/APPLIED_MFN_TARIFFS/mnf_tariff.py
-
-|    | Name       | Type   | Comment   |
-|---:|:-----------|:-------|:----------|
-|  0 | reporter   | string |           |
-|  1 | year       | string |           |
-|  2 | import_tax | float  |           |
-|  3 | HS02       | string |           |
-
-    
-
 ## Table china_import_export
 
 - Database: chinese_trade
@@ -173,5 +158,52 @@
 |  2 | iso_alpha  | string | country ID 1         |
 |  3 | code       | string | country ID 2         |
 |  4 | index      | int    | index                |
+
+    
+
+## Table china_applied_mfn_tariffs_hs2
+
+- Database: chinese_trade
+- S3uri: `s3://datalake-datascience/DATA/ECON/TAX_DATA/CHINA/APPLIED_MFN_TARIFFS_HS2`
+- Partitition: []
+- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/01_data_preprocessing/00_download_data/APPLIED_MFN_TARIFFS/mnf_tariff.py
+
+|    | Name       | Type   | Comment   |
+|---:|:-----------|:-------|:----------|
+|  0 | reporter   | string |           |
+|  1 | year       | string |           |
+|  2 | import_tax | float  |           |
+|  3 | hs6        | string |           |
+
+    
+
+## Table china_export_tariff_tax
+
+- Database: chinese_trade
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/EXPORT_TARIFF_TAX`
+- Partitition: ['geocode4_corr', 'year', 'regime', 'hs6', 'country_en']
+- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/00_export_vat.md
+
+|    | Name              | Type          | Comment                               |
+|---:|:------------------|:--------------|:--------------------------------------|
+|  0 | cityen            | string        | English city name                     |
+|  1 | geocode4_corr     | string        | Chinese city code                     |
+|  2 | year              | string        | year                                  |
+|  3 | regime            | varchar(12)   | eligible or no eligible to vat rebate |
+|  4 | hs6               | string        | HS6 6 digit                           |
+|  5 | country_en        | string        | English country name                  |
+|  6 | iso_alpha         | string        |                                       |
+|  7 | quantity          | bigint        | Export quantity                       |
+|  8 | value             | bigint        | Export value                          |
+|  9 | unit_price        | decimal(21,5) | product unit price                    |
+| 10 | lag_vat_m         | float         | lag vat tax                           |
+| 11 | ln_lag_vat_m      | double        | log lag vat tax                       |
+| 12 | lag_vat_reb_m     | float         | lag vat rebate                        |
+| 13 | ln_lag_vat_reb_m  | double        | log lag vat rebate                    |
+| 14 | lag_tax_rebate    | float         | lag vat rebate to pay                 |
+| 15 | ln_lag_tax_rebate | double        | log lag vat rebate to pay             |
+| 16 | lag_import_tax    | float         | lag import tax                        |
+| 17 | ln_lag_import_tax | double        | log lag import tax                    |
+| 18 | cnt               | bigint        | remove duplicate                      |
 
     

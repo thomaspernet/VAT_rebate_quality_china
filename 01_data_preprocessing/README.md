@@ -26,3 +26,9 @@
      - [vat_rebate.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/VAT_REBATE/vat_rebate.py)
    - **WORLD_BANK/**
      - [gdp_per_capita.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/WORLD_BANK/gdp_per_capita.py)
+ - **02_transform_tables/**
+   - [00_export_vat.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/00_export_vat.md)
+   - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/README.md)
+   - **Reports/**
+     - [00_export_vat.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/Reports/00_export_vat.html)
+     - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/Reports/README.md)
