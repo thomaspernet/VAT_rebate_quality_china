@@ -26,7 +26,6 @@ PATH_S3 = "DATA/ECON/TRADE_DATA/CHINA/IMPORT_EXPORT"  ### Copy destination in S3
 
 ### ADD SHCEMA
 schema = [
-[
             {"Name": "date", "Type": "string", "Comment": "year trade recorded"},
             {"Name": "ID", "Type": "string", "Comment": "firm ID"},
             {"Name": "business_type", "Type": "string", "Comment": "business trade type"},
@@ -40,7 +39,6 @@ schema = [
             {"Name": "origin_or_destination", "Type": "string", "Comment": "source or destination country"},
             {"Name": "value", "Type": "int", "Comment": "import or export value"},
             {"Name": "quantities", "Type": "int", "Comment": "import or export quantity"},
-        ]
 ]
 
 ### ADD DESCRIPTION
