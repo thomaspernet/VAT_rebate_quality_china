@@ -63,7 +63,7 @@ schema = [
 {"Name": "reporter", "Type": "string", "Comment": ""},
             {"Name": "year", "Type": "string", "Comment": ""},
             {"Name": "import_tax", "Type": "float", "Comment": ""},
-            {"Name": "HS02", "Type": "string", "Comment": ""}
+            {"Name": "hs6", "Type": "string", "Comment": ""}
 ]
 
 ### ADD DESCRIPTION
