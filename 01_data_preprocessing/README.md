@@ -11,6 +11,8 @@
      - [mnf_tariff.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/APPLIED_MFN_TARIFFS/mnf_tariff.py)
    - **BACI/**
      - [baci_92_2002.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/BACI/baci_92_2002.py)
+   - **COUNTRY_NAME/**
+     - [chinese_country_name.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/COUNTRY_NAME/chinese_country_name.py)
    - **DENSITY/**
      - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/DENSITY/README.md)
      - [density.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/DENSITY/density.py)

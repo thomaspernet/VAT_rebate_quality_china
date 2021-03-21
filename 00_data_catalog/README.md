@@ -14,6 +14,7 @@
 - [hs6_china_vat_rebate](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-hs6_china_vat_rebate)
 - [china_applied_mfn_tariffs_hs2](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_applied_mfn_tariffs_hs2)
 - [china_import_export](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_import_export)
+- [china_country_name](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_country_name)
 
     
 
@@ -155,5 +156,22 @@
 | 10 | origin_or_destination | string | source or destination country                                                                                     |
 | 11 | value                 | int    | import or export value                                                                                            |
 | 12 | quantities            | int    | import or export quantity                                                                                         |
+
+    
+
+## Table china_country_name
+
+- Database: chinese_lookup
+- S3uri: `s3://datalake-datascience/DATA/ECON/LOOKUP_DATA/COUNTRY_NAME`
+- Partitition: []
+- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/01_data_preprocessing/00_download_data/COUNTRY_NAME/chinese_country_name.py
+
+|    | Name       | Type   | Comment              |
+|---:|:-----------|:-------|:---------------------|
+|  0 | country_cn | string | Chinese country name |
+|  1 | country_en | string | English country name |
+|  2 | iso_alpha  | string | country ID 1         |
+|  3 | code       | string | country ID 2         |
+|  4 | index      | int    | index                |
 
     
