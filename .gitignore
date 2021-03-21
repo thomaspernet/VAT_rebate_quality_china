@@ -161,3 +161,4 @@ dmypy.json
 .pyre/
 *.Rda
 *.zip
+*.txt
