@@ -30,10 +30,18 @@ gd_auth = auth.authorization_drive()
 drive = connect_drive.drive_operations(gd_auth)
 
 ### Load from spreadsheet
-sigmas = drive.upload_data_from_spreadsheet(
-    sheetID = '1YLr4n2xLWKIxYftf8ODSMw6tsoiukLMxs1L5mopTDfk',
-    sheetName = 'Sigmas',
-	 to_dataframe = True)
+### DOWNLOAD SPREADSHEET TO temporary_local_data folder
+FILENAME_SPREADSHEET = "Sigmas_3digit_China"
+spreadsheet_id = drive.find_file_id(FILENAME_SPREADSHEET, to_print=False)
+sheetName = 'Sigmas'
+sigmas = (
+    drive.upload_data_from_spreadsheet(
+        sheetID=spreadsheet_id,
+        sheetName=sheetName,
+        to_dataframe=True)
+)
+
+sigmas.head()
 
 input_path = os.path.join(parent_path,"00_data_catalog", "temporary_local_data", "sigmas_china.csv")
 sigmas.to_csv(input_path, index = False)
@@ -47,7 +55,7 @@ os.remove(input_path)
 schema = [{"Name": "ccode", "Type": "string", "Comment": "Country code"},
             {"Name": "cname", "Type": "string", "Comment": "countr name"},
             {"Name": "sigma", "Type": "float", "Comment": "sigma"},
-            {"Name": "HS3", "Type": "string", "Comment": "industry code"}]
+            {"Name": "hs3", "Type": "string", "Comment": "industry code"}]
 
 glue = service_glue.connect_glue(client=client)
 target_S3URI = "s3://datalake-datascience/DATA/ECON/INDUSTRY/ADDITIONAL_DATA/SIGMAS_HS3"
