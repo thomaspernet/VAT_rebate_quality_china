@@ -13,6 +13,7 @@
 - [baci_export](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-baci_export)
 - [hs6_china_vat_rebate](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-hs6_china_vat_rebate)
 - [china_applied_mfn_tariffs_hs2](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_applied_mfn_tariffs_hs2)
+- [china_import_export](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_import_export)
 
     
 
@@ -129,5 +130,30 @@
 |  1 | year       | string |           |
 |  2 | import_tax | float  |           |
 |  3 | HS02       | string |           |
+
+    
+
+## Table china_import_export
+
+- Database: chinese_trade
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/IMPORT_EXPORT`
+- Partitition: []
+- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/01_data_preprocessing/00_download_data/TRADE_CHINA/import_export.py
+
+|    | Name                  | Type   | Comment                                                                                                           |
+|---:|:----------------------|:-------|:------------------------------------------------------------------------------------------------------------------|
+|  0 | date                  | string | year trade recorded                                                                                               |
+|  1 | ID                    | string | firm ID                                                                                                           |
+|  2 | business_type         | string | business trade type                                                                                               |
+|  3 | intermediate          | string | company name includes the following 进出口, 贸易, 外贸,外经, 经贸, 工贸, 科贸, then there are intermediates firms |
+|  4 | trade_type            | string | Trade type including ordianry or processing                                                                       |
+|  5 | province              | string | Province name                                                                                                     |
+|  6 | city_prod             | string | production site city name                                                                                         |
+|  7 | matching_city         | string | matching name                                                                                                     |
+|  8 | imp_exp               | string | import or export                                                                                                  |
+|  9 | hs                    | string | HS6 6 digit                                                                                                       |
+| 10 | origin_or_destination | string | source or destination country                                                                                     |
+| 11 | value                 | int    | import or export value                                                                                            |
+| 12 | quantities            | int    | import or export quantity                                                                                         |
 
     

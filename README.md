@@ -15,6 +15,8 @@ This paper studies the effect of industrial policy in China, the VAT export tax,
      - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog/temporary_local_data/README.md)
  - **01_data_preprocessing/**
    - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/README.md)
+   - **00_download_data/**
+     - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/README.md)
      - **APPLIED_MFN_TARIFFS/**
        - [mnf_tariff.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/APPLIED_MFN_TARIFFS/mnf_tariff.py)
      - **BACI/**
@@ -26,6 +28,8 @@ This paper studies the effect of industrial policy in China, the VAT export tax,
        - [hs_homogeneous_goods.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/HOMOGENEOUS_GOODS/hs_homogeneous_goods.py)
      - **SIGMA/**
        - [sigma.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/SIGMA/sigma.py)
+     - **TRADE_CHINA/**
+       - [import_export.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/TRADE_CHINA/import_export.py)
      - **VAT_REBATE/**
        - [vat_rebate.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/VAT_REBATE/vat_rebate.py)
      - **WORLD_BANK/**
