@@ -30,9 +30,11 @@
    - [00_export_vat.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/00_export_vat.md)
    - [01_preparation_quality.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/01_preparation_quality.md)
    - [02_ownership_export_share_ckr.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/02_ownership_export_share_ckr.md)
+   - [03_ownership_soe_export_share_ckr.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/03_ownership_soe_export_share_ckr.md)
    - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/README.md)
    - **Reports/**
      - [00_export_vat.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/Reports/00_export_vat.html)
      - [01_preparation_quality.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/Reports/01_preparation_quality.html)
      - [02_ownership_export_share_ckr.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/Reports/02_ownership_export_share_ckr.html)
+     - [03_ownership_soe_export_share_ckr.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/Reports/03_ownership_soe_export_share_ckr.html)
      - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/Reports/README.md)
