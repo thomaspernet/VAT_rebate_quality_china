@@ -110,6 +110,7 @@ github_url = os.path.join(
                , '', path))[1:],
     filename
 )
+table_name = '{}{}'.format(TablePrefix, os.path.basename(target_S3URI).lower())
 json_etl = {
     'description': description,
     'schema': schema,
@@ -117,6 +118,7 @@ json_etl = {
     'metadata': {
         'DatabaseName': DatabaseName,
         'TablePrefix': TablePrefix,
+        'TableName': table_name,
         'target_S3URI': target_S3URI,
         'from_athena': 'False',
         'filename': filename,

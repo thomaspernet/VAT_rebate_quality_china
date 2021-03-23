@@ -99,6 +99,7 @@ github_url = os.path.join(
                , '', path))[1:],
     filename
 )
+table_name = '{}{}'.format(TablePrefix, os.path.basename(target_S3URI).lower())
 json_etl = {
     'description': 'Download GDP per capita from the World Bank Website',
     'schema': schema,
@@ -107,6 +108,7 @@ json_etl = {
         'DatabaseName': DatabaseName,
         'TablePrefix': TablePrefix,
         'target_S3URI': target_S3URI,
+        'TableName': table_name,
         'from_athena': 'False',
         'filename': filename,
         'github_url':github_url
