@@ -105,6 +105,7 @@ with Diagram("{0}", show=False, filename="{1}", outformat="jpg"):\n
                 ### connection
                 connection = sort_origin(data, val['input'], reverse =False)
                 template_schema_transform = ""
+                size_connection = len(connection)
                 for ind, tab in enumerate(connection):
                     index = [t['index_name'] for t in list_index if t['table'] == tab['table']]
                     if len(index) > 0:
@@ -120,7 +121,13 @@ with Diagram("{0}", show=False, filename="{1}", outformat="jpg"):\n
                         input_temp = "input_{0}".format(tab['table'])
                         #template_schema_transform += template
                         if input_temp + index_name[0] not in list_input_transform:
-                            template_schema_transform += "{} {} >> {}\n".format(intend, input_temp, index_name[0])
+                            if ind == size_connection-1:
+                                template_schema_transform += "{} {} >> {} >> {}\n".format(intend, input_temp, index_name[0], index_final[0])
+                            else:
+                                ### the last input will link the TRANSFORMATION to final table
+                                ### it avoids having many lines
+                                template_schema_transform += "{} {} >> {}\n".format(intend, input_temp, index_name[0])
+
                             list_input_transform.append(input_temp +  index_name[0])
                         add_intend = False
 
