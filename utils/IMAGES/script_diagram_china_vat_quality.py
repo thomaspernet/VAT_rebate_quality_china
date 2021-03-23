@@ -28,9 +28,9 @@ with Diagram("CHINA VAT QUALITY", show=False, filename="/Users/thomas/Google Dri
      input_city_cn_en >> temp_2
      input_china_country_name >> temp_2
      input_china_applied_mfn_tariffs_hs2 >> temp_2
-     input_hs6_china_vat_rebate >> temp_2
+     input_hs6_china_vat_rebate >> temp_2 >> temp_final_0
      temp_2 >>temp_3 >> temp_final_0
      input_china_import_export >> temp_5
-     input_city_cn_en >> temp_5
+     input_city_cn_en >> temp_5 >> temp_final_0
      input_china_import_export >> temp_6
-     input_city_cn_en >> temp_6
+     input_city_cn_en >> temp_6 >> temp_final_0
