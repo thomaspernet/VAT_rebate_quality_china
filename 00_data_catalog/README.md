@@ -17,6 +17,7 @@
 - [china_sigmas_hs3](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_sigmas_hs3)
 - [china_export_tariff_tax](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_export_tariff_tax)
 - [china_product_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_product_quality)
+- [export_foreign_city_product](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-export_foreign_city_product)
 
     
 
@@ -239,5 +240,27 @@
 | 18 | residual               | float  | residual OLS           |
 | 19 | price_adjusted_quality | float  | price adjusted         |
 | 20 | kandhelwal_quality     | float  | Kandhelwal quality     |
+
+    
+
+## Table export_foreign_city_product
+
+- Database: chinese_trade
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/EXPORT_SHARE/FOREIGN_CITY_PRODUCT`
+- Partitition: ['year_lag', 'regime', 'geocode4_corr', 'hs6']
+- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/02_ownership_export_share_ckr.md
+
+|    | Name                         | Type          | Comment                                    |
+|---:|:-----------------------------|:--------------|:-------------------------------------------|
+|  0 | year                         | string        | year                                       |
+|  1 | year_lag                     | string        | previous year                              |
+|  2 | regime                       | varchar(12)   | eligible or not eligible to vat refund     |
+|  3 | foreign_ownership            | varchar(10)   | foreign or not foreign ownership           |
+|  4 | geocode4_corr                | string        | city id                                    |
+|  5 | hs6                          | string        | HS6 6 digits                               |
+|  6 | quantities                   | bigint        | export quantity by ownership               |
+|  7 | quantities_lag               | bigint        | lag export quantity by ownership           |
+|  8 | total_quantities_lag         | bigint        | total export lag quantity by city industry |
+|  9 | lag_foreign_export_share_ckr | decimal(21,5) | lag export share city industry regime      |
 
     
