@@ -38,9 +38,18 @@ df_final= (df
 .drop(columns = ['country', 'Country Name'])
 .reindex(columns = ['Long Name', 'Country Code', 'Country ISO3', 'date',
 'GNI per Capita', 'GDP per Capita', 'Income Group'])
+.rename(columns  = {
+'Long Name':'country',
+'Country Code':'iso_alpha',
+'Country ISO3':'iso_alpha03',
+'date':'year',
+'GNI per Capita':'gni_per_capita',
+'GDP per Capita':'gpd_per_capita',
+'Income Group':'income_group'
+})
 )
 
-df_final['Income Group'].unique()
+df_final['income_group'].unique()
 
 
 input_path = os.path.join(parent_path,"00_data_catalog", "temporary_local_data", 'gdp_gni_per_capita.csv')
