@@ -263,6 +263,7 @@ We also compute the following variables:
 ```python
 df_quality = (
     df_vat.assign(
+    hs2 = lambda x: x['hs6'].str[:2],
     hs3 = lambda x: x['hs6'].str[:3],
     hs4 = lambda x: x['hs6'].str[:4],
         
@@ -339,6 +340,7 @@ cols_to_keep = [
     'hs6',
     'hs3',
     'hs4',
+    'hs2',
     'quantity',
     'value',
     'unit_price',
@@ -460,6 +462,7 @@ schema = [
 {'Name': 'hs6', 'Type': 'string', 'Comment': 'HS6 6 digits'},
 {'Name': 'hs3', 'Type': 'string', 'Comment': 'HS3 3 digits'},
 {'Name': 'hs4', 'Type': 'string', 'Comment': 'HS4 4 digits'},
+{'Name': 'hs2', 'Type': 'string', 'Comment': 'HS2 2 digits'},
 {'Name': 'quantity', 'Type': 'float', 'Comment': 'Export quantity'},
 {'Name': 'value', 'Type': 'float', 'Comment': 'Export value'},
 {'Name': 'unit_price', 'Type': 'float', 'Comment': 'Export unit price'},
@@ -523,16 +526,16 @@ github_url = os.path.join(
 )
 ```
 
-Grab the input name from query
+Grab the input name from query: manually add input because data constructed with Python
 
 ```python
-list_input = []
-tables = glue.get_tables(full_output = False)
-regex_matches = re.findall(r'(?=\.).*?(?=\s)|(?=\.\").*?(?=\")', query)
-for i in regex_matches:
-    cleaning = i.lstrip().rstrip().replace('.', '').replace('"', '')
-    if cleaning in tables and cleaning != table_name:
-        list_input.append(cleaning)
+list_input = ["", ""]
+#tables = glue.get_tables(full_output = False)
+#regex_matches = re.findall(r'(?=\.).*?(?=\s)|(?=\.\").*?(?=\")', query)
+#for i in regex_matches:
+#    cleaning = i.lstrip().rstrip().replace('.', '').replace('"', '')
+#    if cleaning in tables and cleaning != table_name:
+#        list_input.append(cleaning)
 ```
 
 ```python
@@ -974,7 +977,7 @@ create_schema.create_schema(path_json, path_save_image = os.path.join(parent_pat
 ### Update TOC in Github
 for p in [parent_path,
           str(Path(path).parent),
-          #os.path.join(str(Path(path).parent), "00_download_data_from"),
+          os.path.join(str(Path(path).parent), "00_download_data"),
           #os.path.join(str(Path(path).parent.parent), "02_data_analysis"),
           #os.path.join(str(Path(path).parent.parent), "02_data_analysis", "00_statistical_exploration"),
           #os.path.join(str(Path(path).parent.parent), "02_data_analysis", "01_model_estimation"),
