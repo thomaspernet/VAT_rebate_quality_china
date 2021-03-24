@@ -1,0 +1,1 @@
+{"to_rename": [{"old": "ln\\_lag\\_tax\\_rebate", "new": "\\text{Ln VAT export tax}_{k, t-1}"}, {"old": "regimeELIGIBLE", "new": "\\text{Regime}^R"}, {"old": "ln\\_lag\\_import\\_tax", "new": "\\text{Ln VAT import tax,}_{k, t-1}"}], "to_remove": []}
