@@ -112,6 +112,20 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 ```
 
+```sos kernel="R"
+change_target <- function(table){
+    ## Regime
+    check_target <- grep("regimeELIGIBLE:ln_lag_import_tax", rownames(table$coef))
+    
+    if (length(check_target) !=0) {
+    ## SOE
+    rownames(table$coefficients)[check_target] <- 'ln_lag_import_tax:regimeELIGIBLE'
+    rownames(table$beta)[check_target] <- 'ln_lag_import_tax:regimeELIGIBLE'
+    } 
+    return (table)
+}
+```
+
 <!-- #region kernel="SoS" -->
 # Load tables
 
@@ -221,7 +235,7 @@ if create_fe:
 
     ### City-sector-year
     df["fe_cst"] = pd.factorize(df["geocode4_corr"].astype('str') + 
-                                        df["hs2"].astype('str') +
+                                        df["hs4"].astype('str') +
                                         df["year"].astype('str')
                                        )[0]
 
@@ -233,7 +247,7 @@ if create_fe:
 
     ### City-sector-regime-year
     df["fe_csrt"] = pd.factorize(df["geocode4_corr"].astype('str') + 
-                                        df["hs2"].astype('str') +
+                                        df["hs4"].astype('str') +
                                         df["regime"].astype('str') +
                                         df["year"].astype('str')
                                        )[0]
@@ -286,23 +300,23 @@ Then add it to the key `to_rename`
 <!-- #endregion -->
 
 ```sos kernel="SoS" nteract={"transient": {"deleting": false}}
-add_to_dic = False
+add_to_dic = True
 if add_to_dic:
     if os.path.exists("schema_table.json"):
         os.remove("schema_table.json")
-        data = {'to_rename':[], 'to_remove':[]}
+    data = {'to_rename':[], 'to_remove':[]}
     dic_rename = [
         {
-        'old':'working\_capital\_i',
-        'new':'\\text{working capital}_i'
+        'old':'ln\_lag\_tax\_rebate',
+        'new':'\\text{Ln VAT export tax}_{k, t-1}'
         },
         {
-        'old':'periodTRUE',
-        'new':'\\text{period}'
+        'old':'regimeELIGIBLE',
+        'new':'\\text{Regime}^R'
         },
         {
-        'old':'tso2\_mandate\_c',
-        'new':'\\text{policy mandate}_'
+        'old':'ln\_lag\_import\_tax',
+        'new':'\\text{Ln VAT import tax,}_{k, t-1}'
         },
     ]
 
@@ -402,32 +416,39 @@ print('table 1 done')
 t_2 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
             | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
             exactDOF = TRUE)
+t_2 <- change_target(t_2)
 
 print('table 2 done')
 t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
             | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
             exactDOF = TRUE)
+t_3 <- change_target(t_3)
 
 print('table 3 done')
 #t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate+ ln_lag_import_tax  
 #            | fe_ck + fe_cst+fe_kj+ fe_ckj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
 #            exactDOF = TRUE)
+#t_4 <- change_target(t_4)
 
 #print('table 4 done')
 #t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate + ln_lag_import_tax 
 #            | fe_ck + fe_cst+fe_kj+ fe_ckj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
 #            exactDOF = TRUE)
+#t_5 <- change_target(t_5)
 
 #print('table 5 done')
 #t_6 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
 #            | fe_ckr + fe_csrt + fe_kj+ fe_ckj|0 | hs6, df_final,
 #            exactDOF = TRUE)
+#t_6 <- change_target(t_6)
 
 #print('table 6 done')
 #t_7 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-#            | fe_ckr + fe_csrt+fe_kt+ fe_ckj|0 | hs6, df_final,
+#           | fe_ckr + fe_csrt+fe_kt+ fe_ckj|0 | hs6, df_final,
 #            exactDOF = TRUE)
-            
+#t_7 <- change_target(t_7)
+#print('table 7 done')
+
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
     c("City-product fixed effects", "Yes", "Yes", "No", "No"#, "Yes", "Yes", "No", "No"
@@ -507,7 +528,16 @@ lb.beautify(table_number = table_nb,
 import os, time, shutil, urllib, ipykernel, json
 from pathlib import Path
 from notebook import notebookapp
+import sys
+path = os.getcwd()
+parent_path = str(Path(path).parent.parent.parent)
+sys.path.append(os.path.join(parent_path, 'utils'))
 import make_toc
+```
+
+```sos kernel="python3"
+name_json = 'parameters_ETL_VAT_rebate_quality_china.json'
+path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
 ```
 
 ```sos kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
@@ -571,17 +601,23 @@ def create_report(extension = "html", keep_code = False, notebookname = None):
 ```
 
 ```sos kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
-create_report(extension = "html", keep_code = False, notebookname = None)
+create_report(extension = "html", keep_code = False, notebookname = "00_previous_tables.ipynb")
 ```
 
 ```sos kernel="python3"
 ### Update TOC in Github
-for p in [parent_path, path, str(Path(path).parent), os.path.join(str(Path(path).parent), "00_download_data_from")]:
+for p in [parent_path,
+          str(Path(path).parent),
+          #os.path.join(str(Path(path).parent), "00_download_data_from"),
+          #os.path.join(str(Path(path).parent.parent), "02_data_analysis"),
+          #os.path.join(str(Path(path).parent.parent), "02_data_analysis", "00_statistical_exploration"),
+          #os.path.join(str(Path(path).parent.parent), "02_data_analysis", "01_model_estimation"),
+         ]:
     try:
         os.remove(os.path.join(p, 'README.md'))
     except:
         pass
-    path_parameter = os.path.join(parent_path,'utils', 'parameters_ETL_Financial_dependency_pollution.json')
+    path_parameter = os.path.join(parent_path,'utils', name_json)
     md_lines =  make_toc.create_index(cwd = p, path_parameter = path_parameter)
     md_out_fn = os.path.join(p,'README.md')
     
