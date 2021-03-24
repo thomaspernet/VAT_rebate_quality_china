@@ -10,6 +10,7 @@ This paper studies the effect of industrial policy in China, the VAT export tax,
  - **00_data_catalog/**
    - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog/README.md)
    - **HTML_ANALYSIS/**
+     - [CHINA_VAT_QUALITY.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/00_data_catalog/HTML_ANALYSIS/CHINA_VAT_QUALITY.html)
      - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog/HTML_ANALYSIS/README.md)
    - **temporary_local_data/**
      - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog/temporary_local_data/README.md)
@@ -50,11 +51,14 @@ This paper studies the effect of industrial policy in China, the VAT export tax,
        - [03_ownership_soe_export_share_ckr.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/Reports/03_ownership_soe_export_share_ckr.html)
        - [04_baseline_vat_quantity_covariates.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/Reports/04_baseline_vat_quantity_covariates.html)
        - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/02_transform_tables/Reports/README.md)
+     - **00_replicate_previous/**
+       - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/02_data_analysis/01_model_estimation/00_replicate_previous/README.md)
  - **utils/**
-   - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/README.md)
    - [create_schema.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/create_schema.py)
    - [make_toc.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/make_toc.py)
    - [prepare_catalog.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/prepare_catalog.py)
+   - **IMAGES/**
+     - [script_diagram_china_vat_quality.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/IMAGES/script_diagram_china_vat_quality.py)
    - **latex/**
      - [latex_beautify.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/latex/latex_beautify.py)
      - [prepare_catalog.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/latex/prepare_catalog.py)

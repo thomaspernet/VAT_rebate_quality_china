@@ -5,7 +5,7 @@ from diagrams.aws.database import Redshift, RDS
 from diagrams.aws.integration import SQS
 from diagrams.aws.storage import S3
 
-with Diagram("CHINA VAT QUALITY", show=False, filename="/Users/thomas/Google Drive/PROJECT/GITHUB/REPOSITORIES/VAT_rebate_quality_china/utils/IMAGES/china_vat_quality", outformat="jpg"):
+with Diagram("CHINA VAT QUALITY", show=False, filename="/home/ec2-user/VAT_rebate_quality_china/utils/IMAGES/china_vat_quality", outformat="jpg"):
 
      temp_1 = S3('world_bank_gdp_per_capita')
      input_china_import_export = S3("china_import_export")
@@ -13,10 +13,11 @@ with Diagram("CHINA VAT QUALITY", show=False, filename="/Users/thomas/Google Dri
      input_china_country_name = S3("china_country_name")
      input_china_applied_mfn_tariffs_hs2 = S3("china_applied_mfn_tariffs_hs2")
      input_hs6_china_vat_rebate = S3("hs6_china_vat_rebate")
+     input_ = S3("")
      temp_2 = SQS('china_export_tariff_tax')
      temp_3 = SQS('china_product_quality')
-     temp_5 = SQS('export_foreign_city_product')
-     temp_6 = SQS('export_soe_city_product')
+     temp_4 = SQS('export_foreign_city_product')
+     temp_5 = SQS('export_soe_city_product')
 
      with Cluster("FINAL"):
 
@@ -29,8 +30,8 @@ with Diagram("CHINA VAT QUALITY", show=False, filename="/Users/thomas/Google Dri
      input_china_country_name >> temp_2
      input_china_applied_mfn_tariffs_hs2 >> temp_2
      input_hs6_china_vat_rebate >> temp_2 >> temp_final_0
-     temp_2 >>temp_3 >> temp_final_0
+     input_ >> temp_3
+     input_china_import_export >> temp_4
+     input_city_cn_en >> temp_4 >> temp_final_0
      input_china_import_export >> temp_5
      input_city_cn_en >> temp_5 >> temp_final_0
-     input_china_import_export >> temp_6
-     input_city_cn_en >> temp_6 >> temp_final_0

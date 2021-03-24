@@ -16,17 +16,17 @@
 - [china_sigmas_hs3](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_sigmas_hs3)
 - [world_bank_gdp_per_capita](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-world_bank_gdp_per_capita)
 - [china_export_tariff_tax](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_export_tariff_tax)
-- [china_product_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_product_quality)
 - [export_foreign_city_product](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-export_foreign_city_product)
 - [export_soe_city_product](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-export_soe_city_product)
 - [china_vat_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_vat_quality)
+- [china_product_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_product_quality)
 
     
 
 ## Table hs6_homogeneous
 
 - Database: industry
-- S3uri: `s3://datalake-datascience/TRADE_DATA/RAW/GOODS_CLASSIFICATION/HOMOGENEOUS`
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/RAW/GOODS_CLASSIFICATION/HOMOGENEOUS`
 - Partitition: []
 - Script: https://github.com/thomaspernet/VAT_rebate_quality_china/01_data_preprocessing/00_download_data/HOMOGENEOUS_GOODS/hs_homogeneous_goods.py
 
@@ -212,39 +212,6 @@
 
     
 
-## Table china_product_quality
-
-- Database: chinese_trade
-- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/PRODUCT_QUALITY`
-- Partitition: ['geocode4_corr', 'year', 'regime', 'hs6', 'country_en']
-- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/01_preparation_quality.md
-
-|    | Name                   | Type   | Comment                |
-|---:|:-----------------------|:-------|:-----------------------|
-|  0 | ccode                  | string | country code           |
-|  1 | cname                  | string | country name           |
-|  2 | country_en             | string | country name english   |
-|  3 | iso_alpha              | string |                        |
-|  4 | geocode4_corr          | string | city code              |
-|  5 | year                   | string | year                   |
-|  6 | regime                 | string | eligible to vat rebate |
-|  7 | hs6                    | string | HS6 6 digits           |
-|  8 | hs3                    | string | HS3 3 digits           |
-|  9 | hs4                    | string | HS4 4 digits           |
-| 10 | quantity               | float  | Export quantity        |
-| 11 | value                  | float  | Export value           |
-| 12 | unit_price             | float  | Export unit price      |
-| 13 | sigma                  | float  | sigma                  |
-| 14 | sigma_price            | float  |                        |
-| 15 | y                      | float  |                        |
-| 16 | FE_ct                  | int    | city year fixed effect |
-| 17 | prediction             | float  | prediction OLS         |
-| 18 | residual               | float  | residual OLS           |
-| 19 | price_adjusted_quality | float  | price adjusted         |
-| 20 | kandhelwal_quality     | float  | Kandhelwal quality     |
-
-    
-
 ## Table export_foreign_city_product
 
 - Database: chinese_trade
@@ -331,5 +298,39 @@
 | 30 | city_average_quantity        | double        |                                                                                                                                                                       |
 | 31 | size_quantity                | varchar(14)   |                                                                                                                                                                       |
 | 32 | size_product                 | varchar(11)   |                                                                                                                                                                       |
+
+    
+
+## Table china_product_quality
+
+- Database: chinese_trade
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/PRODUCT_QUALITY`
+- Partitition: ['geocode4_corr', 'year', 'regime', 'hs6', 'country_en']
+- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/01_preparation_quality.md
+
+|    | Name                   | Type   | Comment                |
+|---:|:-----------------------|:-------|:-----------------------|
+|  0 | ccode                  | string | country code           |
+|  1 | cname                  | string | country name           |
+|  2 | country_en             | string | country name english   |
+|  3 | iso_alpha              | string |                        |
+|  4 | geocode4_corr          | string | city code              |
+|  5 | year                   | string | year                   |
+|  6 | regime                 | string | eligible to vat rebate |
+|  7 | hs6                    | string | HS6 6 digits           |
+|  8 | hs3                    | string | HS3 3 digits           |
+|  9 | hs4                    | string | HS4 4 digits           |
+| 10 | hs2                    | string | HS2 2 digits           |
+| 11 | quantity               | float  | Export quantity        |
+| 12 | value                  | float  | Export value           |
+| 13 | unit_price             | float  | Export unit price      |
+| 14 | sigma                  | float  | sigma                  |
+| 15 | sigma_price            | float  |                        |
+| 16 | y                      | float  |                        |
+| 17 | FE_ct                  | int    | city year fixed effect |
+| 18 | prediction             | float  | prediction OLS         |
+| 19 | residual               | float  | residual OLS           |
+| 20 | price_adjusted_quality | float  | price adjusted         |
+| 21 | kandhelwal_quality     | float  | Kandhelwal quality     |
 
     
