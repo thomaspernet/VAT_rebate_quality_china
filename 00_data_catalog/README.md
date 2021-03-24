@@ -18,8 +18,8 @@
 - [china_export_tariff_tax](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_export_tariff_tax)
 - [export_foreign_city_product](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-export_foreign_city_product)
 - [export_soe_city_product](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-export_soe_city_product)
-- [china_vat_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_vat_quality)
 - [china_product_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_product_quality)
+- [china_vat_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_vat_quality)
 
     
 
@@ -256,51 +256,6 @@
 
     
 
-## Table china_vat_quality
-
-- Database: chinese_trade
-- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/VAT_QUALITY`
-- Partitition: ['year', 'regime', 'geocode4_corr', 'iso_alpha', 'hs6']
-- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/04_baseline_vat_quantity_covariates.md
-
-|    | Name                         | Type          | Comment                                                                                                                                                               |
-|---:|:-----------------------------|:--------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|  0 | geocode4_corr                | string        | city name                                                                                                                                                             |
-|  1 | year                         | string        | year                                                                                                                                                                  |
-|  2 | regime                       | varchar(12)   | eligible or no eligible to vat rebate                                                                                                                                 |
-|  3 | hs6                          | string        | HS6 6 digit                                                                                                                                                           |
-|  4 | hs4                          | string        | HS4 4 digit                                                                                                                                                           |
-|  5 | hs3                          | string        | HS3 3 digit                                                                                                                                                           |
-|  6 | country_en                   | string        | English country name                                                                                                                                                  |
-|  7 | iso_alpha                    | string        |                                                                                                                                                                       |
-|  8 | gni_per_capita               | float         | GDP per capita is gross domestic product divided by midyear population                                                                                                |
-|  9 | gpd_per_capita               | float         | GNI per capita (formerly GNP per capita) is the gross national income, converted to U.S. dollars using the World Bank Atlas method, divided by the midyear population |
-| 10 | income_group                 | string        | One of 'Others', 'Low income', 'Upper middle income','High income: nonOECD', 'Lower middle income', 'High income: OECD'                                               |
-| 11 | income_group_ldc_dc          | varchar(3)    | Income group LDC or not LDC in 2003                                                                                                                                   |
-| 12 | quantity                     | bigint        | Export quantity                                                                                                                                                       |
-| 13 | value                        | bigint        | Export value                                                                                                                                                          |
-| 14 | unit_price                   | decimal(21,5) | product unit price                                                                                                                                                    |
-| 15 | kandhelwal_quality           | float         | Kandhelwal quality                                                                                                                                                    |
-| 16 | price_adjusted_quality       | float         | price adjusted                                                                                                                                                        |
-| 17 | lag_vat_m                    | float         | lag vat tax                                                                                                                                                           |
-| 18 | lag_vat_reb_m                | float         | lag vat rebate                                                                                                                                                        |
-| 19 | lag_tax_rebate               | float         | lag vat rebate to pay                                                                                                                                                 |
-| 20 | ln_lag_vat_m                 | double        | log lag vat tax                                                                                                                                                       |
-| 21 | ln_lag_vat_reb_m             | double        | log lag vat rebate                                                                                                                                                    |
-| 22 | ln_lag_tax_rebate            | double        | log lag vat rebate to pay                                                                                                                                             |
-| 23 | lag_import_tax               | float         | lag import tax                                                                                                                                                        |
-| 24 | ln_lag_import_tax            | double        | log lag import tax                                                                                                                                                    |
-| 25 | lag_soe_export_share_ckr     | decimal(21,5) | lag export share city industry regime                                                                                                                                 |
-| 26 | lag_foreign_export_share_ckr | decimal(21,5) | lag export share city industry regime                                                                                                                                 |
-| 27 | count_hs6                    | bigint        | count hs6                                                                                                                                                             |
-| 28 | sum_quantity                 | bigint        |                                                                                                                                                                       |
-| 29 | city_average_hs6             | double        |                                                                                                                                                                       |
-| 30 | city_average_quantity        | double        |                                                                                                                                                                       |
-| 31 | size_quantity                | varchar(14)   |                                                                                                                                                                       |
-| 32 | size_product                 | varchar(11)   |                                                                                                                                                                       |
-
-    
-
 ## Table china_product_quality
 
 - Database: chinese_trade
@@ -332,5 +287,51 @@
 | 19 | residual               | float  | residual OLS           |
 | 20 | price_adjusted_quality | float  | price adjusted         |
 | 21 | kandhelwal_quality     | float  | Kandhelwal quality     |
+
+    
+
+## Table china_vat_quality
+
+- Database: chinese_trade
+- S3uri: `s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/VAT_QUALITY`
+- Partitition: ['year', 'regime', 'geocode4_corr', 'iso_alpha', 'hs6']
+- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/04_baseline_vat_quantity_covariates.md
+
+|    | Name                         | Type          | Comment                                                                                                                                                               |
+|---:|:-----------------------------|:--------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|  0 | geocode4_corr                | string        | city name                                                                                                                                                             |
+|  1 | year                         | string        | year                                                                                                                                                                  |
+|  2 | regime                       | varchar(12)   | eligible or no eligible to vat rebate                                                                                                                                 |
+|  3 | hs6                          | string        | HS6 6 digit                                                                                                                                                           |
+|  4 | hs4                          | string        | HS4 4 digit                                                                                                                                                           |
+|  5 | hs3                          | string        | HS3 3 digit                                                                                                                                                           |
+|  6 | hs2                          | string        | HS2 2 digit                                                                                                                                                           |
+|  7 | country_en                   | string        | English country name                                                                                                                                                  |
+|  8 | iso_alpha                    | string        |                                                                                                                                                                       |
+|  9 | gni_per_capita               | float         | GDP per capita is gross domestic product divided by midyear population                                                                                                |
+| 10 | gpd_per_capita               | float         | GNI per capita (formerly GNP per capita) is the gross national income, converted to U.S. dollars using the World Bank Atlas method, divided by the midyear population |
+| 11 | income_group                 | string        | One of 'Others', 'Low income', 'Upper middle income','High income: nonOECD', 'Lower middle income', 'High income: OECD'                                               |
+| 12 | income_group_ldc_dc          | varchar(3)    | Income group LDC or not LDC in 2003                                                                                                                                   |
+| 13 | quantity                     | bigint        | Export quantity                                                                                                                                                       |
+| 14 | value                        | bigint        | Export value                                                                                                                                                          |
+| 15 | unit_price                   | decimal(21,5) | product unit price                                                                                                                                                    |
+| 16 | kandhelwal_quality           | float         | Kandhelwal quality                                                                                                                                                    |
+| 17 | price_adjusted_quality       | float         | price adjusted                                                                                                                                                        |
+| 18 | lag_vat_m                    | float         | lag vat tax                                                                                                                                                           |
+| 19 | lag_vat_reb_m                | float         | lag vat rebate                                                                                                                                                        |
+| 20 | lag_tax_rebate               | float         | lag vat rebate to pay                                                                                                                                                 |
+| 21 | ln_lag_vat_m                 | double        | log lag vat tax                                                                                                                                                       |
+| 22 | ln_lag_vat_reb_m             | double        | log lag vat rebate                                                                                                                                                    |
+| 23 | ln_lag_tax_rebate            | double        | log lag vat rebate to pay                                                                                                                                             |
+| 24 | lag_import_tax               | float         | lag import tax                                                                                                                                                        |
+| 25 | ln_lag_import_tax            | double        | log lag import tax                                                                                                                                                    |
+| 26 | lag_soe_export_share_ckr     | decimal(21,5) | lag export share city industry regime                                                                                                                                 |
+| 27 | lag_foreign_export_share_ckr | decimal(21,5) | lag export share city industry regime                                                                                                                                 |
+| 28 | count_hs6                    | bigint        | count hs6                                                                                                                                                             |
+| 29 | sum_quantity                 | bigint        |                                                                                                                                                                       |
+| 30 | city_average_hs6             | double        |                                                                                                                                                                       |
+| 31 | city_average_quantity        | double        |                                                                                                                                                                       |
+| 32 | size_quantity                | varchar(14)   |                                                                                                                                                                       |
+| 33 | size_product                 | varchar(11)   |                                                                                                                                                                       |
 
     
