@@ -409,45 +409,52 @@ t_3 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * 
             exactDOF = TRUE)
 
 print('table 3 done')
-t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate+ ln_lag_import_tax  
-            | fe_ck + fe_cst+fe_kj+ fe_ckj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
-            exactDOF = TRUE)
+#t_4 <- felm(kandhelwal_quality ~ln_lag_tax_rebate+ ln_lag_import_tax  
+#            | fe_ck + fe_cst+fe_kj+ fe_ckj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+#            exactDOF = TRUE)
 
-print('table 4 done')
-t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate + ln_lag_import_tax 
-            | fe_ck + fe_cst+fe_kj+ fe_ckj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
-            exactDOF = TRUE)
+#print('table 4 done')
+#t_5 <- felm(kandhelwal_quality ~ln_lag_tax_rebate + ln_lag_import_tax 
+#            | fe_ck + fe_cst+fe_kj+ fe_ckj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+#            exactDOF = TRUE)
 
-print('table 5 done')
-t_6 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt + fe_kj+ fe_ckj|0 | hs6, df_final,
-            exactDOF = TRUE)
+#print('table 5 done')
+#t_6 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+#            | fe_ckr + fe_csrt + fe_kj+ fe_ckj|0 | hs6, df_final,
+#            exactDOF = TRUE)
 
-print('table 6 done')
-t_7 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-            | fe_ckr + fe_csrt+fe_kt+ fe_ckj|0 | hs6, df_final,
-            exactDOF = TRUE)
+#print('table 6 done')
+#t_7 <- felm(kandhelwal_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+#            | fe_ckr + fe_csrt+fe_kt+ fe_ckj|0 | hs6, df_final,
+#            exactDOF = TRUE)
             
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
-    c("City-product fixed effects", "Yes", "Yes", "No", "No", "Yes", "Yes", "No", "No"),
+    c("City-product fixed effects", "Yes", "Yes", "No", "No"#, "Yes", "Yes", "No", "No"
+     ),
     
-    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No", "Yes", "Yes", "No", "No"),
+    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No"#, "Yes", "Yes", "No", "No"
+     ),
     
-    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No","Yes", "Yes", "Yes", "No"),
+    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No"#,"Yes", "Yes", "Yes", "No"
+     ),
     
-    c("City-product-regime fixed effects","No", "No", "Yes", "Yes","No", "No", "Yes", "Yes"),
+    c("City-product-regime fixed effects","No", "No", "Yes", "Yes"#,"No", "No", "Yes", "Yes"
+     ),
     
-    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes","No", "No", "Yes", "Yes"),
+    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes"#,"No", "No", "Yes", "Yes"
+     ),
     
-    c("Product-year fixed effects", "No", "No", "No", "Yes", "No", "No", "No", "Yes"),
+    c("Product-year fixed effects", "No", "No", "No", "Yes"#, "No", "No", "No", "Yes"
+     ),
     
-    c("City-product-destination fixed effects", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes")
+    c("City-product-destination fixed effects", "No", "No", "No", "No"#, "Yes", "Yes", "Yes", "Yes"
+     )
     
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4, t_5, t_6, t_7
+    t_0,t_1, t_2, t_3#, t_4, t_5, t_6, t_7
 ),
     title="VAT export tax and product's quality upgrading, baseline regression",
     dep_var = dep,
