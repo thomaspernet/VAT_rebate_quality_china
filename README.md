@@ -71,4 +71,3 @@ This paper studies the effect of industrial policy in China, the VAT export tax,
      - [script_diagram_china_vat_quality.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/IMAGES/script_diagram_china_vat_quality.py)
    - **latex/**
      - [latex_beautify.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/latex/latex_beautify.py)
-     - [prepare_catalog.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/latex/prepare_catalog.py)
