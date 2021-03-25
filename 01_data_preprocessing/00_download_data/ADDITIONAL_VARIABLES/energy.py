@@ -29,33 +29,33 @@ auth = authorization_service.get_authorization(
     #path_credential_gcp=os.path.join(parent_path, "creds", "service.json"),
     path_credential_drive=os.path.join(parent_path, "creds"),
     verbose=False,
-    scope = ['https://www.googleapis.com/auth/spreadsheets.readonly',
-    "https://www.googleapis.com/auth/drive"]
+    #scope = ['https://www.googleapis.com/auth/spreadsheets.readonly',
+    #"https://www.googleapis.com/auth/drive"]
 )
 gd_auth = auth.authorization_drive(path_secret = os.path.join(parent_path, "creds", "credentials.json"))
 drive = connect_drive.drive_operations(gd_auth)
 
 ### DOWNLOAD DATA TO temporary_local_data folder
-FILENAME_DRIVE = 'energy.dta'
-FILEID = drive.find_file_id(FILENAME_DRIVE, to_print=False)
+FILENAME_DRIVE = 'energy'
+FILEID = drive.find_file_id(FILENAME_DRIVE + ".dta", to_print=False)
 
 var = (
     drive.download_file(
-        filename=FILENAME_DRIVE,
+        filename=FILENAME_DRIVE + ".dta",
         file_id=FILEID,
         local_path=os.path.join(parent_path,"00_data_catalog", "temporary_local_data"))
 )
 
 ### READ DATA
-input_path = os.path.join(parent_path,"00_data_catalog", "temporary_local_data", FILENAME_DRIVE)
+input_path = os.path.join(parent_path,"00_data_catalog", "temporary_local_data")
 (
-pd.read_stata(input_path)
+pd.read_stata(os.path.join(input_path, 'energy.dta'))
 .assign(energy = "LARGE_ENERGY_CONSUMED")
-.to_csv( os.path.join(parent_path,"00_data_catalog", "temporary_local_data", 'energy.csv'), index = False)
+.to_csv(os.path.join(input_path, 'energy.csv'), index = False)
 )
 
 #### SAVE S3
-s3.upload_file(input_path, PATH_S3)
+s3.upload_file(os.path.join(input_path, 'energy.csv'), PATH_S3)
 #os.remove(input_path)
 
 ### ADD SHCEMA
