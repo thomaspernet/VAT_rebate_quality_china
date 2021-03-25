@@ -36,21 +36,21 @@ gd_auth = auth.authorization_drive(path_secret = os.path.join(parent_path, "cred
 drive = connect_drive.drive_operations(gd_auth)
 
 ### DOWNLOAD DATA TO temporary_local_data folder
-FILENAME_DRIVE = 'test_es.dta'
-FILEID = drive.find_file_id(FILENAME_DRIVE, to_print=False)
+FILENAME_DRIVE = 'test_es'
+FILEID = drive.find_file_id(FILENAME_DRIVE + ".dta", to_print=False)
 
 var = (
     drive.download_file(
-        filename=FILENAME_DRIVE,
+        filename=FILENAME_DRIVE+ ".dta",
         file_id=FILEID,
         local_path=os.path.join(parent_path,"00_data_catalog", "temporary_local_data"))
 )
 
 ### READ DATA
 
-input_path = os.path.join(parent_path,"00_data_catalog", "temporary_local_data", 'test_es.csv')
+input_path = os.path.join(parent_path,"00_data_catalog", "temporary_local_data")
 (
-pd.read_stata(input_path)
+pd.read_stata(os.path.join(input_path, FILENAME_DRIVE + ".dta"))
 .assign(skilled = lambda x: np.where(
 x['hi_s_e1'], "SKILLED_ORIENTED", "NO_SKILLED_ORIENTED")
 )
@@ -60,11 +60,11 @@ hs4 = lambda x: np.where(
 x['gbt'].apply(lambda x: len(str(x))) <4, '0' + x['gbt'].astype('str'), x['gbt'].astype('str')
 ))
 .reindex(columns = ['hs4', 'skilled'])
-.to_csv( os.path.join(parent_path,"00_data_catalog", "temporary_local_data", 'test_es.csv'), index = False)
+.to_csv(os.path.join(input_path, FILENAME_DRIVE  + ".csv"), index = False)
 )
 
 #### SAVE S3
-s3.upload_file(input_path, PATH_S3)
+s3.upload_file(os.path.join(input_path, FILENAME_DRIVE  + ".csv"), PATH_S3)
 #os.remove(input_path)
 
 ### ADD SHCEMA
