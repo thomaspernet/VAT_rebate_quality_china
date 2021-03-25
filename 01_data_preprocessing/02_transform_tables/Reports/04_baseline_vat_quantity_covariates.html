@@ -14445,6 +14445,7 @@ a.anchor-link {
 <span class="s2">    hs4, </span>
 <span class="s2">    hs3, </span>
 <span class="s2">    hs2,</span>
+<span class="s2">    homogeneous,</span>
 <span class="s2">    china_export_tariff_tax.country_en, </span>
 <span class="s2">    china_export_tariff_tax.iso_alpha, </span>
 <span class="s2">    gni_per_capita, </span>
@@ -14487,6 +14488,8 @@ a.anchor-link {
 <span class="s2">    AND china_export_tariff_tax.regime = export_soe_city_product.regime </span>
 <span class="s2">    LEFT JOIN world_bank.world_bank_gdp_per_capita ON china_export_tariff_tax.iso_alpha = world_bank_gdp_per_capita.iso_alpha03 </span>
 <span class="s2">    AND china_export_tariff_tax.year = world_bank_gdp_per_capita.year </span>
+<span class="s2">    LEFT JOIN industry.hs6_homogeneous</span>
+<span class="s2">    ON china_export_tariff_tax.hs6 = hs6_homogeneous.hs6</span>
 <span class="s2">  WHERE </span>
 <span class="s2">    china_export_tariff_tax.quantity IS NOT NULL</span>
 <span class="s2">  )</span>
@@ -14503,6 +14506,7 @@ a.anchor-link {
 <span class="s2">        hs4, </span>
 <span class="s2">        hs3, </span>
 <span class="s2">        hs2,</span>
+<span class="s2">        homogeneous,</span>
 <span class="s2">        country_en, </span>
 <span class="s2">        merge_cov.iso_alpha, </span>
 <span class="s2">        gni_per_capita, </span>
@@ -14558,6 +14562,7 @@ a.anchor-link {
 <span class="s2">      hs4, </span>
 <span class="s2">      hs3, </span>
 <span class="s2">      hs2,</span>
+<span class="s2">      homogeneous,</span>
 <span class="s2">      country_en, </span>
 <span class="s2">      iso_alpha, </span>
 <span class="s2">      gni_per_capita, </span>
@@ -14699,6 +14704,7 @@ a.anchor-link {
       <th>hs4</th>
       <th>hs3</th>
       <th>hs2</th>
+      <th>homogeneous</th>
       <th>country_en</th>
       <th>iso_alpha</th>
       <th>gni_per_capita</th>
@@ -14731,246 +14737,25 @@ a.anchor-link {
   <tbody>
     <tr>
       <th>0</th>
-      <td>3204</td>
-      <td>2004</td>
+      <td>6501</td>
+      <td>2005</td>
       <td>ELIGIBLE</td>
-      <td>854449</td>
-      <td>8544</td>
-      <td>854</td>
-      <td>85</td>
-      <td>Australia</td>
-      <td>AUS</td>
-      <td>25480.0</td>
-      <td>47926.7270</td>
-      <td>High income: OECD</td>
-      <td>DC</td>
-      <td>17833</td>
-      <td>54660</td>
-      <td>3.06510</td>
-      <td>6.106978</td>
-      <td>-0.956876</td>
-      <td>17.0</td>
-      <td>17.0</td>
-      <td>0.0</td>
-      <td>2.890372</td>
-      <td>2.890372</td>
-      <td>0.000000</td>
-      <td>3.5</td>
-      <td>1.504077</td>
-      <td>0.58394</td>
-      <td>0.00000</td>
-      <td>1520</td>
-      <td>878217563</td>
-      <td>329.237037</td>
-      <td>5.564546e+08</td>
-      <td>LARGE_QUANTITY</td>
-      <td>LARGE_COUNT</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>3204</td>
-      <td>2003</td>
-      <td>ELIGIBLE</td>
-      <td>902300</td>
-      <td>9023</td>
-      <td>902</td>
-      <td>90</td>
-      <td>Hong Kong</td>
-      <td>HKG</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>DC</td>
-      <td>66</td>
-      <td>379</td>
-      <td>5.74242</td>
-      <td>0.050554</td>
-      <td>1.609693</td>
-      <td>17.0</td>
-      <td>17.0</td>
-      <td>0.0</td>
-      <td>2.890372</td>
-      <td>2.890372</td>
-      <td>0.000000</td>
-      <td>7.0</td>
-      <td>2.079442</td>
-      <td>1.00000</td>
-      <td>0.00000</td>
-      <td>1520</td>
-      <td>878217563</td>
-      <td>329.237037</td>
-      <td>5.564546e+08</td>
-      <td>LARGE_QUANTITY</td>
-      <td>LARGE_COUNT</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>3204</td>
-      <td>2003</td>
-      <td>ELIGIBLE</td>
-      <td>854390</td>
-      <td>8543</td>
-      <td>854</td>
-      <td>85</td>
-      <td>Hong Kong</td>
-      <td>HKG</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>DC</td>
-      <td>251</td>
-      <td>17947</td>
-      <td>71.50199</td>
-      <td>17.304000</td>
-      <td>-1.615290</td>
-      <td>17.0</td>
-      <td>17.0</td>
-      <td>0.0</td>
-      <td>2.890372</td>
-      <td>2.890372</td>
-      <td>0.000000</td>
-      <td>1.2</td>
-      <td>0.788457</td>
-      <td>0.19896</td>
-      <td>0.01885</td>
-      <td>1520</td>
-      <td>878217563</td>
-      <td>329.237037</td>
-      <td>5.564546e+08</td>
-      <td>LARGE_QUANTITY</td>
-      <td>LARGE_COUNT</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>3204</td>
-      <td>2009</td>
-      <td>ELIGIBLE</td>
-      <td>170230</td>
-      <td>1702</td>
-      <td>170</td>
-      <td>17</td>
-      <td>Vietnam</td>
-      <td>VNM</td>
-      <td>1010.0</td>
-      <td>1250.7958</td>
+      <td>847490</td>
+      <td>8474</td>
+      <td>847</td>
+      <td>84</td>
+      <td>HETEREGENEOUS</td>
+      <td>Kyrgyz</td>
+      <td>KGZ</td>
+      <td>450.0</td>
+      <td>747.5656</td>
       <td>Lower middle income</td>
       <td>DC</td>
-      <td>4768500</td>
-      <td>1776019</td>
-      <td>0.37245</td>
-      <td>3.049866</td>
-      <td>-3.313746</td>
-      <td>17.0</td>
-      <td>13.0</td>
-      <td>4.0</td>
-      <td>2.890372</td>
-      <td>2.639057</td>
-      <td>1.609438</td>
-      <td>30.0</td>
-      <td>3.433987</td>
-      <td>0.00000</td>
-      <td>0.00000</td>
-      <td>1520</td>
-      <td>878217563</td>
-      <td>329.237037</td>
-      <td>5.564546e+08</td>
-      <td>LARGE_QUANTITY</td>
-      <td>LARGE_COUNT</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>3204</td>
-      <td>2010</td>
-      <td>ELIGIBLE</td>
-      <td>960820</td>
-      <td>9608</td>
-      <td>960</td>
-      <td>96</td>
-      <td>Lithuania</td>
-      <td>LTU</td>
-      <td>12570.0</td>
-      <td>11990.6630</td>
-      <td>High income: nonOECD</td>
-      <td>DC</td>
-      <td>568224</td>
-      <td>58525</td>
-      <td>0.10300</td>
-      <td>0.821417</td>
-      <td>-4.717333</td>
-      <td>17.0</td>
-      <td>13.0</td>
-      <td>4.0</td>
-      <td>2.890372</td>
-      <td>2.639057</td>
-      <td>1.609438</td>
-      <td>21.0</td>
-      <td>3.091042</td>
-      <td>0.00000</td>
-      <td>0.00024</td>
-      <td>1520</td>
-      <td>878217563</td>
-      <td>329.237037</td>
-      <td>5.564546e+08</td>
-      <td>LARGE_QUANTITY</td>
-      <td>LARGE_COUNT</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>3204</td>
-      <td>2010</td>
-      <td>ELIGIBLE</td>
-      <td>950669</td>
-      <td>9506</td>
-      <td>950</td>
-      <td>95</td>
-      <td>Lithuania</td>
-      <td>LTU</td>
-      <td>12570.0</td>
-      <td>11990.6630</td>
-      <td>High income: nonOECD</td>
-      <td>DC</td>
-      <td>35600</td>
-      <td>3895</td>
-      <td>0.10941</td>
-      <td>-1.097099</td>
-      <td>24.152712</td>
-      <td>17.0</td>
-      <td>13.0</td>
-      <td>4.0</td>
-      <td>2.890372</td>
-      <td>2.639057</td>
-      <td>1.609438</td>
-      <td>12.0</td>
-      <td>2.564949</td>
-      <td>0.05708</td>
-      <td>0.00000</td>
-      <td>1520</td>
-      <td>878217563</td>
-      <td>329.237037</td>
-      <td>5.564546e+08</td>
-      <td>LARGE_QUANTITY</td>
-      <td>LARGE_COUNT</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>3204</td>
-      <td>2006</td>
-      <td>ELIGIBLE</td>
-      <td>901590</td>
-      <td>9015</td>
-      <td>901</td>
-      <td>90</td>
-      <td>Switzerland</td>
-      <td>CHE</td>
-      <td>63990.0</td>
-      <td>72823.8360</td>
-      <td>High income: OECD</td>
-      <td>DC</td>
-      <td>285</td>
-      <td>3380</td>
-      <td>11.85965</td>
-      <td>-2.418969</td>
-      <td>3.551557</td>
+      <td>15000</td>
+      <td>18126</td>
+      <td>1.20840</td>
+      <td>-0.434631</td>
+      <td>1.068876</td>
       <td>17.0</td>
       <td>13.0</td>
       <td>4.0</td>
@@ -14979,124 +14764,355 @@ a.anchor-link {
       <td>1.609438</td>
       <td>5.0</td>
       <td>1.791759</td>
-      <td>0.00153</td>
       <td>0.00000</td>
-      <td>1520</td>
-      <td>878217563</td>
+      <td>0.00000</td>
+      <td>368</td>
+      <td>104201302</td>
       <td>329.237037</td>
       <td>5.564546e+08</td>
-      <td>LARGE_QUANTITY</td>
+      <td>SMALL_QUANTITY</td>
+      <td>LARGE_COUNT</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>6501</td>
+      <td>2007</td>
+      <td>ELIGIBLE</td>
+      <td>900319</td>
+      <td>9003</td>
+      <td>900</td>
+      <td>90</td>
+      <td>HETEREGENEOUS</td>
+      <td>Colombia</td>
+      <td>COL</td>
+      <td>4130.0</td>
+      <td>6002.3310</td>
+      <td>Upper middle income</td>
+      <td>DC</td>
+      <td>50400</td>
+      <td>32970</td>
+      <td>0.65417</td>
+      <td>-0.539934</td>
+      <td>0.662353</td>
+      <td>17.0</td>
+      <td>13.0</td>
+      <td>4.0</td>
+      <td>2.890372</td>
+      <td>2.639057</td>
+      <td>1.609438</td>
+      <td>10.0</td>
+      <td>2.397895</td>
+      <td>0.00000</td>
+      <td>0.00000</td>
+      <td>368</td>
+      <td>104201302</td>
+      <td>329.237037</td>
+      <td>5.564546e+08</td>
+      <td>SMALL_QUANTITY</td>
+      <td>LARGE_COUNT</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>6501</td>
+      <td>2004</td>
+      <td>ELIGIBLE</td>
+      <td>392610</td>
+      <td>3926</td>
+      <td>392</td>
+      <td>39</td>
+      <td>HETEREGENEOUS</td>
+      <td>The Russian Federation</td>
+      <td>RUS</td>
+      <td>3410.0</td>
+      <td>8360.2520</td>
+      <td>High income: nonOECD</td>
+      <td>DC</td>
+      <td>240</td>
+      <td>1200</td>
+      <td>5.00000</td>
+      <td>0.554447</td>
+      <td>0.129378</td>
+      <td>17.0</td>
+      <td>15.0</td>
+      <td>2.0</td>
+      <td>2.890372</td>
+      <td>2.772589</td>
+      <td>1.098612</td>
+      <td>12.0</td>
+      <td>2.564949</td>
+      <td>0.00000</td>
+      <td>0.00000</td>
+      <td>368</td>
+      <td>104201302</td>
+      <td>329.237037</td>
+      <td>5.564546e+08</td>
+      <td>SMALL_QUANTITY</td>
+      <td>LARGE_COUNT</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>6501</td>
+      <td>2010</td>
+      <td>ELIGIBLE</td>
+      <td>854160</td>
+      <td>8541</td>
+      <td>854</td>
+      <td>85</td>
+      <td>HETEREGENEOUS</td>
+      <td>Slovenia</td>
+      <td>SVN</td>
+      <td>24540.0</td>
+      <td>23509.5430</td>
+      <td>High income: OECD</td>
+      <td>DC</td>
+      <td>4</td>
+      <td>2327</td>
+      <td>581.75000</td>
+      <td>1.100547</td>
+      <td>5.991750</td>
+      <td>17.0</td>
+      <td>17.0</td>
+      <td>0.0</td>
+      <td>2.890372</td>
+      <td>2.890372</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.00000</td>
+      <td>0.00000</td>
+      <td>368</td>
+      <td>104201302</td>
+      <td>329.237037</td>
+      <td>5.564546e+08</td>
+      <td>SMALL_QUANTITY</td>
+      <td>LARGE_COUNT</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>6501</td>
+      <td>2008</td>
+      <td>ELIGIBLE</td>
+      <td>848180</td>
+      <td>8481</td>
+      <td>848</td>
+      <td>84</td>
+      <td>HETEREGENEOUS</td>
+      <td>India</td>
+      <td>IND</td>
+      <td>1000.0</td>
+      <td>1192.5117</td>
+      <td>Lower middle income</td>
+      <td>DC</td>
+      <td>2</td>
+      <td>9000</td>
+      <td>4500.00000</td>
+      <td>5.136136</td>
+      <td>-12.149086</td>
+      <td>17.0</td>
+      <td>12.0</td>
+      <td>5.0</td>
+      <td>2.890372</td>
+      <td>2.564949</td>
+      <td>1.791759</td>
+      <td>6.0</td>
+      <td>1.945910</td>
+      <td>0.00004</td>
+      <td>0.83950</td>
+      <td>368</td>
+      <td>104201302</td>
+      <td>329.237037</td>
+      <td>5.564546e+08</td>
+      <td>SMALL_QUANTITY</td>
+      <td>LARGE_COUNT</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>6501</td>
+      <td>2010</td>
+      <td>ELIGIBLE</td>
+      <td>610433</td>
+      <td>6104</td>
+      <td>610</td>
+      <td>61</td>
+      <td>HETEREGENEOUS</td>
+      <td>Poland</td>
+      <td>POL</td>
+      <td>12740.0</td>
+      <td>12613.0110</td>
+      <td>High income: OECD</td>
+      <td>DC</td>
+      <td>80</td>
+      <td>1814</td>
+      <td>22.67500</td>
+      <td>0.284951</td>
+      <td>2.480819</td>
+      <td>17.0</td>
+      <td>15.0</td>
+      <td>2.0</td>
+      <td>2.890372</td>
+      <td>2.772589</td>
+      <td>1.098612</td>
+      <td>19.0</td>
+      <td>2.995732</td>
+      <td>0.00000</td>
+      <td>0.01581</td>
+      <td>368</td>
+      <td>104201302</td>
+      <td>329.237037</td>
+      <td>5.564546e+08</td>
+      <td>SMALL_QUANTITY</td>
+      <td>LARGE_COUNT</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>6501</td>
+      <td>2007</td>
+      <td>ELIGIBLE</td>
+      <td>820790</td>
+      <td>8207</td>
+      <td>820</td>
+      <td>82</td>
+      <td>HETEREGENEOUS</td>
+      <td>Portugal</td>
+      <td>PRT</td>
+      <td>20850.0</td>
+      <td>22819.5040</td>
+      <td>High income: OECD</td>
+      <td>DC</td>
+      <td>170</td>
+      <td>38148</td>
+      <td>224.40000</td>
+      <td>3.275657</td>
+      <td>-2.403449</td>
+      <td>17.0</td>
+      <td>13.0</td>
+      <td>4.0</td>
+      <td>2.890372</td>
+      <td>2.639057</td>
+      <td>1.609438</td>
+      <td>8.0</td>
+      <td>2.197225</td>
+      <td>0.00000</td>
+      <td>0.00000</td>
+      <td>368</td>
+      <td>104201302</td>
+      <td>329.237037</td>
+      <td>5.564546e+08</td>
+      <td>SMALL_QUANTITY</td>
       <td>LARGE_COUNT</td>
     </tr>
     <tr>
       <th>7</th>
-      <td>3204</td>
-      <td>2006</td>
+      <td>6501</td>
+      <td>2010</td>
       <td>ELIGIBLE</td>
-      <td>901380</td>
-      <td>9013</td>
-      <td>901</td>
-      <td>90</td>
-      <td>Iran</td>
-      <td>IRN</td>
-      <td>3480.0</td>
-      <td>5954.7417</td>
-      <td>Upper middle income</td>
+      <td>940350</td>
+      <td>9403</td>
+      <td>940</td>
+      <td>94</td>
+      <td>HETEREGENEOUS</td>
+      <td>Ireland</td>
+      <td>IRL</td>
+      <td>44880.0</td>
+      <td>48715.1760</td>
+      <td>High income: OECD</td>
       <td>DC</td>
-      <td>150</td>
-      <td>1500</td>
-      <td>10.00000</td>
-      <td>-1.707303</td>
-      <td>3.063728</td>
+      <td>925</td>
+      <td>91012</td>
+      <td>98.39135</td>
+      <td>0.568957</td>
+      <td>3.595827</td>
       <td>17.0</td>
-      <td>13.0</td>
-      <td>4.0</td>
+      <td>10.5</td>
+      <td>6.5</td>
       <td>2.890372</td>
-      <td>2.639057</td>
-      <td>1.609438</td>
-      <td>8.5</td>
-      <td>2.251292</td>
+      <td>2.442347</td>
+      <td>2.014903</td>
+      <td>0.0</td>
+      <td>0.000000</td>
       <td>0.00000</td>
       <td>0.00000</td>
-      <td>1520</td>
-      <td>878217563</td>
+      <td>368</td>
+      <td>104201302</td>
       <td>329.237037</td>
       <td>5.564546e+08</td>
-      <td>LARGE_QUANTITY</td>
+      <td>SMALL_QUANTITY</td>
       <td>LARGE_COUNT</td>
     </tr>
     <tr>
       <th>8</th>
-      <td>3204</td>
-      <td>2008</td>
+      <td>6501</td>
+      <td>2007</td>
       <td>ELIGIBLE</td>
-      <td>540754</td>
-      <td>5407</td>
-      <td>540</td>
-      <td>54</td>
-      <td>Mexico</td>
-      <td>MEX</td>
-      <td>9780.0</td>
-      <td>9587.6370</td>
+      <td>848180</td>
+      <td>8481</td>
+      <td>848</td>
+      <td>84</td>
+      <td>HETEREGENEOUS</td>
+      <td>Malaysia</td>
+      <td>MYS</td>
+      <td>6630.0</td>
+      <td>8605.0180</td>
       <td>Upper middle income</td>
       <td>DC</td>
-      <td>51392</td>
-      <td>49113</td>
-      <td>0.95565</td>
-      <td>-0.450473</td>
-      <td>0.745212</td>
-      <td>17.0</td>
-      <td>11.0</td>
-      <td>6.0</td>
-      <td>2.890372</td>
-      <td>2.484907</td>
-      <td>1.945910</td>
-      <td>10.0</td>
-      <td>2.397895</td>
-      <td>0.00000</td>
-      <td>0.00000</td>
-      <td>1520</td>
-      <td>878217563</td>
-      <td>329.237037</td>
-      <td>5.564546e+08</td>
-      <td>LARGE_QUANTITY</td>
-      <td>LARGE_COUNT</td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <td>3204</td>
-      <td>2006</td>
-      <td>ELIGIBLE</td>
-      <td>521141</td>
-      <td>5211</td>
-      <td>521</td>
-      <td>52</td>
-      <td>Venezuela</td>
-      <td>VEN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>LDC</td>
-      <td>10098</td>
-      <td>14813</td>
-      <td>1.46692</td>
-      <td>-0.247148</td>
-      <td>2.052140</td>
+      <td>2908</td>
+      <td>5971</td>
+      <td>2.05330</td>
+      <td>-1.988564</td>
+      <td>8.680044</td>
       <td>17.0</td>
       <td>13.0</td>
       <td>4.0</td>
       <td>2.890372</td>
       <td>2.639057</td>
       <td>1.609438</td>
-      <td>10.0</td>
-      <td>2.397895</td>
+      <td>6.0</td>
+      <td>1.945910</td>
+      <td>0.16019</td>
       <td>0.00000</td>
-      <td>0.00000</td>
-      <td>1520</td>
-      <td>878217563</td>
+      <td>368</td>
+      <td>104201302</td>
       <td>329.237037</td>
       <td>5.564546e+08</td>
-      <td>LARGE_QUANTITY</td>
+      <td>SMALL_QUANTITY</td>
+      <td>LARGE_COUNT</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>6501</td>
+      <td>2008</td>
+      <td>ELIGIBLE</td>
+      <td>611790</td>
+      <td>6117</td>
+      <td>611</td>
+      <td>61</td>
+      <td>HETEREGENEOUS</td>
+      <td>Malaysia</td>
+      <td>MYS</td>
+      <td>7510.0</td>
+      <td>8850.0090</td>
+      <td>Upper middle income</td>
+      <td>DC</td>
+      <td>880</td>
+      <td>3371</td>
+      <td>3.83068</td>
+      <td>-0.939316</td>
+      <td>3.778972</td>
+      <td>17.0</td>
+      <td>12.0</td>
+      <td>5.0</td>
+      <td>2.890372</td>
+      <td>2.564949</td>
+      <td>1.791759</td>
+      <td>14.0</td>
+      <td>2.708050</td>
+      <td>0.00000</td>
+      <td>0.00000</td>
+      <td>368</td>
+      <td>104201302</td>
+      <td>329.237037</td>
+      <td>5.564546e+08</td>
+      <td>SMALL_QUANTITY</td>
       <td>LARGE_COUNT</td>
     </tr>
   </tbody>
@@ -15178,7 +15194,7 @@ a.anchor-link {
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>{&#39;ResponseMetadata&#39;: {&#39;RequestId&#39;: &#39;921e87c4-5a31-4444-9ba6-c011ada7b038&#39;, &#39;HTTPStatusCode&#39;: 200, &#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Wed, 24 Mar 2021 06:52:30 GMT&#39;, &#39;content-type&#39;: &#39;application/x-amz-json-1.1&#39;, &#39;content-length&#39;: &#39;2&#39;, &#39;connection&#39;: &#39;keep-alive&#39;, &#39;x-amzn-requestid&#39;: &#39;921e87c4-5a31-4444-9ba6-c011ada7b038&#39;}, &#39;RetryAttempts&#39;: 0}}
+<pre>{&#39;ResponseMetadata&#39;: {&#39;RequestId&#39;: &#39;2fe0fb45-bdf2-41a2-af52-5533a8e4a31a&#39;, &#39;HTTPStatusCode&#39;: 200, &#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Thu, 25 Mar 2021 06:51:55 GMT&#39;, &#39;content-type&#39;: &#39;application/x-amz-json-1.1&#39;, &#39;content-length&#39;: &#39;2&#39;, &#39;connection&#39;: &#39;keep-alive&#39;, &#39;x-amzn-requestid&#39;: &#39;2fe0fb45-bdf2-41a2-af52-5533a8e4a31a&#39;}, &#39;RetryAttempts&#39;: 0}}
 </pre>
 </div>
 </div>
@@ -15248,6 +15264,7 @@ a.anchor-link {
 <span class="s2">    hs4, </span>
 <span class="s2">    hs3, </span>
 <span class="s2">    hs2,</span>
+<span class="s2">    homogeneous,</span>
 <span class="s2">    china_export_tariff_tax.country_en, </span>
 <span class="s2">    china_export_tariff_tax.iso_alpha, </span>
 <span class="s2">    gni_per_capita, </span>
@@ -15290,6 +15307,8 @@ a.anchor-link {
 <span class="s2">    AND china_export_tariff_tax.regime = export_soe_city_product.regime </span>
 <span class="s2">    LEFT JOIN world_bank.world_bank_gdp_per_capita ON china_export_tariff_tax.iso_alpha = world_bank_gdp_per_capita.iso_alpha03 </span>
 <span class="s2">    AND china_export_tariff_tax.year = world_bank_gdp_per_capita.year </span>
+<span class="s2">    LEFT JOIN industry.hs6_homogeneous</span>
+<span class="s2">    ON china_export_tariff_tax.hs6 = hs6_homogeneous.hs6</span>
 <span class="s2">  WHERE </span>
 <span class="s2">    china_export_tariff_tax.quantity IS NOT NULL</span>
 <span class="s2">  )</span>
@@ -15306,6 +15325,7 @@ a.anchor-link {
 <span class="s2">        hs4, </span>
 <span class="s2">        hs3, </span>
 <span class="s2">        hs2,</span>
+<span class="s2">        homogeneous,</span>
 <span class="s2">        country_en, </span>
 <span class="s2">        merge_cov.iso_alpha, </span>
 <span class="s2">        gni_per_capita, </span>
@@ -15361,6 +15381,7 @@ a.anchor-link {
 <span class="s2">      hs4, </span>
 <span class="s2">      hs3, </span>
 <span class="s2">      hs2,</span>
+<span class="s2">      homogeneous,</span>
 <span class="s2">      country_en, </span>
 <span class="s2">      iso_alpha, </span>
 <span class="s2">      gni_per_capita, </span>
@@ -15461,8 +15482,8 @@ a.anchor-link {
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>CPU times: user 1.51 s, sys: 36.7 ms, total: 1.55 s
-Wall time: 26.4 s
+<pre>CPU times: user 1.49 s, sys: 48.5 ms, total: 1.54 s
+Wall time: 26.6 s
 </pre>
 </div>
 </div>
@@ -15477,9 +15498,9 @@ Wall time: 26.4 s
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
 <pre>{&#39;Results&#39;: {&#39;State&#39;: &#39;SUCCEEDED&#39;,
-  &#39;SubmissionDateTime&#39;: datetime.datetime(2021, 3, 24, 6, 52, 31, 72000, tzinfo=tzlocal()),
-  &#39;CompletionDateTime&#39;: datetime.datetime(2021, 3, 24, 6, 52, 57, 342000, tzinfo=tzlocal())},
- &#39;QueryID&#39;: &#39;4502b193-b433-4d5d-9f94-7afd6abc2248&#39;}</pre>
+  &#39;SubmissionDateTime&#39;: datetime.datetime(2021, 3, 25, 6, 51, 58, 575000, tzinfo=tzlocal()),
+  &#39;CompletionDateTime&#39;: datetime.datetime(2021, 3, 25, 6, 52, 24, 995000, tzinfo=tzlocal())},
+ &#39;QueryID&#39;: &#39;2b871a4c-03a6-4104-a98e-9ee7c7a1b082&#39;}</pre>
 </div>
 
 </div>
@@ -15628,6 +15649,7 @@ Wall time: 26.4 s
  {&#39;Name&#39;: &#39;hs4&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
  {&#39;Name&#39;: &#39;hs3&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
  {&#39;Name&#39;: &#39;hs2&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;homogeneous&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
  {&#39;Name&#39;: &#39;country_en&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
  {&#39;Name&#39;: &#39;iso_alpha&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
  {&#39;Name&#39;: &#39;gni_per_capita&#39;, &#39;Type&#39;: &#39;float&#39;, &#39;Comment&#39;: &#39;&#39;},
@@ -15678,6 +15700,7 @@ Wall time: 26.4 s
  <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;hs4&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;HS4 4 digit&#39;</span><span class="p">},</span>
  <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;hs3&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;HS3 3 digit&#39;</span><span class="p">},</span>
  <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;hs2&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;HS2 2 digit&#39;</span><span class="p">},</span>
+          <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;homogeneous&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;Goods label&#39;</span><span class="p">},</span>
  <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;country_en&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;English country name&#39;</span><span class="p">},</span>
  <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;iso_alpha&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">},</span>
  <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;gni_per_capita&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;GDP per capita is gross domestic product divided by midyear population&#39;</span><span class="p">},</span>
@@ -15903,7 +15926,8 @@ Wall time: 26.4 s
   &#39;china_product_quality&#39;,
   &#39;export_foreign_city_product&#39;,
   &#39;export_soe_city_product&#39;,
-  &#39;world_bank_gdp_per_capita&#39;],
+  &#39;world_bank_gdp_per_capita&#39;,
+  &#39;hs6_homogeneous&#39;],
  &#39;target_S3URI&#39;: &#39;s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/VAT_QUALITY&#39;,
  &#39;from_athena&#39;: &#39;True&#39;,
  &#39;filename&#39;: &#39;04_baseline_vat_quantity_covariates.ipynb&#39;,
@@ -16062,13 +16086,13 @@ Wall time: 26.4 s
 
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
-<pre>{&#39;ResponseMetadata&#39;: {&#39;RequestId&#39;: &#39;e7cabc16-9d1e-49f4-a419-c1af9014e75f&#39;,
+<pre>{&#39;ResponseMetadata&#39;: {&#39;RequestId&#39;: &#39;3b3989c9-e175-4e67-9795-84dce2b4d8cc&#39;,
   &#39;HTTPStatusCode&#39;: 200,
-  &#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Wed, 24 Mar 2021 06:53:02 GMT&#39;,
+  &#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Thu, 25 Mar 2021 06:54:04 GMT&#39;,
    &#39;content-type&#39;: &#39;application/x-amz-json-1.1&#39;,
    &#39;content-length&#39;: &#39;2&#39;,
    &#39;connection&#39;: &#39;keep-alive&#39;,
-   &#39;x-amzn-requestid&#39;: &#39;e7cabc16-9d1e-49f4-a419-c1af9014e75f&#39;},
+   &#39;x-amzn-requestid&#39;: &#39;3b3989c9-e175-4e67-9795-84dce2b4d8cc&#39;},
   &#39;RetryAttempts&#39;: 0}}</pre>
 </div>
 
@@ -16276,192 +16300,197 @@ Wall time: 26.4 s
 
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output " data-mime-type="text/html">
 <style  type="text/css" >
-#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow0_col1{
+#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow0_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 100.0%, transparent 100.0%);
-        }#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow1_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow2_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow3_col1{
+        }#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow1_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow2_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow3_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 10.9%, transparent 10.9%);
-        }#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow4_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow5_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow6_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow7_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow8_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow9_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow10_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow11_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow12_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow13_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow14_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow15_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow16_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow17_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow18_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow19_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow20_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow21_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow22_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow23_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow24_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow25_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow26_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow27_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow28_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow29_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow30_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow31_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow32_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow33_col1,#T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow34_col1{
+        }#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow4_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow5_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow6_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow7_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow8_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow9_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow10_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow11_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow12_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow13_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow14_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow15_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow16_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow17_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow18_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow19_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow20_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow21_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow22_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow23_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow24_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow25_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow26_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow27_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow28_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow29_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow30_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow31_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow32_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow33_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow34_col1,#T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow35_col1{
             width:  10em;
              height:  80%;
-        }</style><table id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fad" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >total_missing</th>        <th class="col_heading level0 col1" >total_missing_pct</th>    </tr></thead><tbody>
+        }</style><table id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6f" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >total_missing</th>        <th class="col_heading level0 col1" >total_missing_pct</th>    </tr></thead><tbody>
                 <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row0" class="row_heading level0 row0" >nb_obs</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow0_col0" class="data row0 col0" >5744044</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow0_col1" class="data row0 col1" >100.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row0" class="row_heading level0 row0" >nb_obs</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow0_col0" class="data row0 col0" >5744044</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow0_col1" class="data row0 col1" >100.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row1" class="row_heading level0 row1" >gni_per_capita</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow1_col0" class="data row1 col0" >626838</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow1_col1" class="data row1 col1" >10.91%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row1" class="row_heading level0 row1" >income_group</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow1_col0" class="data row1 col0" >626838</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow1_col1" class="data row1 col1" >10.91%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row2" class="row_heading level0 row2" >income_group</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow2_col0" class="data row2 col0" >626838</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow2_col1" class="data row2 col1" >10.91%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row2" class="row_heading level0 row2" >gpd_per_capita</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow2_col0" class="data row2 col0" >626838</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow2_col1" class="data row2 col1" >10.91%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row3" class="row_heading level0 row3" >gpd_per_capita</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow3_col0" class="data row3 col0" >626838</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow3_col1" class="data row3 col1" >10.91%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row3" class="row_heading level0 row3" >gni_per_capita</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow3_col0" class="data row3 col0" >626838</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow3_col1" class="data row3 col1" >10.91%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row4" class="row_heading level0 row4" >lag_tax_rebate</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow4_col0" class="data row4 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow4_col1" class="data row4 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row4" class="row_heading level0 row4" >lag_import_tax</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow4_col0" class="data row4 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow4_col1" class="data row4 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row5" class="row_heading level0 row5" >ln_lag_vat_m</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow5_col0" class="data row5 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow5_col1" class="data row5 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row5" class="row_heading level0 row5" >lag_tax_rebate</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow5_col0" class="data row5 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow5_col1" class="data row5 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row6" class="row_heading level0 row6" >ln_lag_vat_reb_m</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow6_col0" class="data row6 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow6_col1" class="data row6 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row6" class="row_heading level0 row6" >ln_lag_vat_m</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow6_col0" class="data row6 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow6_col1" class="data row6 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row7" class="row_heading level0 row7" >ln_lag_tax_rebate</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow7_col0" class="data row7 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow7_col1" class="data row7 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row7" class="row_heading level0 row7" >ln_lag_vat_reb_m</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow7_col0" class="data row7 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow7_col1" class="data row7 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row8" class="row_heading level0 row8" >lag_import_tax</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow8_col0" class="data row8 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow8_col1" class="data row8 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row8" class="row_heading level0 row8" >ln_lag_tax_rebate</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow8_col0" class="data row8 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow8_col1" class="data row8 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row9" class="row_heading level0 row9" >ln_lag_import_tax</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow9_col0" class="data row9 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow9_col1" class="data row9 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row9" class="row_heading level0 row9" >ln_lag_import_tax</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow9_col0" class="data row9 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow9_col1" class="data row9 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row10" class="row_heading level0 row10" >lag_vat_m</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow10_col0" class="data row10 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow10_col1" class="data row10 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row10" class="row_heading level0 row10" >lag_vat_m</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow10_col0" class="data row10 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow10_col1" class="data row10 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row11" class="row_heading level0 row11" >lag_soe_export_share_ckr</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow11_col0" class="data row11 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow11_col1" class="data row11 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row11" class="row_heading level0 row11" >lag_soe_export_share_ckr</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow11_col0" class="data row11 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow11_col1" class="data row11 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row12" class="row_heading level0 row12" >lag_foreign_export_share_ckr</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow12_col0" class="data row12 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow12_col1" class="data row12 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row12" class="row_heading level0 row12" >lag_foreign_export_share_ckr</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow12_col0" class="data row12 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow12_col1" class="data row12 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row13" class="row_heading level0 row13" >count_hs6</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow13_col0" class="data row13 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow13_col1" class="data row13 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row13" class="row_heading level0 row13" >count_hs6</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow13_col0" class="data row13 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow13_col1" class="data row13 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row14" class="row_heading level0 row14" >sum_quantity</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow14_col0" class="data row14 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow14_col1" class="data row14 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row14" class="row_heading level0 row14" >sum_quantity</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow14_col0" class="data row14 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow14_col1" class="data row14 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row15" class="row_heading level0 row15" >city_average_hs6</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow15_col0" class="data row15 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow15_col1" class="data row15 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row15" class="row_heading level0 row15" >city_average_hs6</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow15_col0" class="data row15 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow15_col1" class="data row15 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row16" class="row_heading level0 row16" >city_average_quantity</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow16_col0" class="data row16 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow16_col1" class="data row16 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row16" class="row_heading level0 row16" >city_average_quantity</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow16_col0" class="data row16 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow16_col1" class="data row16 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row17" class="row_heading level0 row17" >size_quantity</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow17_col0" class="data row17 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow17_col1" class="data row17 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row17" class="row_heading level0 row17" >size_quantity</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow17_col0" class="data row17 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow17_col1" class="data row17 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row18" class="row_heading level0 row18" >lag_vat_reb_m</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow18_col0" class="data row18 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow18_col1" class="data row18 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row18" class="row_heading level0 row18" >lag_vat_reb_m</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow18_col0" class="data row18 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow18_col1" class="data row18 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row19" class="row_heading level0 row19" >kandhelwal_quality</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow19_col0" class="data row19 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow19_col1" class="data row19 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row19" class="row_heading level0 row19" >kandhelwal_quality</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow19_col0" class="data row19 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow19_col1" class="data row19 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row20" class="row_heading level0 row20" >price_adjusted_quality</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow20_col0" class="data row20 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow20_col1" class="data row20 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row20" class="row_heading level0 row20" >price_adjusted_quality</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow20_col0" class="data row20 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow20_col1" class="data row20 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row21" class="row_heading level0 row21" >geocode4_corr</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow21_col0" class="data row21 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow21_col1" class="data row21 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row21" class="row_heading level0 row21" >geocode4_corr</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow21_col0" class="data row21 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow21_col1" class="data row21 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row22" class="row_heading level0 row22" >unit_price</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow22_col0" class="data row22 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow22_col1" class="data row22 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row22" class="row_heading level0 row22" >unit_price</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow22_col0" class="data row22 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow22_col1" class="data row22 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row23" class="row_heading level0 row23" >value</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow23_col0" class="data row23 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow23_col1" class="data row23 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row23" class="row_heading level0 row23" >value</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow23_col0" class="data row23 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow23_col1" class="data row23 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row24" class="row_heading level0 row24" >quantity</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow24_col0" class="data row24 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow24_col1" class="data row24 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row24" class="row_heading level0 row24" >quantity</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow24_col0" class="data row24 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow24_col1" class="data row24 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row25" class="row_heading level0 row25" >income_group_ldc_dc</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow25_col0" class="data row25 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow25_col1" class="data row25 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row25" class="row_heading level0 row25" >income_group_ldc_dc</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow25_col0" class="data row25 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow25_col1" class="data row25 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row26" class="row_heading level0 row26" >iso_alpha</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow26_col0" class="data row26 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow26_col1" class="data row26 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row26" class="row_heading level0 row26" >iso_alpha</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow26_col0" class="data row26 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow26_col1" class="data row26 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row27" class="row_heading level0 row27" >country_en</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow27_col0" class="data row27 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow27_col1" class="data row27 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row27" class="row_heading level0 row27" >country_en</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow27_col0" class="data row27 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow27_col1" class="data row27 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row28" class="row_heading level0 row28" >hs2</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow28_col0" class="data row28 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow28_col1" class="data row28 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row28" class="row_heading level0 row28" >homogeneous</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow28_col0" class="data row28 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow28_col1" class="data row28 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row29" class="row_heading level0 row29" >hs3</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow29_col0" class="data row29 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow29_col1" class="data row29 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row29" class="row_heading level0 row29" >hs2</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow29_col0" class="data row29 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow29_col1" class="data row29 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row30" class="row_heading level0 row30" >hs4</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow30_col0" class="data row30 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow30_col1" class="data row30 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row30" class="row_heading level0 row30" >hs3</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow30_col0" class="data row30 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow30_col1" class="data row30 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row31" class="row_heading level0 row31" >hs6</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow31_col0" class="data row31 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow31_col1" class="data row31 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row31" class="row_heading level0 row31" >hs4</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow31_col0" class="data row31 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow31_col1" class="data row31 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row32" class="row_heading level0 row32" >regime</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow32_col0" class="data row32 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow32_col1" class="data row32 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row32" class="row_heading level0 row32" >hs6</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow32_col0" class="data row32 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow32_col1" class="data row32 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row33" class="row_heading level0 row33" >year</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow33_col0" class="data row33 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow33_col1" class="data row33 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row33" class="row_heading level0 row33" >regime</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow33_col0" class="data row33 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow33_col1" class="data row33 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadlevel0_row34" class="row_heading level0 row34" >size_product</th>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow34_col0" class="data row34 col0" >0</td>
-                        <td id="T_9c1d448e_8c6d_11eb_a618_bd120ff34fadrow34_col1" class="data row34 col1" >0.00%</td>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row34" class="row_heading level0 row34" >year</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow34_col0" class="data row34 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow34_col1" class="data row34 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6flevel0_row35" class="row_heading level0 row35" >size_product</th>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow35_col0" class="data row35 col0" >0</td>
+                        <td id="T_ef091136_8d36_11eb_8a06_0b82fa1d2d6frow35_col1" class="data row35 col1" >0.00%</td>
             </tr>
     </tbody></table>
 </div>
@@ -16729,22 +16758,22 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
-<pre>{&#39;ResponseMetadata&#39;: {&#39;RequestId&#39;: &#39;6fb8acc3-218c-48c3-8a8c-378af37370a8&#39;,
+<pre>{&#39;ResponseMetadata&#39;: {&#39;RequestId&#39;: &#39;070f8339-344d-46ec-a97e-489c5811aa7f&#39;,
   &#39;HTTPStatusCode&#39;: 200,
-  &#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Wed, 24 Mar 2021 06:54:49 GMT&#39;,
+  &#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Thu, 25 Mar 2021 06:54:48 GMT&#39;,
    &#39;content-type&#39;: &#39;application/json&#39;,
    &#39;content-length&#39;: &#39;75&#39;,
    &#39;connection&#39;: &#39;keep-alive&#39;,
-   &#39;x-amzn-requestid&#39;: &#39;6fb8acc3-218c-48c3-8a8c-378af37370a8&#39;,
+   &#39;x-amzn-requestid&#39;: &#39;070f8339-344d-46ec-a97e-489c5811aa7f&#39;,
    &#39;x-amzn-remapped-content-length&#39;: &#39;0&#39;,
    &#39;x-amz-executed-version&#39;: &#39;$LATEST&#39;,
-   &#39;x-amz-log-result&#39;: &#39;U1RBUlQgUmVxdWVzdElkOiA2ZmI4YWNjMy0yMThjLTQ4YzMtOGE4Yy0zNzhhZjM3MzcwYTggVmVyc2lvbjogJExBVEVTVApFTkQgUmVxdWVzdElkOiA2ZmI4YWNjMy0yMThjLTQ4YzMtOGE4Yy0zNzhhZjM3MzcwYTgKUkVQT1JUIFJlcXVlc3RJZDogNmZiOGFjYzMtMjE4Yy00OGMzLThhOGMtMzc4YWYzNzM3MGE4CUR1cmF0aW9uOiAyMjg1LjA2IG1zCUJpbGxlZCBEdXJhdGlvbjogMjI4NiBtcwlNZW1vcnkgU2l6ZTogMTI4IE1CCU1heCBNZW1vcnkgVXNlZDogODQgTUIJSW5pdCBEdXJhdGlvbjogMjk2LjYxIG1zCQo=&#39;,
-   &#39;x-amzn-trace-id&#39;: &#39;root=1-605ae236-7c0bfe2b6bea8d9c04cebe87;sampled=0&#39;},
+   &#39;x-amz-log-result&#39;: &#39;U1RBUlQgUmVxdWVzdElkOiAwNzBmODMzOS0zNDRkLTQ2ZWMtYTk3ZS00ODljNTgxMWFhN2YgVmVyc2lvbjogJExBVEVTVApFTkQgUmVxdWVzdElkOiAwNzBmODMzOS0zNDRkLTQ2ZWMtYTk3ZS00ODljNTgxMWFhN2YKUkVQT1JUIFJlcXVlc3RJZDogMDcwZjgzMzktMzQ0ZC00NmVjLWE5N2UtNDg5YzU4MTFhYTdmCUR1cmF0aW9uOiAyMzM3LjMyIG1zCUJpbGxlZCBEdXJhdGlvbjogMjMzOCBtcwlNZW1vcnkgU2l6ZTogMTI4IE1CCU1heCBNZW1vcnkgVXNlZDogODQgTUIJSW5pdCBEdXJhdGlvbjogMjc3LjE5IG1zCQo=&#39;,
+   &#39;x-amzn-trace-id&#39;: &#39;root=1-605c33b5-27fabd3c0c403f196033fcdd;sampled=0&#39;},
   &#39;RetryAttempts&#39;: 0},
  &#39;StatusCode&#39;: 200,
- &#39;LogResult&#39;: &#39;U1RBUlQgUmVxdWVzdElkOiA2ZmI4YWNjMy0yMThjLTQ4YzMtOGE4Yy0zNzhhZjM3MzcwYTggVmVyc2lvbjogJExBVEVTVApFTkQgUmVxdWVzdElkOiA2ZmI4YWNjMy0yMThjLTQ4YzMtOGE4Yy0zNzhhZjM3MzcwYTgKUkVQT1JUIFJlcXVlc3RJZDogNmZiOGFjYzMtMjE4Yy00OGMzLThhOGMtMzc4YWYzNzM3MGE4CUR1cmF0aW9uOiAyMjg1LjA2IG1zCUJpbGxlZCBEdXJhdGlvbjogMjI4NiBtcwlNZW1vcnkgU2l6ZTogMTI4IE1CCU1heCBNZW1vcnkgVXNlZDogODQgTUIJSW5pdCBEdXJhdGlvbjogMjk2LjYxIG1zCQo=&#39;,
+ &#39;LogResult&#39;: &#39;U1RBUlQgUmVxdWVzdElkOiAwNzBmODMzOS0zNDRkLTQ2ZWMtYTk3ZS00ODljNTgxMWFhN2YgVmVyc2lvbjogJExBVEVTVApFTkQgUmVxdWVzdElkOiAwNzBmODMzOS0zNDRkLTQ2ZWMtYTk3ZS00ODljNTgxMWFhN2YKUkVQT1JUIFJlcXVlc3RJZDogMDcwZjgzMzktMzQ0ZC00NmVjLWE5N2UtNDg5YzU4MTFhYTdmCUR1cmF0aW9uOiAyMzM3LjMyIG1zCUJpbGxlZCBEdXJhdGlvbjogMjMzOCBtcwlNZW1vcnkgU2l6ZTogMTI4IE1CCU1heCBNZW1vcnkgVXNlZDogODQgTUIJSW5pdCBEdXJhdGlvbjogMjc3LjE5IG1zCQo=&#39;,
  &#39;ExecutedVersion&#39;: &#39;$LATEST&#39;,
- &#39;Payload&#39;: &lt;botocore.response.StreamingBody at 0x7f26eb82c040&gt;}</pre>
+ &#39;Payload&#39;: &lt;botocore.response.StreamingBody at 0x7f2de9aabfa0&gt;}</pre>
 </div>
 
 </div>
