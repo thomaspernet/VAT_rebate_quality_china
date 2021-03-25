@@ -162,3 +162,4 @@ dmypy.json
 *.Rda
 *.zip
 *.txt
+*.dta
