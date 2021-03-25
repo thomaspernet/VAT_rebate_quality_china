@@ -174,6 +174,7 @@ WITH merge_cov AS (
     hs4, 
     hs3, 
     hs2,
+    homogeneous,
     china_export_tariff_tax.country_en, 
     china_export_tariff_tax.iso_alpha, 
     gni_per_capita, 
@@ -216,6 +217,8 @@ WITH merge_cov AS (
     AND china_export_tariff_tax.regime = export_soe_city_product.regime 
     LEFT JOIN world_bank.world_bank_gdp_per_capita ON china_export_tariff_tax.iso_alpha = world_bank_gdp_per_capita.iso_alpha03 
     AND china_export_tariff_tax.year = world_bank_gdp_per_capita.year 
+    LEFT JOIN industry.hs6_homogeneous
+    ON china_export_tariff_tax.hs6 = hs6_homogeneous.hs6
   WHERE 
     china_export_tariff_tax.quantity IS NOT NULL
   )
@@ -232,6 +235,7 @@ FROM
         hs4, 
         hs3, 
         hs2,
+        homogeneous,
         country_en, 
         merge_cov.iso_alpha, 
         gni_per_capita, 
@@ -287,6 +291,7 @@ FROM
       hs4, 
       hs3, 
       hs2,
+      homogeneous,
       country_en, 
       iso_alpha, 
       gni_per_capita, 
@@ -423,6 +428,7 @@ WITH merge_cov AS (
     hs4, 
     hs3, 
     hs2,
+    homogeneous,
     china_export_tariff_tax.country_en, 
     china_export_tariff_tax.iso_alpha, 
     gni_per_capita, 
@@ -465,6 +471,8 @@ WITH merge_cov AS (
     AND china_export_tariff_tax.regime = export_soe_city_product.regime 
     LEFT JOIN world_bank.world_bank_gdp_per_capita ON china_export_tariff_tax.iso_alpha = world_bank_gdp_per_capita.iso_alpha03 
     AND china_export_tariff_tax.year = world_bank_gdp_per_capita.year 
+    LEFT JOIN industry.hs6_homogeneous
+    ON china_export_tariff_tax.hs6 = hs6_homogeneous.hs6
   WHERE 
     china_export_tariff_tax.quantity IS NOT NULL
   )
@@ -481,6 +489,7 @@ FROM
         hs4, 
         hs3, 
         hs2,
+        homogeneous,
         country_en, 
         merge_cov.iso_alpha, 
         gni_per_capita, 
@@ -536,6 +545,7 @@ FROM
       hs4, 
       hs3, 
       hs2,
+      homogeneous,
       country_en, 
       iso_alpha, 
       gni_per_capita, 
@@ -664,6 +674,7 @@ schema = [{'Name': 'geocode4_corr', 'Type': 'string', 'Comment': 'city name'},
  {'Name': 'hs4', 'Type': 'string', 'Comment': 'HS4 4 digit'},
  {'Name': 'hs3', 'Type': 'string', 'Comment': 'HS3 3 digit'},
  {'Name': 'hs2', 'Type': 'string', 'Comment': 'HS2 2 digit'},
+          {'Name': 'homogeneous', 'Type': 'string', 'Comment': 'Goods label'},
  {'Name': 'country_en', 'Type': 'string', 'Comment': 'English country name'},
  {'Name': 'iso_alpha', 'Type': 'string', 'Comment': ''},
  {'Name': 'gni_per_capita', 'Type': 'float', 'Comment': 'GDP per capita is gross domestic product divided by midyear population'},
