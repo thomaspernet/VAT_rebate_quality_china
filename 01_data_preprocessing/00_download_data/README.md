@@ -5,6 +5,11 @@
 
 ## Table of Content
 
+ - **ADDITIONAL_VARIABLES/**
+   - [energy.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/ADDITIONAL_VARIABLES/energy.py)
+   - [high_tech.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/ADDITIONAL_VARIABLES/high_tech.py)
+   - [rd_oriented.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/ADDITIONAL_VARIABLES/rd_oriented.py)
+   - [skilled_oriented.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/ADDITIONAL_VARIABLES/skilled_oriented.py)
  - **APPLIED_MFN_TARIFFS/**
    - [mnf_tariff.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/01_data_preprocessing/00_download_data/APPLIED_MFN_TARIFFS/mnf_tariff.py)
  - **BACI/**

@@ -15,6 +15,9 @@
 - [china_applied_mfn_tariffs_hs2](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_applied_mfn_tariffs_hs2)
 - [china_sigmas_hs3](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_sigmas_hs3)
 - [world_bank_gdp_per_capita](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-world_bank_gdp_per_capita)
+- [industry_high_tech](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-industry_high_tech)
+- [industry_rd_oriented](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-industry_rd_oriented)
+- [industry_skilled_oriented](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-industry_skilled_oriented)
 - [china_export_tariff_tax](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-china_export_tariff_tax)
 - [export_foreign_city_product](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-export_foreign_city_product)
 - [export_soe_city_product](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/00_data_catalog#table-export_soe_city_product)
@@ -181,6 +184,48 @@
 
     
 
+## Table industry_high_tech
+
+- Database: chinese_lookup
+- S3uri: `s3://datalake-datascience/DATA/ECON/LOOKUP_DATA/CHINA/INDUSTRY_CHARACTERISTICS/HIGH_TECH`
+- Partitition: []
+- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/01_data_preprocessing/00_download_data/ADDITIONAL_VARIABLES/high_tech.py
+
+|    | Name      | Type   | Comment           |
+|---:|:----------|:-------|:------------------|
+|  0 | hs6       | string | HS6 6 digits      |
+|  1 | high_tech | string | high tech product |
+
+    
+
+## Table industry_rd_oriented
+
+- Database: chinese_lookup
+- S3uri: `s3://datalake-datascience/DATA/ECON/LOOKUP_DATA/CHINA/INDUSTRY_CHARACTERISTICS/RD_ORIENTED`
+- Partitition: []
+- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/01_data_preprocessing/00_download_data/ADDITIONAL_VARIABLES/energy.py
+
+|    | Name        | Type   | Comment              |
+|---:|:------------|:-------|:---------------------|
+|  0 | hs4         | string | HS6 6 digits         |
+|  1 | rd_oriented | string | Industry rd oriented |
+
+    
+
+## Table industry_skilled_oriented
+
+- Database: chinese_lookup
+- S3uri: `s3://datalake-datascience/DATA/ECON/LOOKUP_DATA/CHINA/INDUSTRY_CHARACTERISTICS/SKILLED_ORIENTED`
+- Partitition: []
+- Script: https://github.com/thomaspernet/VAT_rebate_quality_china/01_data_preprocessing/00_download_data/ADDITIONAL_VARIABLES/skilled_oriented.py
+
+|    | Name    | Type   | Comment                   |
+|---:|:--------|:-------|:--------------------------|
+|  0 | hs4     | string | HS6 6 digits              |
+|  1 | skilled | string | Industry skilled oriented |
+
+    
+
 ## Table china_export_tariff_tax
 
 - Database: chinese_trade
@@ -328,11 +373,15 @@
 | 26 | ln_lag_import_tax            | double        | log lag import tax                                                                                                                                                    |
 | 27 | lag_soe_export_share_ckr     | decimal(21,5) | lag export share city industry regime                                                                                                                                 |
 | 28 | lag_foreign_export_share_ckr | decimal(21,5) | lag export share city industry regime                                                                                                                                 |
-| 29 | count_hs6                    | bigint        | count hs6                                                                                                                                                             |
-| 30 | sum_quantity                 | bigint        |                                                                                                                                                                       |
-| 31 | city_average_hs6             | double        |                                                                                                                                                                       |
-| 32 | city_average_quantity        | double        |                                                                                                                                                                       |
-| 33 | size_quantity                | varchar(14)   |                                                                                                                                                                       |
-| 34 | size_product                 | varchar(11)   |                                                                                                                                                                       |
+| 29 | high_tech                    | string        | high tech product                                                                                                                                                     |
+| 30 | energy                       | string        | energy consuming product                                                                                                                                              |
+| 31 | skilled                      | string        | skilled sectors                                                                                                                                                       |
+| 32 | rd_oriented                  | string        | rd_oriented sectors                                                                                                                                                   |
+| 33 | count_hs6                    | bigint        | count hs6                                                                                                                                                             |
+| 34 | sum_quantity                 | bigint        |                                                                                                                                                                       |
+| 35 | city_average_hs6             | double        |                                                                                                                                                                       |
+| 36 | city_average_quantity        | double        |                                                                                                                                                                       |
+| 37 | size_quantity                | varchar(14)   |                                                                                                                                                                       |
+| 38 | size_product                 | varchar(11)   |                                                                                                                                                                       |
 
     
