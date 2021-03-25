@@ -45,6 +45,7 @@ Create lag soe export quantity at the city, product level
                 * [city_cn_en](None): None
     * CREATION
         * [world_bank_gdp_per_capita](https://github.com/thomaspernet/VAT_rebate_quality_china/01_data_preprocessing/00_download_data/WORLD_BANK/gdp_per_capita.py): Download GDP per capita from the World Bank Website
+        * [hs6_homogeneous](https://github.com/thomaspernet/VAT_rebate_quality_china/01_data_preprocessing/00_download_data/HOMOGENEOUS_GOODS/hs_homogeneous_goods.py): Download homogeneous goods from R library concordance
 
 ### ETL diagrams
 
