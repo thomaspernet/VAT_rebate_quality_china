@@ -219,6 +219,7 @@ WITH merge_cov AS (
     AND china_export_tariff_tax.year = world_bank_gdp_per_capita.year 
     LEFT JOIN industry.hs6_homogeneous
     ON china_export_tariff_tax.hs6 = hs6_homogeneous.hs6
+    
   WHERE 
     china_export_tariff_tax.quantity IS NOT NULL
   )
@@ -287,8 +288,8 @@ FROM
       merge_.geocode4_corr, 
       merge_.year, 
       regime, 
-      hs6, 
-      hs4, 
+      merge_.hs6, 
+      merge_.hs4, 
       hs3, 
       hs2,
       homogeneous,
@@ -318,6 +319,10 @@ FROM
       ln_lag_import_tax, 
       lag_soe_export_share_ckr, 
       lag_foreign_export_share_ckr, 
+      high_tech, 
+      energy, 
+      skilled, 
+      rd_oriented,
       count_hs6, 
       sum_quantity, 
       city_average_hs6, 
@@ -365,6 +370,14 @@ FROM
           ) as count_n_sum
       ) as city_avg ON count_n_sum.year = city_avg.year 
       LEFT JOIN merge_ ON merge_.geocode4_corr = count_n_sum.geocode4_corr
+      LEFT JOIN chinese_lookup.industry_high_tech
+    ON merge_.hs6 = industry_high_tech.hs6
+    LEFT JOIN chinese_lookup.industry_energy
+    ON merge_.hs6 = industry_energy.hs6
+    LEFT JOIN chinese_lookup.industry_skilled_oriented
+    ON merge_.hs4 = industry_skilled_oriented.hs4
+    LEFT JOIN chinese_lookup.industry_rd_oriented
+    ON merge_.hs4 = industry_rd_oriented.hs4
   )
    LIMIT 10
 """
@@ -541,8 +554,8 @@ FROM
       merge_.geocode4_corr, 
       merge_.year, 
       regime, 
-      hs6, 
-      hs4, 
+      merge_.hs6, 
+      merge_.hs4, 
       hs3, 
       hs2,
       homogeneous,
@@ -571,7 +584,11 @@ FROM
       lag_import_tax, 
       ln_lag_import_tax, 
       lag_soe_export_share_ckr, 
-      lag_foreign_export_share_ckr, 
+      lag_foreign_export_share_ckr,
+      high_tech, 
+      energy, 
+      skilled, 
+      rd_oriented,
       count_hs6, 
       sum_quantity, 
       city_average_hs6, 
@@ -619,6 +636,14 @@ FROM
           ) as count_n_sum
       ) as city_avg ON count_n_sum.year = city_avg.year 
       LEFT JOIN merge_ ON merge_.geocode4_corr = count_n_sum.geocode4_corr
+      LEFT JOIN chinese_lookup.industry_high_tech
+      ON merge_.hs6 = industry_high_tech.hs6
+    LEFT JOIN chinese_lookup.industry_energy
+    ON merge_.hs6 = industry_energy.hs6
+    LEFT JOIN chinese_lookup.industry_skilled_oriented
+    ON merge_.hs4 = industry_skilled_oriented.hs4
+    LEFT JOIN chinese_lookup.industry_rd_oriented
+    ON merge_.hs4 = industry_rd_oriented.hs4
   )
 """.format(DatabaseName, table_name)
 output = s3.run_query(
@@ -698,6 +723,10 @@ schema = [{'Name': 'geocode4_corr', 'Type': 'string', 'Comment': 'city name'},
  {'Name': 'lag_foreign_export_share_ckr',
   'Type': 'decimal(21,5)',
   'Comment': 'lag export share city industry regime'},
+ {'Name': 'high_tech', 'Type': 'string', 'Comment': 'high tech product'},
+ {'Name': 'energy', 'Type': 'string', 'Comment': 'energy consuming product'},
+ {'Name': 'skilled', 'Type': 'string', 'Comment': 'skilled sectors'},
+ {'Name': 'rd_oriented', 'Type': 'string', 'Comment': 'rd_oriented sectors'},
  {'Name': 'count_hs6', 'Type': 'bigint', 'Comment': 'count hs6'},
  {'Name': 'sum_quantity', 'Type': 'bigint', 'Comment': ''},
  {'Name': 'city_average_hs6', 'Type': 'double', 'Comment': ''},
