@@ -18,11 +18,10 @@ with Diagram("CHINA VAT QUALITY", show=False, filename="/home/ec2-user/VAT_rebat
      input_china_country_name = S3("china_country_name")
      input_china_applied_mfn_tariffs_hs2 = S3("china_applied_mfn_tariffs_hs2")
      input_hs6_china_vat_rebate = S3("hs6_china_vat_rebate")
-     input_ = S3("")
      temp_7 = SQS('china_export_tariff_tax')
      temp_8 = SQS('china_product_quality')
-     temp_9 = SQS('export_foreign_city_product')
-     temp_10 = SQS('export_soe_city_product')
+     temp_10 = SQS('export_foreign_city_product')
+     temp_11 = SQS('export_soe_city_product')
 
      with Cluster("FINAL"):
 
@@ -40,8 +39,8 @@ with Diagram("CHINA VAT QUALITY", show=False, filename="/home/ec2-user/VAT_rebat
      input_china_country_name >> temp_7
      input_china_applied_mfn_tariffs_hs2 >> temp_7
      input_hs6_china_vat_rebate >> temp_7 >> temp_final_0
-     input_ >> temp_8
-     input_china_import_export >> temp_9
-     input_city_cn_en >> temp_9 >> temp_final_0
+     temp_7 >>temp_8 >> temp_final_0
      input_china_import_export >> temp_10
      input_city_cn_en >> temp_10 >> temp_final_0
+     input_china_import_export >> temp_11
+     input_city_cn_en >> temp_11 >> temp_final_0
