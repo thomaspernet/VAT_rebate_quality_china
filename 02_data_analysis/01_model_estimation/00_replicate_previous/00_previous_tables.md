@@ -548,6 +548,128 @@ lb.beautify(table_number = table_nb,
 ```
 
 <!-- #region kernel="SoS" -->
+### Test Price adjusted
+<!-- #endregion -->
+
+```sos kernel="SoS"
+folder = 'Tables_0'
+table_nb = 1
+table = 'table_{}'.format(table_nb)
+path = os.path.join(folder, table + '.txt')
+if os.path.exists(folder) == False:
+        os.mkdir(folder)
+for ext in ['.txt', '.tex', '.pdf']:
+    x = [a for a in os.listdir(folder) if a.endswith(ext)]
+    [os.remove(os.path.join(folder, i)) for i in x]
+```
+
+```sos kernel="R"
+%get path table
+t_0 <- felm(price_adjusted_quality ~ln_lag_tax_rebate+ ln_lag_import_tax  
+            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+            exactDOF = TRUE)
+
+print('table 0 done')
+t_1 <- felm(price_adjusted_quality ~ln_lag_tax_rebate + ln_lag_import_tax 
+            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+            exactDOF = TRUE)
+
+print('table 1 done')
+t_2 <- felm(price_adjusted_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_2 <- change_target(t_2)
+
+print('table 2 done')
+t_3 <- felm(price_adjusted_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_3 <- change_target(t_3)
+
+print('table 3 done')
+t_4 <- felm(price_adjusted_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_4 <- change_target(t_4)
+print('table 4 done')
+t_5 <- felm(price_adjusted_quality ~ln_lag_tax_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_5 <- change_target(t_5)
+print('table 5 done')
+
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    c("City-product fixed effects", "Yes", "Yes", "No", "No", "No", "No"
+     ),
+    
+    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No", "No", "No"
+     ),
+    
+    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No", "Yes", "No"
+     ),
+    
+    c("City-product-regime fixed effects","No", "No", "Yes", "Yes", "Yes", "Yes"
+     ),
+    
+    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes", "Yes", "Yes"
+     ),
+    
+    c("Product-year fixed effects", "No", "No", "No", "Yes", "No", "Yes"
+     ),
+    
+    c("City-product-destination fixed effects", "No", "No", "No", "No","Yes", "Yes"
+     )
+    
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4, t_5#, t_6, t_7
+),
+    title="VAT export tax and product's quality upgrading, baseline regression",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name=path
+) 
+```
+
+```sos kernel="SoS"
+tbe1  = "This table estimates eq(3). " \
+"Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group." \
+"Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund." \
+"Sectors are defined following the Chinese 4-digit GB/T industry" \
+"classification and regroup several products." \
+"Heteroskedasticity-robust standard errors" \
+"clustered at the product level appear inparentheses."\
+"\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."
+
+multicolumn ={
+    'Eligible': 1,
+    'Non-Eligible': 1,
+    'All': 1,
+    'All benchmark': 1,
+    'All': 1,
+    'All benchmark': 1,
+}
+
+multi_lines_dep = '(city/product/trade regime/year)'
+#new_r = ['& test1', 'test2']
+lb.beautify(table_number = table_nb,
+            #reorder_var = reorder,
+            multi_lines_dep = multi_lines_dep,
+            #new_row= new_r,
+            multicolumn = multicolumn,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 150,
+            folder = folder)
+```
+
+<!-- #region kernel="SoS" -->
 ## Table 2: Heterogeneity effect
 
 - LDC and DC comes from the world bank classification, and are already in the table
