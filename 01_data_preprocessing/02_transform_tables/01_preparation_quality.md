@@ -243,15 +243,12 @@ $$\ln \left( x _ { f h c t } \right) + \sigma \ln \left( p _ { f h c t } \right)
 
 where the country-year fixed effect $\varphi _ { c t }$ collects both the destination price index $P_{ct}$ and income $Y_{ct}$. The product fixed effect $\varphi _ { h }$ captures the difference in prices and qualitites across product categories due to the inherent characteristics of products.
 
-Then estimated quality is $\ln \left( \hat { q } _ { f h c t } \right) = \hat { \epsilon } _ { f h c t }$
+Then estimated quality is $\ln \left(\hat{q}_{f h c t}\right)=\widehat{\epsilon}_{f h c t} /(\sigma-1)$
 
 Consequently, quality-adjusted prices are the observed log prices less estimated effective quality:
 
 $$\ln \left(\widetilde{p}_{f h c t}\right) = \ln \left( p _ { f h c t } \right) - \ln \left( \hat { q } _ { f h c t } \right)$$ 
 
-From Khandewal 
-
-$$\hat{\lambda}_{f c d t} \equiv \hat{\epsilon}_{f c h t} /(\sigma-1)$$
 <!-- #endregion -->
 
 We also compute the following variables:
@@ -323,8 +320,8 @@ MODEL = clf.fit(df_quality[['hs6', 'FE_ct']], df_quality['y'])
 df_quality = df_quality.assign(
     prediction = lambda x: MODEL.predict(x[['hs6', 'FE_ct']]),
     residual = lambda x: x['y'] - x['prediction'],
-    price_adjusted_quality = lambda x: np.log(x['unit_price']) - x['residual'],
-    kandhelwal_quality = lambda x: x['residual'] / (x['sigma'].astype('float') -1)
+    kandhelwal_quality = lambda x: x['residual'] / (x['sigma'].astype('float') -1),
+    price_adjusted_quality = lambda x: np.log(x['unit_price']) - x['kandhelwal_quality']
 )  
 ```
 
@@ -358,7 +355,7 @@ df_quality.head()
 
 Plot the average quality by year
 
-![](https://drive.google.com/uc?export=view&id=1Q9KHBwEyx6tTuCU8hsy3_P46uIOm_dB9)
+![quality.png](https://drive.google.com/uc?export=view&id=1iN5YZK4ITcr3E39j4ocl6f6EUpX6MB2W)
 
 ```python
 import matplotlib.pyplot as plt
@@ -529,13 +526,13 @@ github_url = os.path.join(
 Grab the input name from query: manually add input because data constructed with Python
 
 ```python
-list_input = ["", ""]
-#tables = glue.get_tables(full_output = False)
-#regex_matches = re.findall(r'(?=\.).*?(?=\s)|(?=\.\").*?(?=\")', query)
-#for i in regex_matches:
-#    cleaning = i.lstrip().rstrip().replace('.', '').replace('"', '')
-#    if cleaning in tables and cleaning != table_name:
-#        list_input.append(cleaning)
+list_input = []
+tables = glue.get_tables(full_output = False)
+regex_matches = re.findall(r'(?=\.).*?(?=\s)|(?=\.\").*?(?=\")', query)
+for i in regex_matches:
+    cleaning = i.lstrip().rstrip().replace('.', '').replace('"', '')
+    if cleaning in tables and cleaning != table_name:
+        list_input.append(cleaning)
 ```
 
 ```python
