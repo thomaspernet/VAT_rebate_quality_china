@@ -724,29 +724,29 @@ t_5 <- change_target(t_5)
 print('table 5 done')
 
 ##### Quantity
-t_6 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_quantity == 'SMALL_QUANTITY'),
-            exactDOF = TRUE)
-t_6 <- change_target(t_6)
-print('table 6 done')
+#t_6 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_quantity == 'SMALL_QUANTITY'),
+#            exactDOF = TRUE)
+#t_6 <- change_target(t_6)
+#print('table 6 done')
 
-t_7 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_quantity == 'LARGE_QUANTITY'),
-            exactDOF = TRUE)
-t_7 <- change_target(t_7)
-print('table 7 done')
+#t_7 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final %>% filter(size_quantity == 'LARGE_QUANTITY'),
+#            exactDOF = TRUE)
+#t_7 <- change_target(t_7)
+#print('table 7 done')
 
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
-    c("City-product-regime fixed effects","Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes"),
+    c("City-product-regime fixed effects","Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes"),
     
-    c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes"),
+    c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes"),
     
-    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes")
+    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes")
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4, t_5#, t_6, t_7
+    t_0,t_1, t_2, t_3, t_4, t_5
 ),
     title="VAT export tax and firm’s quality upgrading, characteristics of the destination countries, products, and cities",
     dep_var = dep,
@@ -878,7 +878,7 @@ fe1 <- list(
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4#, t_5, t_6, t_7
+    t_0,t_1, t_2, t_3, t_4
 ),
     title="VAT export tax and firm’s quality upgrading, characteristics of sensible sectors",
     dep_var = dep,
@@ -1049,17 +1049,18 @@ print('table 5 done')
 
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
-    c("City-product-regime fixed effects","Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    c("City-product-regime fixed effects", "Yes","Yes", "Yes", "Yes","Yes","Yes"),
     
-    c("City-sector-regime-year fixed effects","Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    c("City-sector-regime-year fixed effects", "Yes","Yes", "Yes", "Yes","Yes","Yes"),
     
-    c("product-year fixed effects", "Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    c("product-year fixed effects",  "Yes","Yes", "Yes", "Yes","Yes","Yes"),
     
-    c("product-year-destination fixed effects", "Yes", "No", "No", "No","No","No")
+    c("product-year-destination fixed effects", "Yes","No", "No", "No","No","No")
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4, t_5#, t_6, t_7
+    t_0,
+    t_1, t_2, t_3, t_4, t_5
 ),
     title="VAT export tax and firm’s quality upgrading, Robustness checks",
     dep_var = dep,
@@ -1117,8 +1118,8 @@ sys.path.append(os.path.join(parent_path, 'utils'))
 import make_toc
 ```
 
-```sos kernel="SoS"
-name_json = 'parameters_ETL_pollution_credit_constraint.json'
+```sos kernel="python3"
+name_json = 'parameters_ETL_VAT_rebate_quality_china.json'
 path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
 ```
 
@@ -1183,7 +1184,7 @@ def create_report(extension = "html", keep_code = False, notebookname = None):
 ```
 
 ```sos kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
-create_report(extension = "html", keep_code = False, notebookname = None)
+create_report(extension = "html", keep_code = False, notebookname = "00_baseline_vat_quality.ipynb")
 ```
 
 ```sos kernel="python3"
