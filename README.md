@@ -67,7 +67,13 @@ This paper studies the effect of industrial policy in China, the VAT export tax,
        - [00_baseline_vat_quality.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/02_data_analysis/01_model_estimation/01_baseline_tables/00_baseline_vat_quality.md)
        - **Reports/**
          - [00_baseline_vat_quality.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/02_data_analysis/01_model_estimation/01_baseline_tables/Reports/00_baseline_vat_quality.html)
+   - **02_statistical_tables/**
+     - [00_final_publishable_tables_figures.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/02_data_analysis/02_statistical_tables/00_final_publishable_tables_figures.md)
+     - [README.md](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/02_data_analysis/02_statistical_tables/README.md)
+     - **Reports/**
+       - [00_final_publishable_tables_figures.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/02_data_analysis/02_statistical_tables/Reports/00_final_publishable_tables_figures.html)
  - **utils/**
+   - [create_report.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/create_report.py)
    - [create_schema.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/create_schema.py)
    - [make_toc.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/make_toc.py)
    - [prepare_catalog.py](https://github.com/thomaspernet/VAT_rebate_quality_china/tree/master/utils/prepare_catalog.py)
