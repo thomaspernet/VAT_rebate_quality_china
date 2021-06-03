@@ -194,11 +194,108 @@ if download_data:
         os.path.join(path_local, filename + '.csv')
     )
     s3.remove_file(full_path_filename)
-    df.head()
 ```
 
 ```sos kernel="SoS" nteract={"transient": {"deleting": false}}
 pd.DataFrame(schema)
+```
+
+<!-- #region kernel="SoS" -->
+# compute fixed effect
+
+| Benchmark | Origin            | Name                     | Description                                                                                                                                                                                                                                                                                                                                    | Math_notebook     |
+|-----------|-------------------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|
+| Yes       | Current           | city-product             |                                                                                                                                                                                                                                                                                                                                                | $\alpha_{ck}$     |
+| Yes       | Current           | city-product-regime      |                                                                                                                                                                                                                                                                                                                                                | $\alpha_{ck}^R$   |
+| Yes       | Current           | city-sector-year         | Sector is defined as GBT 4 digit                                                                                                                                                                                                                                                                                                               | $\alpha_{cst}$    |
+| Yes       | Current           | city-sectorーregime-year | Sector is defined as GBT 4 digit                                                                                                                                                                                                                                                                                                               | $\alpha_{cst}^R$  |
+| Yes       | Current           | product-destination      |                                                                                                                                                                                                                                                                                                                                                | $\alpha_{pj}$     |
+| Yes       | Previous baseline | Product-year             | account for all factors that affect product-level export irrespective of the trade regime in a given year                                                                                                                                                                                                                                      | $\alpha_{pt}$     |
+| No        | Previous baseline | firm-product-eligibility | captures all the factors that affect firms regardless of the time and type of regime. This firm‒product pair eliminates the demand shocks that firms face and that are not correlated with the types of status. The fixed effects are also responsible for potential correlations between subsidies, R&D, or trade policies and VAT rebates.   | $\alpha^{E}_{it}$ |
+| No        | Previous baseline | HS4-year-eligibility     |                                                                                                                                                                                                                                                                                                                                                | $\alpha^{E}_{st}$ |
+| No        | Previous baseline | city-year                | captures the differences in demand, capital intensity, or labor supply that prevail between cities each year                                                                                                                                                                                                                                   | $\alpha_{ct}$     |
+| No        | Candidate         | destination-year         | Captures additional level of control, encompassing all the shocks and developments in the economies to which China exports.                                                                                                                                                                                                                    | $\alpha_{dt}$     |
+
+
+Create the following fixed effect for the baseline regression:
+
+**index**
+
+* city: `c`
+* product: `k`
+* sector: `s`
+* year: `t`
+* Destination: `j`
+* regime: `r`
+
+**FE**
+
+* city-product: `FE_ck`
+* City-sector-year: `FE_cst`
+* City-product-regime: `FE_ckr`
+* City-sector-regime-year: `FE_csrt`
+* Product-year: `FE_kt`
+* Product-destination: `FE_pj`
+* Destination-year: `FE_jt`
+<!-- #endregion -->
+<!-- #endregion -->
+
+```sos kernel="SoS"
+create_fe = False
+if create_fe:
+    df = pd.read_csv(df_path, dtype = dtypes)
+    ### city-product
+    df["fe_ck"] = pd.factorize(df["geocode4_corr"].astype('str') + 
+                                        df["hs6"].astype('str')
+                                       )[0]
+
+    ### City-sector-year
+    df["fe_cst"] = pd.factorize(df["geocode4_corr"].astype('str') + 
+                                        df["hs4"].astype('str') +
+                                        df["year"].astype('str')
+                                       )[0]
+
+    ### City-product-regime
+    df["fe_ckr"] = pd.factorize(df["geocode4_corr"].astype('str') + 
+                                        df["hs6"].astype('str') +
+                                        df["regime"].astype('str')
+                                       )[0]
+
+    ### City-sector-regime-year
+    df["fe_csrt"] = pd.factorize(df["geocode4_corr"].astype('str') + 
+                                        df["hs4"].astype('str') +
+                                        df["regime"].astype('str') +
+                                        df["year"].astype('str')
+                                       )[0]
+
+    ## Product-year
+    df["fe_kt"] = pd.factorize(df["hs6"].astype('str') + 
+                                        df["year"].astype('str')
+                                       )[0]
+
+    ## Product-destination
+    df["fe_kj"] = pd.factorize(df["hs6"].astype('str') + 
+                                        df["country_en"].astype('str')
+                                       )[0]
+
+    ## Destination-year
+    df["fe_jt"] = pd.factorize(df["country_en"].astype('str') + 
+                                        df["year"].astype('str')
+                                       )[0]
+
+    ## city-product-destination
+    df["fe_ckj"] = pd.factorize(df["geocode4_corr"].astype('str') + 
+                                        df["hs6"].astype('str') + 
+                                        df["country_en"].astype('str')
+                                       )[0]
+    
+    ## Shocks
+    df["fe_group_shock"] = pd.factorize(
+        df["hs6"].astype('str') +
+        df["country_en"].astype('str') + 
+        df["year"].astype('str'))[0]
+    
+    df.to_csv(os.path.join(path_local, filename + '.csv'), index = False)
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
@@ -287,8 +384,13 @@ mutate_if(is.character, as.factor) %>%
     mutate_at(vars(starts_with("fe")), as.factor) %>%
 mutate(
     regime = relevel(as.factor(regime), ref='NOT_ELIGIBLE'),
-    ln_rebate = ln_lag_tax_rebate * (-1)
+    ln_rebate = ln_lag_tax_rebate * (-1),
+    ln_rebate_1 = log((lag_vat_reb_m / lag_vat_m) +1)
       )
+```
+
+```sos kernel="R"
+head(df_final)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -338,123 +440,123 @@ Sector is defined as the GBT 4 digits
 <!-- #endregion -->
 
 ```sos kernel="SoS" nteract={"transient": {"deleting": false}}
-folder = 'Tables_0'
-table_nb = 1
-table = 'table_{}'.format(table_nb)
-path = os.path.join(folder, table + '.txt')
-if os.path.exists(folder) == False:
-        os.mkdir(folder)
-for ext in ['.txt', '.tex', '.pdf']:
-    x = [a for a in os.listdir(folder) if a.endswith(ext)]
-    [os.remove(os.path.join(folder, i)) for i in x]
+#folder = 'Tables_0'
+#table_nb = 1
+#table = 'table_{}'.format(table_nb)
+#path = os.path.join(folder, table + '.txt')
+#if os.path.exists(folder) == False:
+#        os.mkdir(folder)
+#for ext in ['.txt', '.tex', '.pdf']:
+#    x = [a for a in os.listdir(folder) if a.endswith(ext)]
+#    [os.remove(os.path.join(folder, i)) for i in x]
 ```
 
 ```sos kernel="R"
-%get path table
+#%get path table
 ### unit price
-t_0 <- felm(log(unit_price) ~ln_rebate+ ln_lag_import_tax  
-            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
-            exactDOF = TRUE)
+#t_0 <- felm(log(unit_price) ~ln_rebate+ ln_lag_import_tax  
+#            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+#            exactDOF = TRUE)
 
-print('table 0 done')
-t_1 <- felm(log(unit_price) ~ln_rebate + ln_lag_import_tax 
-            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
-            exactDOF = TRUE)
+#print('table 0 done')
+#t_1 <- felm(log(unit_price) ~ln_rebate + ln_lag_import_tax 
+#            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+#            exactDOF = TRUE)
 
-print('table 1 done')
-t_2 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
-            exactDOF = TRUE)
-t_2 <- change_target(t_2)
+#print('table 1 done')
+#t_2 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+#            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
+#            exactDOF = TRUE)
+#t_2 <- change_target(t_2)
 
-print('table 2 done')
-t_3 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
-            exactDOF = TRUE)
-t_3 <- change_target(t_3)
+#print('table 2 done')
+#t_3 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
+#            exactDOF = TRUE)
+#t_3 <- change_target(t_3)
 
-print('table 3 done')
-t_4 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
-            exactDOF = TRUE)
-t_4 <- change_target(t_4)
-print('table 4 done')
-t_5 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
-            exactDOF = TRUE)
-t_5 <- change_target(t_5)
-print('table 5 done')
+#print('table 3 done')
+#t_4 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+#            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
+#            exactDOF = TRUE)
+#t_4 <- change_target(t_4)
+#print('table 4 done')
+#t_5 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
+#            exactDOF = TRUE)
+#t_5 <- change_target(t_5)
+#print('table 5 done')
 
-dep <- "Dependent variable: unit price"
-fe1 <- list(
-    c("City-product fixed effects", "Yes", "Yes", "No", "No", "No", "No"
-     ),
-    
-    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No", "No", "No"
-     ),
-    
-    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No", "Yes", "No"
-     ),
-    
-    c("City-product-regime fixed effects","No", "No", "Yes", "Yes", "Yes", "Yes"
-     ),
-    
-    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes", "Yes", "Yes"
-     ),
-    
-    c("Product-year fixed effects", "No", "No", "No", "Yes", "No", "Yes"
-     ),
-    
-    c("City-product-destination fixed effects", "No", "No", "No", "No","Yes", "Yes"
-     )
-    
-             )
+#dep <- "Dependent variable: unit price"
+#fe1 <- list(
+#    c("City-product fixed effects", "Yes", "Yes", "No", "No", "No", "No"
+#     ),
+#    
+#    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No", "No", "No"
+#     ),
+#    
+#    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No", "Yes", "No"
+#     ),
+#   
+#    c("City-product-regime fixed effects","No", "No", "Yes", "Yes", "Yes", "Yes"
+#     ),
+#    
+#    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes", "Yes", "Yes"
+#     ),
+#    
+#    c("Product-year fixed effects", "No", "No", "No", "Yes", "No", "Yes"
+#     ),
+#    
+#    c("City-product-destination fixed effects", "No", "No", "No", "No","Yes", "Yes"
+#     )
+#    
+#            )
 
-table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4, t_5
-),
-    title="VAT export tax and product's unit price, baseline regression",
-    dep_var = dep,
-    addFE=fe1,
-    save=TRUE,
-    note = FALSE,
-    name=path
-) 
+#table_1 <- go_latex(list(
+#    t_0,t_1, t_2, t_3, t_4, t_5
+#),
+#    title="VAT export tax and product's unit price, baseline regression",
+#    dep_var = dep,
+#    addFE=fe1,
+#    save=TRUE,
+#    note = FALSE,
+#    name=path
+#) 
 ```
 
 ```sos kernel="SoS"
-tbe1  = "This table estimates eq(3). " \
-"A positive value of Ln VAT rebate means the product has lower tax" \
-"Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group." \
-"Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund." \
-"Sectors are defined following the Chinese 4-digit GB/T industry" \
-"classification and regroup several products." \
-"Heteroskedasticity-robust standard errors" \
-"clustered at the product level appear inparentheses."\
-"\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."
+#tbe1  = "This table estimates eq(3). " \
+#"A positive value of Ln VAT rebate means the product has lower tax" \
+#"Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group." \
+#"Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund." \
+#"Sectors are defined following the Chinese 4-digit GB/T industry" \
+#"classification and regroup several products." \
+#"Heteroskedasticity-robust standard errors" \
+#"clustered at the product level appear inparentheses."\
+#"\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."
 
-multicolumn ={
-    'Eligible': 1,
-    'Non-Eligible': 1,
-    'All': 1,
-    'All benchmark': 1,
-    'All': 1,
-    'All benchmark': 1,
-}
+#multicolumn ={
+#    'Eligible': 1,
+#   'Non-Eligible': 1,
+#    'All': 1,
+#    'All benchmark': 1,
+#    'All': 1,
+#    'All benchmark': 1,
+#}
 
-multi_lines_dep = '(city/product/trade regime/year)'
+#multi_lines_dep = '(city/product/trade regime/year)'
 #new_r = ['& test1', 'test2']
-lb.beautify(table_number = table_nb,
+#lb.beautify(table_number = table_nb,
             #reorder_var = reorder,
-            multi_lines_dep = multi_lines_dep,
+#            multi_lines_dep = multi_lines_dep,
             #new_row= new_r,
-            multicolumn = multicolumn,
-            table_nte = tbe1,
-            jupyter_preview = True,
-            resolution = 150,
-            folder = folder)
+#            multicolumn = multicolumn,
+#            table_nte = tbe1,
+#            jupyter_preview = True,
+#            resolution = 150,
+#            folder = folder)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -477,104 +579,122 @@ for ext in ['.txt', '.tex', '.pdf']:
 %get path table
 ### Quality
 t_0 <- felm(kandhelwal_quality ~ln_rebate+ ln_lag_import_tax  
-            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+            | fe_ck + fe_cst+fe_ckj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
             exactDOF = TRUE)
 
 print('table 0 done')
 t_1 <- felm(kandhelwal_quality ~ln_rebate + ln_lag_import_tax 
-            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+            | fe_ck + fe_cst+fe_ckj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
             exactDOF = TRUE)
-
+### all coefs
 print('table 1 done')
 t_2 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
+            | fe_ckr + fe_csrt + fe_ckj|0 | hs6, df_final,
             exactDOF = TRUE)
 t_2 <- change_target(t_2)
 
+### focus coef -> benchmark
 print('table 2 done')
 t_3 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
+            | fe_ckr + fe_csrt+fe_ckj |0 | hs6, df_final,
             exactDOF = TRUE)
 t_3 <- change_target(t_3)
 
 print('table 3 done')
-t_4 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
+t_4 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+            | fe_ckr + fe_csrt+fe_ckj + fe_kt|0 | hs6, df_final,
             exactDOF = TRUE)
 t_4 <- change_target(t_4)
+
 print('table 4 done')
 t_5 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
+            | fe_ckr + fe_csrt+fe_ckj + fe_kt|0 | hs6, df_final,
             exactDOF = TRUE)
 t_5 <- change_target(t_5)
 print('table 5 done')
+t_6 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_ckj + fe_kt|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_6 <- change_target(t_6)
+print('table 6 done')
 
 ### quality-adjusted price is net-quality price
-t_6 <- felm(price_adjusted_quality ~ln_rebate+ ln_lag_import_tax  
-            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
-            exactDOF = TRUE)
+#t_6 <- felm(price_adjusted_quality ~ln_rebate_1+ ln_lag_import_tax  
+#            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+#            exactDOF = TRUE)
 
 
-print('table 6 done')
-t_7 <- felm(price_adjusted_quality ~ln_rebate + ln_lag_import_tax 
-            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
-            exactDOF = TRUE)
+#print('table 6 done')
+#t_7 <- felm(price_adjusted_quality ~ln_rebate_1 + ln_lag_import_tax 
+#            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+#            exactDOF = TRUE)
 
-print('table 7 done')
-t_8 <- felm(price_adjusted_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
-            exactDOF = TRUE)
-t_8 <- change_target(t_8)
+#print('table 7 done')
+#t_8 <- felm(price_adjusted_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+#            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
+#            exactDOF = TRUE)
+#t_8 <- change_target(t_8)
 
-print('table 8 done')
-t_9 <- felm(price_adjusted_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
-            exactDOF = TRUE)
-t_9 <- change_target(t_9)
+#print('table 8 done')
+#t_9 <- felm(price_adjusted_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
+#            exactDOF = TRUE)
+#t_9 <- change_target(t_9)
 
-print('table 9 done')
-t_10 <- felm(price_adjusted_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
-            exactDOF = TRUE)
-t_10 <- change_target(t_10)
-print('table 10 done')
-t_11 <- felm(price_adjusted_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
-            exactDOF = TRUE)
-t_11 <- change_target(t_11)
-print('table 11 done')
+#print('table 9 done')
+#t_10 <- felm(price_adjusted_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+#            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
+#            exactDOF = TRUE)
+#t_10 <- change_target(t_10)
+#print('table 10 done')
+#t_11 <- felm(price_adjusted_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
+#            exactDOF = TRUE)
+#t_11 <- change_target(t_11)
+#print('table 11 done')
 
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
-    c("City-product fixed effects", "Yes", "Yes", "No", "No", "No", "No", "Yes", "Yes", "No", "No", "No", "No"
+    c("City-product fixed effects",
+      "Yes", "Yes", "No", "No", "No", "No", "No"#,
+      #"Yes", "Yes", "No", "No", "No", "No"
      ),
     
-    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No", "No", "No", "Yes", "Yes", "No", "No", "No", "No"
+    c("City-sector-year fixed effects",
+      "Yes", "Yes", "No", "No", "No", "No", "No"#, 
+      #"Yes", "Yes", "No", "No", "No", "No"
+     ),
+    c("city-product-destination fixed effects",
+      "Yes", "Yes", "Yes", "Yes","Yes", "Yes", "Yes"#,
+     # "No", "No", "No", "No","Yes", "Yes"
+     ),
+    #c("Product-destination fixed effect",
+    #  "Yes", "Yes", "Yes", "No", "Yes", "No"#,
+      #"Yes", "Yes", "Yes", "No", "Yes", "No"
+    # ),
+    
+    c("City-product-regime fixed effects",
+      "No", "No", "Yes", "Yes", "Yes", "Yes", "Yes"#,
+      #"No", "No", "Yes", "Yes", "Yes", "Yes"
      ),
     
-    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No", "Yes", "No","Yes", "Yes", "Yes", "No", "Yes", "No"
+    c("City-sector-year-regime fixed effects",
+      "No", "No", "Yes", "Yes", "Yes", "Yes", "Yes"#,
+      #"No", "No", "Yes", "Yes", "Yes", "Yes"
      ),
     
-    c("City-product-regime fixed effects","No", "No", "Yes", "Yes", "Yes", "Yes","No", "No", "Yes", "Yes", "Yes", "Yes"
-     ),
-    
-    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes", "Yes", "Yes","No", "No", "Yes", "Yes", "Yes", "Yes"
-     ),
-    
-    c("Product-year fixed effects", "No", "No", "No", "Yes", "No", "Yes", "No", "No", "No", "Yes", "No", "Yes"
-     ),
-    
-    c("City-product-destination fixed effects", "No", "No", "No", "No","Yes", "Yes", "No", "No", "No", "No","Yes", "Yes"
-     )
-    
+    c("Product-year fixed effects",
+      "No", "No", "No", "No", "Yes", "Yes", "Yes"#,
+      #"No", "No", "No", "Yes", "No", "Yes"
+     )#,
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8, t_9, t_10, t_11
+    t_0,t_1, t_2, t_3, t_4, t_5#, t_6, t_7, t_8, t_9, t_10, t_11
 ),
     title="VAT export rebate and product's quality upgrading, baseline regression",
     dep_var = dep,
