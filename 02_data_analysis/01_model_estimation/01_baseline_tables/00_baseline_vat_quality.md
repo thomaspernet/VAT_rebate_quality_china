@@ -396,15 +396,9 @@ head(df_final)
 <!-- #region kernel="SoS" -->
 ## Table 1: baseline estimate
 
-$$
-\begin{aligned}
-\operatorname{Quality}_{c,k,j, t}^{R} &=\alpha \ln \text{VAT Export tax}_{k, t-1} \times \text { Eligibility }^{R} \\
-&+\alpha \ln \text{Import tax}  \times \text { Eligibility }^{R} \\
-&+X_{c, s, t-1}^{R}+F E_{c,k}^{R}+F E_{c,s,t}^{R}+ F E_{k, t}+\epsilon_{ck,j, t}^{R}
-\end{aligned}
-$$
+$$\begin{aligned} \text{Quality}_{c,k,j, t}^{R} &=\alpha \ln \text{VAT Rebate}_{k, t-1} \times \text { Eligibility }^{R} +\alpha \ln \text{Import tax} \times \text { Eligibility }^{R} +X_{c, s, t-1}^{R}+F E_{c,k}^{R}+F E_{c,s,t}^{R}+F E_{c,k,j}+ F E_{k, t}+\epsilon_{c,k,j, t}^{R} \end{aligned} $$
 
-
+fe_ckr + fe_csrt+fe_ckj + fe_kt
 * Column 1: Estimate for eligible regime only
     * FE: 
         - city-product: `fe_ck`
@@ -576,6 +570,19 @@ for ext in ['.txt', '.tex', '.pdf']:
 ```
 
 ```sos kernel="R"
+summary(felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+            | fe_ckr + fe_csrt+fe_kj|0 | hs6, df_final %>% group_by(regime) %>% sample_n(10000),
+            exactDOF = TRUE))
+```
+
+```sos kernel="R"
+summary(felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kj +fe_kt|0 | hs6, df_final,
+            exactDOF = TRUE))
+```
+
+```sos kernel="R"
 %get path table
 ### Quality
 t_0 <- felm(kandhelwal_quality ~ln_rebate+ ln_lag_import_tax  
@@ -607,18 +614,18 @@ t_4 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ 
 t_4 <- change_target(t_4)
 
 print('table 4 done')
-t_5 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_csrt+fe_ckj + fe_kt|0 | hs6, df_final,
-            exactDOF = TRUE)
-t_5 <- change_target(t_5)
-print('table 5 done')
-t_6 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_csrt+fe_ckj + fe_kt|0 | hs6, df_final,
-            exactDOF = TRUE)
-t_6 <- change_target(t_6)
-print('table 6 done')
+#t_5 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+#            | fe_ckr + fe_csrt+fe_ckj + fe_kt|0 | hs6, df_final,
+#            exactDOF = TRUE)
+#t_5 <- change_target(t_5)
+#print('table 5 done')
+#t_6 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+#            | fe_ckr + fe_csrt+fe_ckj + fe_kt|0 | hs6, df_final,
+#            exactDOF = TRUE)
+#t_6 <- change_target(t_6)
+#print('table 6 done')
 
 ### quality-adjusted price is net-quality price
 #t_6 <- felm(price_adjusted_quality ~ln_rebate_1+ ln_lag_import_tax  
@@ -659,13 +666,63 @@ print('table 6 done')
 
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
+    c("City-product",
+      "Yes", "Yes", "No", "No", "No"#, "No", "No",
+      #"Yes", "Yes", "No", "No", "No", "No"
+     ),
+    
+    c("City-sector-year",
+      "Yes", "Yes", "No", "No", "No"#, "No", "No", 
+      #"Yes", "Yes", "No", "No", "No", "No"
+     ),
+    c("City-product-destination",
+      "Yes", "Yes", "Yes", "Yes","Yes", "Yes", "Yes"#,
+     # "No", "No", "No", "No","Yes", "Yes"
+     ),
+    #c("Product-destination fixed effect",
+    #  "Yes", "Yes", "Yes", "No", "Yes", "No"#,
+      #"Yes", "Yes", "Yes", "No", "Yes", "No"
+    # ),
+    
+    c("City-product-regime",
+      "No", "No", "Yes", "Yes", "Yes"#, "Yes", "Yes"#,
+      #"No", "No", "Yes", "Yes", "Yes", "Yes"
+     ),
+    
+    c("City-sector-year-regime",
+      "No", "No", "Yes", "Yes", "Yes"#, "Yes", "Yes"#,
+      #"No", "No", "Yes", "Yes", "Yes", "Yes"
+     ),
+    
+    c("Product-year",
+      "No", "No", "No", "No", "Yes"#, "Yes", "Yes"#,
+      #"No", "No", "No", "Yes", "No", "Yes"
+     )#,
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4#,
+    #t_5, t_6#, t_7, t_8, t_9, t_10, t_11
+),
+    title="VAT export rebate and product's quality upgrading, baseline regression",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name=path
+) 
+```
+
+```sos kernel="R"
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
     c("City-product fixed effects",
-      "Yes", "Yes", "No", "No", "No", "No", "No"#,
+      "Yes", "Yes", "No", "No", "No"#, "No", "No",
       #"Yes", "Yes", "No", "No", "No", "No"
      ),
     
     c("City-sector-year fixed effects",
-      "Yes", "Yes", "No", "No", "No", "No", "No"#, 
+      "Yes", "Yes", "No", "No", "No"#, "No", "No", 
       #"Yes", "Yes", "No", "No", "No", "No"
      ),
     c("city-product-destination fixed effects",
@@ -678,23 +735,24 @@ fe1 <- list(
     # ),
     
     c("City-product-regime fixed effects",
-      "No", "No", "Yes", "Yes", "Yes", "Yes", "Yes"#,
+      "No", "No", "Yes", "Yes", "Yes"#, "Yes", "Yes"#,
       #"No", "No", "Yes", "Yes", "Yes", "Yes"
      ),
     
     c("City-sector-year-regime fixed effects",
-      "No", "No", "Yes", "Yes", "Yes", "Yes", "Yes"#,
+      "No", "No", "Yes", "Yes", "Yes"#, "Yes", "Yes"#,
       #"No", "No", "Yes", "Yes", "Yes", "Yes"
      ),
     
     c("Product-year fixed effects",
-      "No", "No", "No", "No", "Yes", "Yes", "Yes"#,
+      "No", "No", "No", "No", "Yes"#, "Yes", "Yes"#,
       #"No", "No", "No", "Yes", "No", "Yes"
      )#,
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4, t_5#, t_6, t_7, t_8, t_9, t_10, t_11
+    t_0,t_1, t_2, t_3, t_4#,
+    #t_5, t_6#, t_7, t_8, t_9, t_10, t_11
 ),
     title="VAT export rebate and product's quality upgrading, baseline regression",
     dep_var = dep,
@@ -706,25 +764,25 @@ table_1 <- go_latex(list(
 ```
 
 ```sos kernel="SoS"
-tbe1  = "This table estimates eq(3). " \
-"A positive value of Ln VAT rebate means the product has lower tax" \
-"Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group." \
-"Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund." \
-"Sectors are defined following the Chinese 4-digit GB/T industry" \
-"classification and regroup several products." \
-"Heteroskedasticity-robust standard errors" \
-"clustered at the product level appear inparentheses."\
-"\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."
+tbe1  = "This table estimates eq(XX). " \
+" A positive value of Ln VAT rebate means the product has lower tax." \
+" Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group." \
+" Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund." \
+" Sectors are defined following the Chinese 4-digit GB/T industry." \
+" classification and regroup several products." \
+" Heteroskedasticity-robust standard errors." \
+" clustered at the product level appear inparentheses."\
+" \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."
 
 multicolumn ={
-    'Quality': 5,
-    'Price-adjusted': 5,
+    'Quality': 4,
+    #'Price-adjusted': 5,
 }
 
 multi_lines_dep = '(city/product/trade regime/year)'
 new_r = [
     '& Eligible', 'Non-Eligible', 'All','All benchmark', 'All', 'All benchmark',
-    'Eligible', 'Non-Eligible', 'All','All benchmark', 'All', 'All benchmark',
+    #'Eligible', 'Non-Eligible', 'All','All benchmark', 'All', 'All benchmark',
 ]
 
 lb.beautify(table_number = table_nb,
@@ -734,7 +792,7 @@ lb.beautify(table_number = table_nb,
             multicolumn = multicolumn,
             table_nte = tbe1,
             jupyter_preview = True,
-            resolution = 250,
+            resolution = 150,
             folder = folder)
 ```
 
