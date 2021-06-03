@@ -238,17 +238,31 @@ Create the following fixed effect for the baseline regression:
 * Product-destination: `FE_pj`
 * Destination-year: `FE_jt`
 <!-- #endregion -->
+<!-- #region kernel="SoS" -->
+<!-- #endregion -->
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-create_fe = False
+create_fe = True
 if create_fe:
     df = pd.read_csv(df_path, dtype = dtypes)
     ### city-product
     df["fe_ck"] = pd.factorize(df["geocode4_corr"].astype('str') + 
                                         df["hs6"].astype('str')
                                        )[0]
+    
+    ### sector-year
+    df["fe_st"] = pd.factorize(
+                                        df["hs4"].astype('str') +
+                                        df["year"].astype('str')
+                                       )[0]
 
+    ### sector-year
+    df["fe_ct"] = pd.factorize(
+                                        df["geocode4_corr"].astype('str') +
+                                        df["year"].astype('str')
+                                       )[0]
+    
     ### City-sector-year
     df["fe_cst"] = pd.factorize(df["geocode4_corr"].astype('str') + 
                                         df["hs4"].astype('str') +
@@ -289,6 +303,11 @@ if create_fe:
                                         df["country_en"].astype('str')
                                        )[0]
     
+    ## product destination regime 
+    df["fe_kjr"] = pd.factorize(df["hs6"].astype('str') + 
+                                        df["country_en"].astype('str') + 
+                                        df["regime"].astype('str')
+                                       )[0]
     ## Shocks
     df["fe_group_shock"] = pd.factorize(
         df["hs6"].astype('str') +
@@ -571,14 +590,21 @@ for ext in ['.txt', '.tex', '.pdf']:
 
 ```sos kernel="R"
 summary(felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-            | fe_ckr + fe_csrt+fe_kj|0 | hs6, df_final %>% group_by(regime) %>% sample_n(10000),
+            | fe_ckr + fe_kj|0 | hs6, df_final,
             exactDOF = TRUE))
 ```
 
 ```sos kernel="R"
-summary(felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_csrt+fe_kj +fe_kt|0 | hs6, df_final,
+summary(felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax #+
+            #lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_cst + fe_kj + fe_kt|0 | hs6, df_final,
+            exactDOF = TRUE))
+```
+
+```sos kernel="R"
+summary(felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax #+
+            #lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_kj + |0 | hs6, df_final,
             exactDOF = TRUE))
 ```
 
@@ -586,40 +612,43 @@ summary(felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+
 %get path table
 ### Quality
 t_0 <- felm(kandhelwal_quality ~ln_rebate+ ln_lag_import_tax  
-            | fe_ck + fe_cst+fe_ckj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
             exactDOF = TRUE)
 
 print('table 0 done')
 t_1 <- felm(kandhelwal_quality ~ln_rebate + ln_lag_import_tax 
-            | fe_ck + fe_cst+fe_ckj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
             exactDOF = TRUE)
 ### all coefs
 print('table 1 done')
 t_2 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt + fe_ckj|0 | hs6, df_final,
+            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
             exactDOF = TRUE)
 t_2 <- change_target(t_2)
-
-### focus coef -> benchmark
 print('table 2 done')
+### focus coef -> benchmark
 t_3 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-            | fe_ckr + fe_csrt+fe_ckj |0 | hs6, df_final,
+            | fe_ckr + fe_csrt+fe_kjr |0 | hs6, df_final,
             exactDOF = TRUE)
 t_3 <- change_target(t_3)
-
 print('table 3 done')
+
+### all coefs + covariates
 t_4 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-            | fe_ckr + fe_csrt+fe_ckj + fe_kt|0 | hs6, df_final,
+            +  lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
             exactDOF = TRUE)
 t_4 <- change_target(t_4)
 
 print('table 4 done')
-#t_5 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ckr + fe_csrt+fe_ckj + fe_kt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_5 <- change_target(t_5)
-#print('table 5 done')
+
+### focus coef + covariates
+t_5 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr + fe_csrt+fe_kjr|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_5 <- change_target(t_5)
+print('table 5 done')
 #t_6 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
 #            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
 #            | fe_ckr + fe_csrt+fe_ckj + fe_kt|0 | hs6, df_final,
