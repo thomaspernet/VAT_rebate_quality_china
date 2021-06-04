@@ -1,0 +1,59 @@
+
+\documentclass[preview]{standalone} 
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
+
+\begin{document}% Date and time \times  Fri, Jun 04, 2021 - 09 \times 42 \times 22
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm’s quality upgrading, characteristics of the destination countries, products, and cities} 
+\label{}
+\begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
+\begin{tabular}{@{\extracolsep{5pt}}lcccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+& \multicolumn{6}{c}{Dependent variable: Product quality} \\
+&\multicolumn{6}{c}{(city/product/trade regime/year)} \\ 
+\cline{2-7}
+            
+\\[-1.8ex]
+            &\multicolumn{1}{c}{LDC}&\multicolumn{1}{c}{DC}&\multicolumn{1}{c}{Homogeneous}&\multicolumn{1}{c}{Heterogeneous}&\multicolumn{1}{c}{Small HS6}&\multicolumn{1}{c}{Large HS6}\\
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\ 
+\hline \\[-1.8ex] 
+  \text{Ln VAT rebate}_{k, t-1} \times \text{Regime}^R & $-$0.288 & 0.299$^{***}$ & $-$0.096 & 0.286$^{***}$ & 0.895$^{**}$ & 0.262$^{***}$ \\ 
+  & (0.235) & (0.094) & (0.401) & (0.099) & (0.434) & (0.096) \\ 
+  \text{Ln VAT import tax,}_{k, t-1} \times \text{Regime}^R & $-$0.185 & $-$0.125$^{***}$ & 0.013 & $-$0.126$^{**}$ & 0.346$^{*}$ & $-$0.127$^{***}$ \\ 
+  & (0.113) & (0.048) & (0.138) & (0.050) & (0.179) & (0.048) \\ 
+  \text{lag foreign export share}_{ckr, t-1} & 0.044$^{*}$ & 0.038$^{***}$ & 0.085$^{***}$ & 0.037$^{***}$ & $-$0.008 & 0.040$^{***}$ \\ 
+  & (0.023) & (0.009) & (0.026) & (0.009) & (0.047) & (0.009) \\ 
+  \text{lag SOE export share}_{ckr, t-1} & 0.096$^{***}$ & 0.126$^{***}$ & 0.147$^{***}$ & 0.124$^{***}$ & 0.120$^{***}$ & 0.126$^{***}$ \\ 
+  & (0.025) & (0.009) & (0.031) & (0.009) & (0.022) & (0.009) \\ 
+ \hline \\[-1.8ex] 
+City-product-regime & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Product-year & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Destination-year & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Observations & 510,872 & 5,233,172 & 257,349 & 5,486,695 & 426,849 & 5,317,195 \\ 
+R$^{2}$ & 0.504 & 0.271 & 0.309 & 0.268 & 0.606 & 0.247 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular}
+\end{adjustbox}
+\begin{tablenotes} 
+ \small 
+ \item \\ 
+
+This table estimates eq(3). 
+LDC and DC are defined according to the World Bank country classification.
+Homogeneous and heterogeneous goods are defined according to the official list of goods`s classification, Rauch (1999).
+Small and large are computed based on either the count of HS6 exported by city $c$ or the total quantity exported.
+When one of these two metrics are above national average, the city is considered as large.
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%. 
+\end{tablenotes}
+\end{table}
+
+\end{document}

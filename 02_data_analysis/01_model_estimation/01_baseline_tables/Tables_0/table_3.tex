@@ -1,0 +1,55 @@
+
+\documentclass[preview]{standalone} 
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
+
+\begin{document}% Date and time \times  Fri, Jun 04, 2021 - 10 \times 06 \times 40
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm’s quality upgrading, characteristics of sensible sectors} 
+\label{}
+\begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
+\begin{tabular}{@{\extracolsep{5pt}}lccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+& \multicolumn{5}{c}{Dependent variable: Product quality} \\
+&\multicolumn{5}{c}{(city/product/trade regime/year)} \\ 
+\cline{2-6}
+            
+\\[-1.8ex]
+            &\multicolumn{1}{c}{No rare-earth}&\multicolumn{1}{c}{No energy intensive}&\multicolumn{1}{c}{No high tech}&\multicolumn{1}{c}{No RD oriented}&\multicolumn{1}{c}{No high skilled oriented}\\
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5)\\ 
+\hline \\[-1.8ex] 
+  \text{Ln VAT rebate}_{k, t-1} \times \text{Regime}^R & 0.265$^{***}$ & 0.116 & 0.294$^{***}$ & 0.263$^{***}$ & 0.263$^{***}$ \\ 
+  & (0.096) & (0.117) & (0.095) & (0.096) & (0.096) \\ 
+  \text{Ln VAT import tax,}_{k, t-1} \times \text{Regime}^R & $-$0.120$^{**}$ & $-$0.070 & $-$0.123$^{**}$ & $-$0.120$^{**}$ & $-$0.120$^{**}$ \\ 
+  & (0.048) & (0.076) & (0.049) & (0.048) & (0.048) \\ 
+  \text{lag foreign export share}_{ckr, t-1} & 0.038$^{***}$ & 0.047$^{***}$ & 0.039$^{***}$ & 0.039$^{***}$ & 0.039$^{***}$ \\ 
+  & (0.009) & (0.011) & (0.009) & (0.009) & (0.009) \\ 
+  \text{lag SOE export share}_{ckr, t-1} & 0.125$^{***}$ & 0.127$^{***}$ & 0.126$^{***}$ & 0.125$^{***}$ & 0.125$^{***}$ \\ 
+  & (0.009) & (0.010) & (0.009) & (0.009) & (0.009) \\ 
+ \hline \\[-1.8ex] 
+City-product-regime & Yes & Yes & Yes & Yes & Yes \\ 
+Product-year & Yes & Yes & Yes & Yes & Yes \\ 
+Destination-year & Yes & Yes & Yes & Yes & Yes \\ 
+Observations & 5,739,070 & 4,086,295 & 5,698,565 & 5,744,044 & 5,744,044 \\ 
+R$^{2}$ & 0.269 & 0.274 & 0.269 & 0.269 & 0.269 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular}
+\end{adjustbox}
+\begin{tablenotes} 
+ \small 
+ \item \\ 
+
+This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%. 
+\end{tablenotes}
+\end{table}
+
+\end{document}

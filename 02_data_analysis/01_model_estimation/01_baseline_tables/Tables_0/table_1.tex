@@ -1,0 +1,47 @@
+
+\documentclass[preview]{standalone} 
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
+
+\begin{document}% Date and time \times  Fri, Jun 04, 2021 - 09 \times 25 \times 19
+\begin{table}[!htbp] \centering 
+  \caption{VAT export rebate and product's quality upgrading, baseline regression} 
+\label{}
+\begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
+\begin{tabular}{@{\extracolsep{5pt}}lcccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+& \multicolumn{6}{c}{Dependent variable: Product quality} \\
+&\multicolumn{6}{c}{(city/product/trade regime/year)} \\ 
+\cline{2-7}
+            
+\\[-1.8ex]
+            &\multicolumn{1}{c}{}&\multicolumn{1}{c}{Baseline}&\multicolumn{1}{c}{Shocks}&\multicolumn{1}{c}{Balance}&\multicolumn{1}{c}{Only 17\%}&\multicolumn{1}{c}{No zero rebate}\\
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\ 
+\hline \\[-1.8ex] 
+  \text{Ln VAT rebate}_{k, t-1} \times \text{Regime}^R & 0.281$^{***}$ & 0.263$^{***}$ & 0.259$^{***}$ & 0.263$^{***}$ & 0.276$^{***}$ & 0.244$^{**}$ \\ 
+  & (0.096) & (0.096) & (0.090) & (0.096) & (0.097) & (0.108) \\ 
+  \text{Ln VAT import tax,}_{k, t-1} \times \text{Regime}^R & $-$0.122$^{**}$ & $-$0.120$^{**}$ & $-$0.150$^{***}$ & $-$0.120$^{**}$ & $-$0.117$^{**}$ & $-$0.120$^{**}$ \\ 
+  & (0.048) & (0.048) & (0.051) & (0.048) & (0.048) & (0.048) \\ 
+  \text{lag foreign export share}_{ckr, t-1} &  & 0.039$^{***}$ & 0.036$^{***}$ & 0.039$^{***}$ & 0.038$^{***}$ & 0.038$^{***}$ \\ 
+  &  & (0.009) & (0.009) & (0.009) & (0.009) & (0.009) \\ 
+  \text{lag SOE export share}_{ckr, t-1} &  & 0.125$^{***}$ & 0.115$^{***}$ & 0.125$^{***}$ & 0.127$^{***}$ & 0.125$^{***}$ \\ 
+  &  & (0.009) & (0.009) & (0.009) & (0.009) & (0.009) \\ 
+ \hline \\[-1.8ex] 
+City-product-regime & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Product-year & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Destination-year & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Observations & 5,744,044 & 5,744,044 & 5,744,044 & 5,738,682 & 5,507,351 & 5,653,887 \\ 
+R$^{2}$ & 0.269 & 0.269 & 0.520 & 0.269 & 0.270 & 0.268 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular}
+\end{adjustbox}
+\begin{tablenotes} 
+ \small 
+ \item \\ 
+This table estimates eq(XX). Ln VAT rebate is the share entitled to reimboursement at the HS6 product. Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group. Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund. Sectors are defined following the Chinese 4-digit GB/T industry. classification and regroup several products. Heteroskedasticity-robust standard errors. clustered at the product level appear inparentheses. \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%. 
+\end{tablenotes}
+\end{table}
+
+\end{document}
