@@ -747,8 +747,8 @@ table_1 <- go_latex(list(
 ```
 
 ```sos kernel="SoS"
-tbe1  = "This table estimates eq(XX). " \
-" A positive value of Ln VAT rebate means the product has lower tax." \
+tbe1  = "This table estimates eq(XX)." \
+" Ln VAT rebate is the share entitled to reimboursement at the HS6 product." \
 " Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group." \
 " Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund." \
 " Sectors are defined following the Chinese 4-digit GB/T industry." \
@@ -762,8 +762,8 @@ tbe1  = "This table estimates eq(XX). " \
     #'Price-adjusted': 5,
 #}
 multicolumn ={
-    '',
-    'Baseline'
+    '':1,
+    'Baseline':1,
     'Shocks': 1,
     'Balance': 1,
     'Only 17\%': 1,
@@ -776,14 +776,19 @@ new_r = [
     #'Eligible', 'Non-Eligible', 'All','All benchmark', 'All', 'All benchmark',
 ]
 
+reorder = {
+    2:0,
+    3:1
+}
+
 lb.beautify(table_number = table_nb,
-            #reorder_var = reorder,
+            reorder_var = reorder,
             multi_lines_dep = multi_lines_dep,
             #new_row= new_r,
             multicolumn = multicolumn,
             table_nte = tbe1,
             jupyter_preview = True,
-            resolution = 150,
+            resolution = 180,
             folder = folder)
 ```
 
@@ -795,98 +800,73 @@ lb.beautify(table_number = table_nb,
 - Small/large city is be computed by using:
     - the number of product exported in 2003. If the count of product is above average, then it can be consider as a large firm 
     - The average quantity
-    
+ 
+ 
 * Column 1: Estimate baseline regression subset LDC countries: `income_group_ldc_dc` -> `LDC`
-    * FE: 
-        - city-product-regime: `fe_ckr`
-        - city-sector-regime-year: `fe_csrt`
-        - product-year: `fe_kt`
 * Column 2: Estimate baseline regression subset DC countries: `income_group_ldc_dc` -> `DC`
-    * FE: 
-        - city-product-regime: `fe_ckr`
-        - city-sector-regime-year: `fe_csrt`
-        - product-year: `fe_kt`
 * Column 3: Estimate baseline regression subset Homogeneous goods: `classification` -> `HOMOGENEOUS`
-    * FE: 
-        - city-product-regime: `fe_ckr`
-        - city-sector-regime-year: `fe_csrt`
-        - product-year: `fe_kt`
 * Column 4: Estimate baseline regression subset heterogeneous goods: `classification` -> != `HOMOGENEOUS`
-    * FE: 
-        - city-product-regime: `fe_ckr`
-        - city-sector-regime-year: `fe_csrt`
-        - product-year: `fe_kt`
 * Column 5: Estimate baseline regression subset small cities: `size_product` -> == `SMALL_COUNT`
-    * FE: 
-        - city-product-regime: `fe_ckr`
-        - city-sector-regime-year: `fe_csrt`
-        - product-year: `fe_kt`
 * Column 6: Estimate baseline regression subset large cities: `size_product` -> == `LARGE_COUNT`
-    * FE: 
-        - city-product-regime: `fe_ckr`
-        - city-sector-regime-year: `fe_csrt`
-        - product-year: `fe_kt`   
 * Column 7: Estimate baseline regression subset small cities: `size_quantity` -> == `SMALL_QUANTITY`
-    * FE: 
-        - city-product-regime: `fe_ckr`
-        - city-sector-regime-year: `fe_csrt`
-        - product-year: `fe_kt`
 * Column 8: Estimate baseline regression subset large cities: `size_quantity` -> == `LARGE_QUANTITY`
-    * FE: 
-        - city-product-regime: `fe_ckr`
-        - city-sector-regime-year: `fe_csrt`
-        - product-year: `fe_kt`    
 
 Sector is defined as the GBT 4 digits
 <!-- #endregion -->
 
 ```sos kernel="SoS"
 folder = 'Tables_0'
-table_nb = 1
+table_nb = 2
 table = 'table_{}'.format(table_nb)
 path = os.path.join(folder, table + '.txt')
 if os.path.exists(folder) == False:
         os.mkdir(folder)
-for ext in ['.txt', '.tex', '.pdf']:
-    x = [a for a in os.listdir(folder) if a.endswith(ext)]
-    [os.remove(os.path.join(folder, i)) for i in x]
+#for ext in ['.txt', '.tex', '.pdf']:
+#    x = [a for a in os.listdir(folder) if a.endswith(ext)]
+#    [os.remove(os.path.join(folder, i)) for i in x]
 ```
 
 ```sos kernel="R"
 %get path table
 #### COUNTRIES
-t_0 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+t_0 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(income_group_ldc_dc == 'LDC'),
             exactDOF = TRUE)
 t_0 <- change_target(t_0)
 print('table 0 done')
 
-t_1 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+t_1 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(income_group_ldc_dc != 'LDC'),
             exactDOF = TRUE)
 t_1 <- change_target(t_1)
 print('table 1 done')
 #### GOODS
-t_2 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+t_2 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(homogeneous) | homogeneous == 'HOMOGENEOUS'),
             exactDOF = TRUE)
 t_2 <- change_target(t_2)
 print('table 2 done')
 
-t_3 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+t_3 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(homogeneous == 'HETEREGENEOUS'),
             exactDOF = TRUE)
 t_3 <- change_target(t_3)
 print('table 3 done')
 #### CITIES
 ##### HS6
-t_4 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+t_4 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(size_product == 'SMALL_COUNT'),
             exactDOF = TRUE)
 t_4 <- change_target(t_4)
 print('table 4 done')
 
-t_5 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+t_5 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(size_product == 'LARGE_COUNT'),
             exactDOF = TRUE)
 t_5 <- change_target(t_5)
@@ -907,11 +887,11 @@ print('table 5 done')
 
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
-    c("City-product-regime","Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes"),
+    c("City-product-regime","Yes", "Yes", "Yes", "Yes","Yes", "Yes"),
     
-    c("Product-year","Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes"),
+    c("Product-year","Yes", "Yes", "Yes", "Yes","Yes", "Yes"),
     
-    c("Destination-year", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes")
+    c("Destination-year", "Yes", "Yes", "Yes", "Yes","Yes", "Yes")
              )
 
 table_1 <- go_latex(list(
@@ -950,15 +930,20 @@ multicolumn ={
     'Large HS6': 1
 }
 multi_lines_dep = '(city/product/trade regime/year)'
+reorder = {
+    2:0,
+    3:1
+}
 #new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
 lb.beautify(table_number = table_nb,
             #multi_lines_dep = None,
+            reorder_var = reorder,
             multi_lines_dep = multi_lines_dep,
             new_row= False,
             multicolumn = multicolumn,
             table_nte = tbe1,
             jupyter_preview = True,
-            resolution = 200,
+            resolution = 180,
            folder = folder)
 ```
 
@@ -966,72 +951,61 @@ lb.beautify(table_number = table_nb,
 ## Table 3: Industry characteristicts
 
 * Column 1 excludes rare earth products with the main fixed effect:
-  * city-product-regime: `fe_ckr`
-  * city-sector-regime-year: `fe_csrt` 
-  * product-year: `fe_kt` 
 * Column 2 excludes energy intensive industries with the main fixed effect:
-  * city-product-regime: `fe_ckr` 
-  * city-sector-regime-year: `fe_csrt` 
-  * product-year: `fe_kt` 
 * Column 3 excludes high tech industries with the main fixed effect:
-  * city-product-regime: `fe_ckr` 
-  * city-sector-regime-year: `fe_csrt` 
-  * product-year: `fe_kt` 
 * Column 4 excludes RD oriented indusrtries with the main fixed effect:
-  * city-product-regime: `fe_ckr` 
-  * city-sector-regime-year: `fe_csrt` 
-  * product-year: `fe_kt` 
 * Column 5 excludes High skilled oriented with the main fixed effect:
-  * city-product-regime: `fe_ckr` 
-  * city-sector-regime-year: `fe_csrt` 
-  * product-year: `fe_kt`
   
-
 Sector is defined as the GBT 4 digits
 <!-- #endregion -->
 
 ```sos kernel="SoS"
 folder = 'Tables_0'
-table_nb = 1
+table_nb = 3
 table = 'table_{}'.format(table_nb)
 path = os.path.join(folder, table + '.txt')
 if os.path.exists(folder) == False:
         os.mkdir(folder)
-for ext in ['.txt', '.tex', '.pdf']:
-    x = [a for a in os.listdir(folder) if a.endswith(ext)]
-    [os.remove(os.path.join(folder, i)) for i in x]
+#for ext in ['.txt', '.tex', '.pdf']:
+#    x = [a for a in os.listdir(folder) if a.endswith(ext)]
+#    [os.remove(os.path.join(folder, i)) for i in x]
 ```
 
 ```sos kernel="R"
 %get path table
 #### RARE HEARTH
-t_0 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+t_0 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(hs6 != 850511),
             exactDOF = TRUE)
 t_0 <- change_target(t_0)
 print('table 0 done')
 
 #### ENERGY
-t_1 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+t_1 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter( is.na(energy)),
             exactDOF = TRUE)
 t_1 <- change_target(t_1)
 print('table 1 done')
 
 #### HIGH TECH
-t_2 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+t_2 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(high_tech)),
             exactDOF = TRUE)
 t_2 <- change_target(t_2)
 print('table 2 done')
 #### SKILLED
-t_3 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+t_3 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(skilled)),
             exactDOF = TRUE)
 t_3 <- change_target(t_3)
 print('table 3 done')
 ##### RD
-t_4 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+t_4 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(rd_oriented)),
             exactDOF = TRUE)
 t_4 <- change_target(t_4)
@@ -1076,16 +1050,21 @@ multicolumn ={
     'No RD oriented': 1,
     'No high skilled oriented': 1,
 }
+reorder = {
+    2:0,
+    3:1
+}
 multi_lines_dep = '(city/product/trade regime/year)'
 #new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
 lb.beautify(table_number = table_nb,
             #multi_lines_dep = None,
+            reorder_var = reorder,
             multi_lines_dep = multi_lines_dep,
             new_row= False,
             multicolumn = multicolumn,
             table_nte = tbe1,
             jupyter_preview = True,
-            resolution = 200,
+            resolution = 180,
             folder = folder)
 ```
 
@@ -1170,7 +1149,7 @@ def create_report(extension = "html", keep_code = False, notebookname = None):
 ```
 
 ```sos kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
-create_report(extension = "html", keep_code = False, notebookname = "00_baseline_vat_quality.ipynb")
+create_report(extension = "html", keep_code = True, notebookname = "00_baseline_vat_quality.ipynb")
 ```
 
 ```sos kernel="python3"
