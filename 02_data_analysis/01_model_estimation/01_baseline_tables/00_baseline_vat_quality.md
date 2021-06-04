@@ -243,7 +243,7 @@ Create the following fixed effect for the baseline regression:
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-create_fe = True
+create_fe = False
 if create_fe:
     df = pd.read_csv(df_path, dtype = dtypes)
     ### city-product
@@ -295,6 +295,13 @@ if create_fe:
     ## Destination-year
     df["fe_jt"] = pd.factorize(df["country_en"].astype('str') + 
                                         df["year"].astype('str')
+                                       )[0]
+    
+    ## Destination-year-regime
+    df["fe_jtr"] = pd.factorize(df["country_en"].astype('str') + 
+                                        df["year"].astype('str') +
+                                df["regime"].astype('str')
+                                
                                        )[0]
 
     ## city-product-destination
@@ -404,7 +411,8 @@ mutate_if(is.character, as.factor) %>%
 mutate(
     regime = relevel(as.factor(regime), ref='NOT_ELIGIBLE'),
     ln_rebate = ln_lag_tax_rebate * (-1),
-    ln_rebate_1 = log((lag_vat_reb_m / lag_vat_m) +1)
+    ln_rebate_1 = log((lag_vat_reb_m / lag_vat_m) +1),
+    ln_rebate_2 = log(lag_vat_reb_m + 1)
       )
 ```
 
@@ -589,63 +597,43 @@ for ext in ['.txt', '.tex', '.pdf']:
 ```
 
 ```sos kernel="R"
-summary(felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-            | fe_ckr + fe_kj|0 | hs6, df_final,
-            exactDOF = TRUE))
-```
-
-```sos kernel="R"
-summary(felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax #+
-            #lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_cst + fe_kj + fe_kt|0 | hs6, df_final,
-            exactDOF = TRUE))
-```
-
-```sos kernel="R"
-summary(felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax #+
-            #lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_kj + |0 | hs6, df_final,
-            exactDOF = TRUE))
-```
-
-```sos kernel="R"
 %get path table
 ### Quality
-t_0 <- felm(kandhelwal_quality ~ln_rebate+ ln_lag_import_tax  
-            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
-            exactDOF = TRUE)
+#t_0 <- felm(kandhelwal_quality ~ln_rebate_1+ ln_lag_import_tax  
+#            | fe_ck  + fe_kt + fe_jt|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
+#            exactDOF = TRUE)
 
-print('table 0 done')
-t_1 <- felm(kandhelwal_quality ~ln_rebate + ln_lag_import_tax 
-            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
-            exactDOF = TRUE)
+#print('table 0 done')
+#t_1 <- felm(kandhelwal_quality ~ln_rebate_1 + ln_lag_import_tax 
+#            | fe_ck  + fe_kt + fe_jt|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
+#            exactDOF = TRUE)
 ### all coefs
-print('table 1 done')
-t_2 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
+#print('table 1 done')
+t_2 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
+            | fe_ck  + fe_kt + fe_jt|0 | hs6, df_final,
             exactDOF = TRUE)
 t_2 <- change_target(t_2)
 print('table 2 done')
 ### focus coef -> benchmark
-t_3 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-            | fe_ckr + fe_csrt+fe_kjr |0 | hs6, df_final,
+t_3 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final,
             exactDOF = TRUE)
 t_3 <- change_target(t_3)
 print('table 3 done')
 
 ### all coefs + covariates
-t_4 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+t_4 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
             +  lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
+            | fe_ck  + fe_kt + fe_jt|0 | hs6, df_final,
             exactDOF = TRUE)
 t_4 <- change_target(t_4)
 
 print('table 4 done')
 
 ### focus coef + covariates
-t_5 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+t_5 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr + fe_csrt+fe_kjr|0 | hs6, df_final,
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final,
             exactDOF = TRUE)
 t_5 <- change_target(t_5)
 print('table 5 done')
@@ -696,92 +684,48 @@ print('table 5 done')
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
     c("City-product",
-      "Yes", "Yes", "No", "No", "No"#, "No", "No",
+     "Yes", "No", "Yes", "No"#, "No",
       #"Yes", "Yes", "No", "No", "No", "No"
      ),
-    
-    c("City-sector-year",
-      "Yes", "Yes", "No", "No", "No"#, "No", "No", 
-      #"Yes", "Yes", "No", "No", "No", "No"
-     ),
-    c("City-product-destination",
-      "Yes", "Yes", "Yes", "Yes","Yes", "Yes", "Yes"#,
-     # "No", "No", "No", "No","Yes", "Yes"
-     ),
-    #c("Product-destination fixed effect",
-    #  "Yes", "Yes", "Yes", "No", "Yes", "No"#,
-      #"Yes", "Yes", "Yes", "No", "Yes", "No"
-    # ),
-    
     c("City-product-regime",
-      "No", "No", "Yes", "Yes", "Yes"#, "Yes", "Yes"#,
-      #"No", "No", "Yes", "Yes", "Yes", "Yes"
-     ),
-    
-    c("City-sector-year-regime",
-      "No", "No", "Yes", "Yes", "Yes"#, "Yes", "Yes"#,
+      "No", "Yes", "No", "Yes"#, "Yes"#,
       #"No", "No", "Yes", "Yes", "Yes", "Yes"
      ),
     
     c("Product-year",
-      "No", "No", "No", "No", "Yes"#, "Yes", "Yes"#,
+      "Yes", "Yes", "Yes", "Yes"#, "Yes"#,
       #"No", "No", "No", "Yes", "No", "Yes"
-     )#,
-             )
-
-table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4#,
-    #t_5, t_6#, t_7, t_8, t_9, t_10, t_11
-),
-    title="VAT export rebate and product's quality upgrading, baseline regression",
-    dep_var = dep,
-    addFE=fe1,
-    save=TRUE,
-    note = FALSE,
-    name=path
-) 
-```
-
-```sos kernel="R"
-dep <- "Dependent variable: Product quality"
-fe1 <- list(
-    c("City-product fixed effects",
-      "Yes", "Yes", "No", "No", "No"#, "No", "No",
-      #"Yes", "Yes", "No", "No", "No", "No"
      ),
     
-    c("City-sector-year fixed effects",
-      "Yes", "Yes", "No", "No", "No"#, "No", "No", 
-      #"Yes", "Yes", "No", "No", "No", "No"
-     ),
-    c("city-product-destination fixed effects",
-      "Yes", "Yes", "Yes", "Yes","Yes", "Yes", "Yes"#,
-     # "No", "No", "No", "No","Yes", "Yes"
-     ),
+    c("Destination-year",
+      "Yes", "Yes", "Yes", "Yes"#, "Yes"#,
+      #"No", "No", "No", "Yes", "No", "Yes"
+     )
+    
+    #c("City-sector-year",
+    #  "Yes", "Yes", "No", "No", "No"#, "No", "No", 
+    #  #"Yes", "Yes", "No", "No", "No", "No"
+    # ),
+    #c("City-product-destination",
+    #  "Yes", "Yes", "Yes", "Yes","Yes", "Yes", "Yes"#,
+    # # "No", "No", "No", "No","Yes", "Yes"
+    # ),
     #c("Product-destination fixed effect",
     #  "Yes", "Yes", "Yes", "No", "Yes", "No"#,
       #"Yes", "Yes", "Yes", "No", "Yes", "No"
     # ),
-    
-    c("City-product-regime fixed effects",
-      "No", "No", "Yes", "Yes", "Yes"#, "Yes", "Yes"#,
+
+    #c("City-sector-year-regime",
+    #  "No", "No", "Yes", "Yes", "Yes"#, "Yes", "Yes"#,
       #"No", "No", "Yes", "Yes", "Yes", "Yes"
-     ),
+    # ),
     
-    c("City-sector-year-regime fixed effects",
-      "No", "No", "Yes", "Yes", "Yes"#, "Yes", "Yes"#,
-      #"No", "No", "Yes", "Yes", "Yes", "Yes"
-     ),
     
-    c("Product-year fixed effects",
-      "No", "No", "No", "No", "Yes"#, "Yes", "Yes"#,
-      #"No", "No", "No", "Yes", "No", "Yes"
-     )#,
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4#,
-    #t_5, t_6#, t_7, t_8, t_9, t_10, t_11
+    t_0,t_1, t_2, t_3, t_4,t_5#,
+    #t_6, t_7, t_8, t_9, t_10, t_11
 ),
     title="VAT export rebate and product's quality upgrading, baseline regression",
     dep_var = dep,
