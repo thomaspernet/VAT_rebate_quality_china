@@ -364,6 +364,14 @@ if add_to_dic:
         'new':'\\text{Ln VAT rebate}_{k, t-1}'
         },
         {
+        'old':'ln\_rebate\_1',
+        'new':'\\text{Ln VAT rebate}_{k, t-1}'
+        },
+        {
+        'old':'ln\_rebate\_2',
+        'new':'\\text{Ln VAT rebate}_{k, t-1}'
+        },
+        {
         'old':'regimeELIGIBLE',
         'new':'\\text{Regime}^R'
         },
@@ -724,7 +732,8 @@ fe1 <- list(
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4,t_5#,
+    #t_0,t_1, 
+    t_2, t_3, t_4,t_5#,
     #t_6, t_7, t_8, t_9, t_10, t_11
 ),
     title="VAT export rebate and product's quality upgrading, baseline regression",
