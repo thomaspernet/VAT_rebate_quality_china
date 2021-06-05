@@ -239,6 +239,9 @@ Create the following fixed effect for the baseline regression:
 * Destination-year: `FE_jt`
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
+
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
 
@@ -381,11 +384,11 @@ if add_to_dic:
         },
         {
         'old':'lag\_foreign\_export\_share\_ckr',
-        'new':'\\text{lag foreign export share}_{ckr, t-1}'
+        'new':'\\text{lag foreign export share}_{ck, t-1}^R'
         },
         {
         'old':'lag\_soe\_export\_share\_ckr',
-        'new':'\\text{lag SOE export share}_{ckr, t-1}'
+        'new':'\\text{lag SOE export share}_{ck, t-1}^R'
         }
     ]
 
@@ -960,6 +963,41 @@ Sector is defined as the GBT 4 digits
 <!-- #endregion -->
 
 ```sos kernel="SoS"
+db = 'environment'
+query = """
+WITH temp AS (
+SELECT ind2, SUM(tso2) as sum_tso2
+FROM environment.china_city_sector_pollution  
+WHERE year = '2002'
+GROUP BY ind2
+ORDER BY sum_tso2
+  )
+  SELECT *
+  FROM temp
+  LEFT JOIN (
+    SELECT cic as ind2, short
+    FROM chinese_lookup.ind_cic_2_name
+    ) as ind_name
+    ON temp.ind2 = ind_name.ind2
+"""
+list_polluted = s3.run_query(
+            query=query,
+            database=db,
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename='polluted',  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+        )
+list_polluted
+```
+
+```sos kernel="SoS"
+(
+    list_polluted.loc[lambda x: x['sum_tso2'] >=np.quantile(list_polluted['sum_tso2'], 0.75)]
+    .reindex(columns = ['ind2', 'short'])
+)
+```
+
+```sos kernel="SoS"
 folder = 'Tables_0'
 table_nb = 3
 table = 'table_{}'.format(table_nb)
@@ -973,6 +1011,16 @@ if os.path.exists(folder) == False:
 
 ```sos kernel="R"
 %get path table
+to_remove <- c(
+  "13",
+"17",
+"22",
+"25",
+"33",
+"26",
+"32",
+"31"
+)
 #### RARE HEARTH
 t_0 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
@@ -981,10 +1029,10 @@ t_0 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime
 t_0 <- change_target(t_0)
 print('table 0 done')
 
-#### ENERGY
+#### NO LARGE POLLUTED INDUSTRY
 t_1 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter( is.na(energy)),
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(!(hs2 %in% to_remove)),
             exactDOF = TRUE)
 t_1 <- change_target(t_1)
 print('table 1 done')
@@ -1032,6 +1080,20 @@ table_1 <- go_latex(list(
 ) 
 ```
 
+```sos kernel="R"
+%get path table
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4
+),
+    title="VAT export tax and firm’s quality upgrading, characteristics of sensible sectors",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name=path
+) 
+```
+
 ```sos kernel="SoS"
 tbe1  = """
 This table estimates eq(3). 
@@ -1045,7 +1107,7 @@ clustered at the product level appear inparentheses.
 
 multicolumn ={
     'No rare-earth': 1,
-    'No energy intensive': 1,
+    'No polluted intensive': 1,
     'No high tech': 1,
     'No RD oriented': 1,
     'No high skilled oriented': 1,
