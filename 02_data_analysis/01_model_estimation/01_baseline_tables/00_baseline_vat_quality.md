@@ -239,9 +239,6 @@ Create the following fixed effect for the baseline regression:
 * Destination-year: `FE_jt`
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
-
-<!-- #endregion -->
-<!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
 
@@ -830,6 +827,48 @@ if os.path.exists(folder) == False:
 ```
 
 ```sos kernel="R"
+temp <- df_final %>% 
+filter(year == "2003") %>%
+#group_by(year, geocode4_corr, hs2) %>%
+group_by(geocode4_corr, hs4) %>%
+summarize(sum_quantity = sum(quantity), sum_value = sum(value)) %>%
+ungroup %>%
+group_by(geocode4_corr) %>%
+mutate(
+    national_avg_q = mean(sum_quantity),
+    national_m_q = median(sum_quantity),
+    national_d_q =quantile(sum_quantity,probs = .75),
+    national_avg_v = mean(sum_value),
+    national_m_v = median(sum_value),
+    national_d_v =quantile(sum_value,probs = .75),
+    size_q_a = ifelse(sum_quantity > national_avg_q, 'LARGE', 'SMALL'),
+    size_q_md = ifelse(sum_quantity > national_m_q, 'LARGE', 'SMALL'),
+    size_q_d = ifelse(sum_quantity > national_d_q, 'LARGE', 'SMALL'),
+    size_v_a = ifelse(sum_value > national_avg_v, 'LARGE', 'SMALL'),
+    size_v_md = ifelse(sum_value > national_m_v, 'LARGE', 'SMALL'),
+    size_v_d = ifelse(sum_value > national_d_v, 'LARGE', 'SMALL')
+) %>%
+right_join(df_final, by = c(
+    #'year',
+    'geocode4_corr',
+    #"hs2",
+    "hs4"
+)) %>%
+mutate(
+    size_q_a = replace_na(size_q_a, "SMALL"),
+    size_q_md = replace_na(size_q_md, "SMALL"),
+    size_q_d = replace_na(size_q_d, "SMALL"),
+    size_v_a = replace_na(size_v_a, "SMALL"),
+    size_v_md = replace_na(size_v_md, "SMALL"),
+    size_v_d = replace_na(size_v_d, "SMALL")
+)
+```
+
+```sos kernel="R"
+temp %>% group_by(size_q_a) %>% count()
+```
+
+```sos kernel="R"
 %get path table
 #### COUNTRIES
 t_0 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
@@ -860,17 +899,17 @@ t_3 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime
 t_3 <- change_target(t_3)
 print('table 3 done')
 #### CITIES
-##### HS6
+##### city-industry
 t_4 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(size_product == 'SMALL_COUNT'),
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, temp %>% filter(size_q_d == 'SMALL'),
             exactDOF = TRUE)
 t_4 <- change_target(t_4)
 print('table 4 done')
 
 t_5 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(size_product == 'LARGE_COUNT'),
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, temp %>% filter(size_q_d == 'LARGE'),
             exactDOF = TRUE)
 t_5 <- change_target(t_5)
 print('table 5 done')
@@ -914,8 +953,8 @@ tbe1  = """
 This table estimates eq(3). 
 LDC and DC are defined according to the World Bank country classification.
 Homogeneous and heterogeneous goods are defined according to the official list of goods`s classification, Rauch (1999).
-Small and large are computed based on either the count of HS6 exported by city $c$ or the total quantity exported.
-When one of these two metrics are above national average, the city is considered as large.
+Small and large are computed based on the total quantity exported by city-HS4.
+When oto total export by city-HS4 above the city average, then the pair city-industry is considered as large.
 Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
 Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
 Sectors are defined following the Chinese 4-digit GB/T industry
@@ -929,8 +968,8 @@ multicolumn ={
     'DC': 1,
     'Homogeneous': 1,
     'Heterogeneous': 1,
-    'Small HS6': 1,
-    'Large HS6': 1
+    'Small': 1,
+    'Large': 1
 }
 multi_lines_dep = '(city/product/trade regime/year)'
 reorder = {
