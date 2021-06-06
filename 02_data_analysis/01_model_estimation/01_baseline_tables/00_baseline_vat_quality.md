@@ -148,7 +148,10 @@ schema = (glue.get_table_information(database = db,
 for key, value in enumerate(schema):
     if value['Type'] in ['varchar(12)',
                          'varchar(3)',
-                        'varchar(14)', 'varchar(11)']:
+                        'varchar(14)',
+                         'varchar(11)',
+                        'array<bigint>',
+                        'map<double,boolean>']:
         format_ = 'string'
     elif value['Type'] in ['decimal(21,5)', 'double', 'bigint', 'int', 'float']:
         format_ = 'float'
@@ -575,9 +578,9 @@ table = 'table_{}'.format(table_nb)
 path = os.path.join(folder, table + '.txt')
 if os.path.exists(folder) == False:
         os.mkdir(folder)
-for ext in ['.txt', '.tex', '.pdf']:
-    x = [a for a in os.listdir(folder) if a.endswith(ext)]
-    [os.remove(os.path.join(folder, i)) for i in x]
+#for ext in ['.txt', '.tex', '.pdf']:
+#    x = [a for a in os.listdir(folder) if a.endswith(ext)]
+#    [os.remove(os.path.join(folder, i)) for i in x]
 ```
 
 ```sos kernel="R"
@@ -865,10 +868,6 @@ mutate(
 ```
 
 ```sos kernel="R"
-temp %>% group_by(size_q_a) %>% count()
-```
-
-```sos kernel="R"
 %get path table
 #### COUNTRIES
 t_0 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
@@ -1107,20 +1106,6 @@ fe1 <- list(
     c("Destination-year", "Yes", "Yes", "Yes", "Yes","Yes")
              )
 
-table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4
-),
-    title="VAT export tax and firm’s quality upgrading, characteristics of sensible sectors",
-    dep_var = dep,
-    addFE=fe1,
-    save=TRUE,
-    note = FALSE,
-    name=path
-) 
-```
-
-```sos kernel="R"
-%get path table
 table_1 <- go_latex(list(
     t_0,t_1, t_2, t_3, t_4
 ),
