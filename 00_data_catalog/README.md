@@ -377,11 +377,5 @@
 | 30 | energy                       | string        | energy consuming product                                                                                                                                              |
 | 31 | skilled                      | string        | skilled sectors                                                                                                                                                       |
 | 32 | rd_oriented                  | string        | rd_oriented sectors                                                                                                                                                   |
-| 33 | count_hs6                    | bigint        | count hs6                                                                                                                                                             |
-| 34 | sum_quantity                 | bigint        |                                                                                                                                                                       |
-| 35 | city_average_hs6             | double        |                                                                                                                                                                       |
-| 36 | city_average_quantity        | double        |                                                                                                                                                                       |
-| 37 | size_quantity                | varchar(14)   |                                                                                                                                                                       |
-| 38 | size_product                 | varchar(11)   |                                                                                                                                                                       |
 
     

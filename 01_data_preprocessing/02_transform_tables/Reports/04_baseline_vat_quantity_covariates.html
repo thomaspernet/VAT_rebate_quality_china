@@ -14334,7 +14334,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">awsPy.aws_authorization</span> <span class="kn">import</span> <span class="n">aws_connector</span>
@@ -14364,7 +14364,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">con</span> <span class="o">=</span> <span class="n">aws_connector</span><span class="o">.</span><span class="n">aws_instantiate</span><span class="p">(</span><span class="n">credential</span> <span class="o">=</span> <span class="n">path_cred</span><span class="p">,</span>
@@ -14383,7 +14383,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">pandas_setting</span> <span class="o">=</span> <span class="kc">True</span>
@@ -14417,7 +14417,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">DatabaseName</span> <span class="o">=</span> <span class="s1">&#39;chinese_trade&#39;</span>
@@ -14432,7 +14432,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[17]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">query</span><span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
@@ -14593,54 +14593,16 @@ a.anchor-link {
 <span class="s2">      high_tech, </span>
 <span class="s2">      energy, </span>
 <span class="s2">      skilled, </span>
-<span class="s2">      rd_oriented,</span>
-<span class="s2">      count_hs6, </span>
-<span class="s2">      sum_quantity, </span>
-<span class="s2">      city_average_hs6, </span>
-<span class="s2">      city_average_quantity, </span>
-<span class="s2">      CASE WHEN sum_quantity &gt; city_average_quantity THEN &#39;LARGE_QUANTITY&#39; ELSE &#39;SMALL_QUANTITY&#39; END AS size_quantity, </span>
-<span class="s2">      CASE WHEN count_hs6 &gt; city_average_hs6 THEN &#39;LARGE_COUNT&#39; ELSE &#39;SMALL_COUNT&#39; END AS size_product</span>
+<span class="s2">      rd_oriented--,</span>
+<span class="s2">      --count_hs6, </span>
+<span class="s2">      -- sum_quantity, </span>
+<span class="s2">      --city_average_hs6, </span>
+<span class="s2">      --city_average_quantity, </span>
+<span class="s2">      --CASE WHEN sum_quantity &gt; city_average_quantity THEN &#39;LARGE_QUANTITY&#39; ELSE &#39;SMALL_QUANTITY&#39; END AS size_quantity, </span>
+<span class="s2">      --CASE WHEN count_hs6 &gt; city_average_hs6 THEN &#39;LARGE_COUNT&#39; ELSE &#39;SMALL_COUNT&#39; END AS size_product</span>
 <span class="s2">    FROM </span>
-<span class="s2">      (</span>
-<span class="s2">        SELECT </span>
-<span class="s2">          year, </span>
-<span class="s2">          geocode4_corr, </span>
-<span class="s2">          COUNT(</span>
-<span class="s2">            DISTINCT(hs6)</span>
-<span class="s2">          ) as count_hs6, </span>
-<span class="s2">          SUM(quantity) as sum_quantity </span>
-<span class="s2">        FROM </span>
-<span class="s2">          merge_ </span>
-<span class="s2">        WHERE </span>
-<span class="s2">          year = &#39;2003&#39; </span>
-<span class="s2">        GROUP BY </span>
-<span class="s2">          geocode4_corr, </span>
-<span class="s2">          year</span>
-<span class="s2">      ) as count_n_sum </span>
-<span class="s2">      LEFT JOIN (</span>
-<span class="s2">        SELECT </span>
-<span class="s2">          MIN(year) as year, </span>
-<span class="s2">          AVG(count_hs6) as city_average_hs6, </span>
-<span class="s2">          AVG(sum_quantity) as city_average_quantity </span>
-<span class="s2">        FROM </span>
-<span class="s2">          (</span>
-<span class="s2">            SELECT </span>
-<span class="s2">              year, </span>
-<span class="s2">              geocode4_corr, </span>
-<span class="s2">              COUNT(</span>
-<span class="s2">                DISTINCT(hs6)</span>
-<span class="s2">              ) as count_hs6, </span>
-<span class="s2">              SUM(quantity) as sum_quantity </span>
-<span class="s2">            FROM </span>
-<span class="s2">              merge_ </span>
-<span class="s2">            WHERE </span>
-<span class="s2">              year = &#39;2003&#39; </span>
-<span class="s2">            GROUP BY </span>
-<span class="s2">              geocode4_corr, </span>
-<span class="s2">              year</span>
-<span class="s2">          ) as count_n_sum</span>
-<span class="s2">      ) as city_avg ON count_n_sum.year = city_avg.year </span>
-<span class="s2">      LEFT JOIN merge_ ON merge_.geocode4_corr = count_n_sum.geocode4_corr</span>
+<span class="s2">      merge_</span>
+<span class="s2">      -- LEFT JOIN merge_ ON merge_.geocode4_corr = count_n_sum.geocode4_corr</span>
 <span class="s2">      LEFT JOIN chinese_lookup.industry_high_tech</span>
 <span class="s2">    ON merge_.hs6 = industry_high_tech.hs6</span>
 <span class="s2">    LEFT JOIN chinese_lookup.industry_energy</span>
@@ -14650,7 +14612,7 @@ a.anchor-link {
 <span class="s2">    LEFT JOIN chinese_lookup.industry_rd_oriented</span>
 <span class="s2">    ON merge_.hs4 = industry_rd_oriented.hs4</span>
 <span class="s2">  )</span>
-<span class="s2">   LIMIT 10</span>
+<span class="s2">    LIMIT 10</span>
 <span class="s2">&quot;&quot;&quot;</span>
 </pre></div>
 
@@ -14659,10 +14621,10 @@ a.anchor-link {
 </div>
 </div>
 
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[18]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">s3</span><span class="o">.</span><span class="n">run_query</span><span class="p">(</span>
@@ -14677,6 +14639,481 @@ a.anchor-link {
      </div>
 </div>
 </div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[18]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>geocode4_corr</th>
+      <th>year</th>
+      <th>regime</th>
+      <th>hs6</th>
+      <th>hs4</th>
+      <th>hs3</th>
+      <th>hs2</th>
+      <th>homogeneous</th>
+      <th>country_en</th>
+      <th>iso_alpha</th>
+      <th>gni_per_capita</th>
+      <th>gpd_per_capita</th>
+      <th>income_group</th>
+      <th>income_group_ldc_dc</th>
+      <th>quantity</th>
+      <th>value</th>
+      <th>unit_price</th>
+      <th>kandhelwal_quality</th>
+      <th>price_adjusted_quality</th>
+      <th>lag_vat_m</th>
+      <th>lag_vat_reb_m</th>
+      <th>lag_tax_rebate</th>
+      <th>ln_lag_vat_m</th>
+      <th>ln_lag_vat_reb_m</th>
+      <th>ln_lag_tax_rebate</th>
+      <th>lag_import_tax</th>
+      <th>ln_lag_import_tax</th>
+      <th>lag_soe_export_share_ckr</th>
+      <th>lag_foreign_export_share_ckr</th>
+      <th>high_tech</th>
+      <th>energy</th>
+      <th>skilled</th>
+      <th>rd_oriented</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>3206</td>
+      <td>2010</td>
+      <td>NOT_ELIGIBLE</td>
+      <td>852351</td>
+      <td>8523</td>
+      <td>852</td>
+      <td>85</td>
+      <td>HETEREGENEOUS</td>
+      <td>Canada</td>
+      <td>CAN</td>
+      <td>44480.0</td>
+      <td>47448.0100</td>
+      <td>High income: OECD</td>
+      <td>DC</td>
+      <td>200</td>
+      <td>1002</td>
+      <td>5.01000</td>
+      <td>-0.707372</td>
+      <td>2.318807</td>
+      <td>15.857142</td>
+      <td>14.428572</td>
+      <td>1.428570</td>
+      <td>2.824775</td>
+      <td>2.736221</td>
+      <td>0.887303</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.00741</td>
+      <td>0.97407</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3206</td>
+      <td>2009</td>
+      <td>ELIGIBLE</td>
+      <td>853120</td>
+      <td>8531</td>
+      <td>853</td>
+      <td>85</td>
+      <td>HETEREGENEOUS</td>
+      <td>Netherlands</td>
+      <td>NLD</td>
+      <td>53670.0</td>
+      <td>50533.5080</td>
+      <td>High income: OECD</td>
+      <td>DC</td>
+      <td>18</td>
+      <td>43716</td>
+      <td>2428.66667</td>
+      <td>3.515836</td>
+      <td>4.279262</td>
+      <td>17.000000</td>
+      <td>13.500000</td>
+      <td>3.500000</td>
+      <td>2.890372</td>
+      <td>2.674149</td>
+      <td>1.504077</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.00000</td>
+      <td>0.00000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3206</td>
+      <td>2009</td>
+      <td>ELIGIBLE</td>
+      <td>853400</td>
+      <td>8534</td>
+      <td>853</td>
+      <td>85</td>
+      <td>HETEREGENEOUS</td>
+      <td>Thailand</td>
+      <td>THA</td>
+      <td>4140.0</td>
+      <td>4744.7627</td>
+      <td>Upper middle income</td>
+      <td>DC</td>
+      <td>320</td>
+      <td>2954</td>
+      <td>9.23125</td>
+      <td>-0.015494</td>
+      <td>2.238088</td>
+      <td>17.000000</td>
+      <td>17.000000</td>
+      <td>0.000000</td>
+      <td>2.890372</td>
+      <td>2.890372</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.00002</td>
+      <td>0.26051</td>
+      <td>HIGH_TECH_ORIENTED</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3301</td>
+      <td>2010</td>
+      <td>NOT_ELIGIBLE</td>
+      <td>392062</td>
+      <td>3920</td>
+      <td>392</td>
+      <td>39</td>
+      <td>HETEREGENEOUS</td>
+      <td>El Salvador</td>
+      <td>SLV</td>
+      <td>2880.0</td>
+      <td>2983.2297</td>
+      <td>Lower middle income</td>
+      <td>DC</td>
+      <td>13496</td>
+      <td>54160</td>
+      <td>4.01304</td>
+      <td>0.770415</td>
+      <td>0.619134</td>
+      <td>17.000000</td>
+      <td>9.666667</td>
+      <td>7.333333</td>
+      <td>2.890372</td>
+      <td>2.367124</td>
+      <td>2.120263</td>
+      <td>6.5</td>
+      <td>2.014903</td>
+      <td>0.22082</td>
+      <td>0.10980</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>3301</td>
+      <td>2005</td>
+      <td>ELIGIBLE</td>
+      <td>392310</td>
+      <td>3923</td>
+      <td>392</td>
+      <td>39</td>
+      <td>HETEREGENEOUS</td>
+      <td>Poland</td>
+      <td>POL</td>
+      <td>7340.0</td>
+      <td>9954.0420</td>
+      <td>High income: OECD</td>
+      <td>DC</td>
+      <td>14285</td>
+      <td>52664</td>
+      <td>3.68666</td>
+      <td>1.704903</td>
+      <td>-0.400182</td>
+      <td>17.000000</td>
+      <td>13.000000</td>
+      <td>4.000000</td>
+      <td>2.890372</td>
+      <td>2.639057</td>
+      <td>1.609438</td>
+      <td>10.0</td>
+      <td>2.397895</td>
+      <td>0.27753</td>
+      <td>0.00000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>SKILLED_ORIENTED</td>
+      <td>RD_ORIENTED</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>3301</td>
+      <td>2008</td>
+      <td>ELIGIBLE</td>
+      <td>392610</td>
+      <td>3926</td>
+      <td>392</td>
+      <td>39</td>
+      <td>HETEREGENEOUS</td>
+      <td>Hong Kong</td>
+      <td>HKG</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>DC</td>
+      <td>5859</td>
+      <td>20127</td>
+      <td>3.43523</td>
+      <td>0.121155</td>
+      <td>1.112928</td>
+      <td>17.000000</td>
+      <td>8.000000</td>
+      <td>9.000000</td>
+      <td>2.890372</td>
+      <td>2.197225</td>
+      <td>2.302585</td>
+      <td>10.0</td>
+      <td>2.397895</td>
+      <td>0.01284</td>
+      <td>0.33180</td>
+      <td>NaN</td>
+      <td>LARGE_ENERGY_CONSUMED</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>3301</td>
+      <td>2008</td>
+      <td>ELIGIBLE</td>
+      <td>420211</td>
+      <td>4202</td>
+      <td>420</td>
+      <td>42</td>
+      <td>HETEREGENEOUS</td>
+      <td>Australia</td>
+      <td>AUS</td>
+      <td>42330.0</td>
+      <td>51841.2600</td>
+      <td>High income: OECD</td>
+      <td>DC</td>
+      <td>360</td>
+      <td>17588</td>
+      <td>48.85556</td>
+      <td>1.795348</td>
+      <td>2.093521</td>
+      <td>17.000000</td>
+      <td>9.250000</td>
+      <td>7.750000</td>
+      <td>2.890372</td>
+      <td>2.327278</td>
+      <td>2.169054</td>
+      <td>12.5</td>
+      <td>2.602690</td>
+      <td>0.00695</td>
+      <td>0.00000</td>
+      <td>NaN</td>
+      <td>LARGE_ENERGY_CONSUMED</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>3301</td>
+      <td>2004</td>
+      <td>ELIGIBLE</td>
+      <td>420212</td>
+      <td>4202</td>
+      <td>420</td>
+      <td>42</td>
+      <td>HETEREGENEOUS</td>
+      <td>Italy</td>
+      <td>ITA</td>
+      <td>28270.0</td>
+      <td>37227.1500</td>
+      <td>High income: OECD</td>
+      <td>DC</td>
+      <td>3049947</td>
+      <td>6212465</td>
+      <td>2.03691</td>
+      <td>3.541083</td>
+      <td>-2.829649</td>
+      <td>17.000000</td>
+      <td>15.000000</td>
+      <td>2.000000</td>
+      <td>2.890372</td>
+      <td>2.772589</td>
+      <td>1.098612</td>
+      <td>20.0</td>
+      <td>3.044522</td>
+      <td>0.14795</td>
+      <td>0.00000</td>
+      <td>NaN</td>
+      <td>LARGE_ENERGY_CONSUMED</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>3301</td>
+      <td>2004</td>
+      <td>ELIGIBLE</td>
+      <td>481940</td>
+      <td>4819</td>
+      <td>481</td>
+      <td>48</td>
+      <td>HETEREGENEOUS</td>
+      <td>United States</td>
+      <td>USA</td>
+      <td>43510.0</td>
+      <td>47287.5940</td>
+      <td>High income: OECD</td>
+      <td>DC</td>
+      <td>7573</td>
+      <td>44773</td>
+      <td>5.91219</td>
+      <td>1.573717</td>
+      <td>0.203300</td>
+      <td>17.000000</td>
+      <td>13.000000</td>
+      <td>4.000000</td>
+      <td>2.890372</td>
+      <td>2.639057</td>
+      <td>1.609438</td>
+      <td>13.3</td>
+      <td>2.660260</td>
+      <td>0.16561</td>
+      <td>0.00000</td>
+      <td>NaN</td>
+      <td>LARGE_ENERGY_CONSUMED</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>3301</td>
+      <td>2010</td>
+      <td>NOT_ELIGIBLE</td>
+      <td>482030</td>
+      <td>4820</td>
+      <td>482</td>
+      <td>48</td>
+      <td>NaN</td>
+      <td>Hong Kong</td>
+      <td>HKG</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>DC</td>
+      <td>104025</td>
+      <td>105079</td>
+      <td>1.01013</td>
+      <td>0.119561</td>
+      <td>-0.109482</td>
+      <td>17.000000</td>
+      <td>12.000000</td>
+      <td>5.000000</td>
+      <td>2.890372</td>
+      <td>2.564949</td>
+      <td>1.791759</td>
+      <td>7.5</td>
+      <td>2.140066</td>
+      <td>0.10934</td>
+      <td>0.58637</td>
+      <td>NaN</td>
+      <td>LARGE_ENERGY_CONSUMED</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[19]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">output</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[19]:</div>
+
+
+
+
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
+<pre>(10, 33)</pre>
+</div>
+
+</div>
+
+</div>
+
 </div>
 
 </div>
@@ -14696,7 +15133,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[20]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">s3_output</span> <span class="o">=</span> <span class="s1">&#39;DATA/ECON/TRADE_DATA/CHINA/VAT_QUALITY&#39;</span>
@@ -14714,10 +15151,10 @@ a.anchor-link {
 <p>First, we need to delete the table (if exist)</p>
 
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[21]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">try</span><span class="p">:</span>
@@ -14735,16 +15172,37 @@ a.anchor-link {
 </div>
 </div>
 
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>{&#39;ResponseMetadata&#39;: {&#39;RequestId&#39;: &#39;b60afa6d-68ed-49e7-8f88-a810bc4c6a2d&#39;, &#39;HTTPStatusCode&#39;: 200, &#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Sun, 06 Jun 2021 08:53:26 GMT&#39;, &#39;content-type&#39;: &#39;application/x-amz-json-1.1&#39;, &#39;content-length&#39;: &#39;2&#39;, &#39;connection&#39;: &#39;keep-alive&#39;, &#39;x-amzn-requestid&#39;: &#39;b60afa6d-68ed-49e7-8f88-a810bc4c6a2d&#39;}, &#39;RetryAttempts&#39;: 0}}
+</pre>
+</div>
+</div>
+
+</div>
+
+</div>
+
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p>Clean up the folder with the previous csv file. Be careful, it will erase all files inside the folder</p>
 
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[22]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">s3</span><span class="o">.</span><span class="n">remove_all_bucket</span><span class="p">(</span><span class="n">path_remove</span> <span class="o">=</span> <span class="n">s3_output</span><span class="p">)</span>
@@ -14755,10 +15213,33 @@ a.anchor-link {
 </div>
 </div>
 
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[22]:</div>
+
+
+
+
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
+<pre>True</pre>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[23]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%time</span>
@@ -14920,54 +15401,9 @@ a.anchor-link {
 <span class="s2">      high_tech, </span>
 <span class="s2">      energy, </span>
 <span class="s2">      skilled, </span>
-<span class="s2">      rd_oriented,</span>
-<span class="s2">      count_hs6, </span>
-<span class="s2">      sum_quantity, </span>
-<span class="s2">      city_average_hs6, </span>
-<span class="s2">      city_average_quantity, </span>
-<span class="s2">      CASE WHEN sum_quantity &gt; city_average_quantity THEN &#39;LARGE_QUANTITY&#39; ELSE &#39;SMALL_QUANTITY&#39; END AS size_quantity, </span>
-<span class="s2">      CASE WHEN count_hs6 &gt; city_average_hs6 THEN &#39;LARGE_COUNT&#39; ELSE &#39;SMALL_COUNT&#39; END AS size_product</span>
+<span class="s2">      rd_oriented</span>
 <span class="s2">    FROM </span>
-<span class="s2">      (</span>
-<span class="s2">        SELECT </span>
-<span class="s2">          year, </span>
-<span class="s2">          geocode4_corr, </span>
-<span class="s2">          COUNT(</span>
-<span class="s2">            DISTINCT(hs6)</span>
-<span class="s2">          ) as count_hs6, </span>
-<span class="s2">          SUM(quantity) as sum_quantity </span>
-<span class="s2">        FROM </span>
-<span class="s2">          merge_ </span>
-<span class="s2">        WHERE </span>
-<span class="s2">          year = &#39;2003&#39; </span>
-<span class="s2">        GROUP BY </span>
-<span class="s2">          geocode4_corr, </span>
-<span class="s2">          year</span>
-<span class="s2">      ) as count_n_sum </span>
-<span class="s2">      LEFT JOIN (</span>
-<span class="s2">        SELECT </span>
-<span class="s2">          MIN(year) as year, </span>
-<span class="s2">          AVG(count_hs6) as city_average_hs6, </span>
-<span class="s2">          AVG(sum_quantity) as city_average_quantity </span>
-<span class="s2">        FROM </span>
-<span class="s2">          (</span>
-<span class="s2">            SELECT </span>
-<span class="s2">              year, </span>
-<span class="s2">              geocode4_corr, </span>
-<span class="s2">              COUNT(</span>
-<span class="s2">                DISTINCT(hs6)</span>
-<span class="s2">              ) as count_hs6, </span>
-<span class="s2">              SUM(quantity) as sum_quantity </span>
-<span class="s2">            FROM </span>
-<span class="s2">              merge_ </span>
-<span class="s2">            WHERE </span>
-<span class="s2">              year = &#39;2003&#39; </span>
-<span class="s2">            GROUP BY </span>
-<span class="s2">              geocode4_corr, </span>
-<span class="s2">              year</span>
-<span class="s2">          ) as count_n_sum</span>
-<span class="s2">      ) as city_avg ON count_n_sum.year = city_avg.year </span>
-<span class="s2">      LEFT JOIN merge_ ON merge_.geocode4_corr = count_n_sum.geocode4_corr</span>
+<span class="s2">      merge_</span>
 <span class="s2">      LEFT JOIN chinese_lookup.industry_high_tech</span>
 <span class="s2">      ON merge_.hs6 = industry_high_tech.hs6</span>
 <span class="s2">    LEFT JOIN chinese_lookup.industry_energy</span>
@@ -14991,10 +15427,49 @@ a.anchor-link {
 </div>
 </div>
 
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>CPU times: user 717 ms, sys: 34 ms, total: 751 ms
+Wall time: 18 s
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[23]:</div>
+
+
+
+
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
+<pre>{&#39;Results&#39;: {&#39;State&#39;: &#39;SUCCEEDED&#39;,
+  &#39;SubmissionDateTime&#39;: datetime.datetime(2021, 6, 6, 8, 53, 52, 979000, tzinfo=tzlocal()),
+  &#39;CompletionDateTime&#39;: datetime.datetime(2021, 6, 6, 8, 54, 8, 847000, tzinfo=tzlocal())},
+ &#39;QueryID&#39;: &#39;43a0ff62-2465-46a9-87ea-b810dd8db54e&#39;}</pre>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[24]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">query_count</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
@@ -15013,6 +15488,56 @@ a.anchor-link {
      </div>
 </div>
 </div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[24]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>CNT</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>5744631</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+
 </div>
 
 </div>
@@ -15044,10 +15569,10 @@ a.anchor-link {
 <p>Bear in mind that CSV SerDe (OpenCSVSerDe) does not support empty fields in columns defined as a numeric data type. All columns with missing values should be saved as string.</p>
 
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[25]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">glue</span><span class="o">.</span><span class="n">get_table_information</span><span class="p">(</span>
@@ -15060,10 +15585,67 @@ a.anchor-link {
 </div>
 </div>
 
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[25]:</div>
+
+
+
+
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
+<pre>[{&#39;Name&#39;: &#39;geocode4_corr&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;year&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;regime&#39;, &#39;Type&#39;: &#39;varchar(12)&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;hs6&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;hs4&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;hs3&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;hs2&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;homogeneous&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;country_en&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;iso_alpha&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;gni_per_capita&#39;, &#39;Type&#39;: &#39;float&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;gpd_per_capita&#39;, &#39;Type&#39;: &#39;float&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;income_group&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;income_group_ldc_dc&#39;, &#39;Type&#39;: &#39;varchar(3)&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;quantity&#39;, &#39;Type&#39;: &#39;bigint&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;value&#39;, &#39;Type&#39;: &#39;bigint&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;unit_price&#39;, &#39;Type&#39;: &#39;decimal(21,5)&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;kandhelwal_quality&#39;, &#39;Type&#39;: &#39;float&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;price_adjusted_quality&#39;, &#39;Type&#39;: &#39;float&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;lag_vat_m&#39;, &#39;Type&#39;: &#39;float&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;lag_vat_reb_m&#39;, &#39;Type&#39;: &#39;float&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;lag_tax_rebate&#39;, &#39;Type&#39;: &#39;float&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;ln_lag_vat_m&#39;, &#39;Type&#39;: &#39;double&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;ln_lag_vat_reb_m&#39;, &#39;Type&#39;: &#39;double&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;ln_lag_tax_rebate&#39;, &#39;Type&#39;: &#39;double&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;lag_import_tax&#39;, &#39;Type&#39;: &#39;float&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;ln_lag_import_tax&#39;, &#39;Type&#39;: &#39;double&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;lag_soe_export_share_ckr&#39;, &#39;Type&#39;: &#39;decimal(21,5)&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;lag_foreign_export_share_ckr&#39;,
+  &#39;Type&#39;: &#39;decimal(21,5)&#39;,
+  &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;high_tech&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;energy&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;skilled&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;},
+ {&#39;Name&#39;: &#39;rd_oriented&#39;, &#39;Type&#39;: &#39;string&#39;, &#39;Comment&#39;: &#39;&#39;}]</pre>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[26]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">schema</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;geocode4_corr&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;city name&#39;</span><span class="p">},</span>
@@ -15101,12 +15683,11 @@ a.anchor-link {
  <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;energy&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;energy consuming product&#39;</span><span class="p">},</span>
  <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;skilled&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;skilled sectors&#39;</span><span class="p">},</span>
  <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;rd_oriented&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;rd_oriented sectors&#39;</span><span class="p">},</span>
- <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;count_hs6&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;bigint&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;count hs6&#39;</span><span class="p">},</span>
- <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;sum_quantity&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;bigint&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">},</span>
- <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;city_average_hs6&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">},</span>
- <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;city_average_quantity&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">},</span>
- <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;size_quantity&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;varchar(14)&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">},</span>
- <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="s1">&#39;size_product&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">:</span> <span class="s1">&#39;varchar(11)&#39;</span><span class="p">,</span> <span class="s1">&#39;Comment&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">}]</span>
+ <span class="c1">#{&#39;Name&#39;: &#39;count_hs6&#39;, &#39;Type&#39;: &#39;bigint&#39;, &#39;Comment&#39;: &#39;count hs6&#39;},</span>
+ <span class="c1">#{&#39;Name&#39;: &#39;sum_quantity&#39;, &#39;Type&#39;: &#39;bigint&#39;, &#39;Comment&#39;: &#39;&#39;},</span>
+ <span class="c1">#{&#39;Name&#39;: &#39;city_hs4_d&#39;, &#39;Type&#39;: &#39;array&lt;bigint&gt;&#39;, &#39;Comment&#39;: &#39;Decile quantity export city industry HS4&#39;},</span>
+ <span class="c1">#{&#39;Name&#39;: &#39;size_q_d&#39;, &#39;Type&#39;: &#39;map&lt;double,boolean&gt;&#39;, &#39;Comment&#39;: &#39;Boolean if decile above sum quantity&#39;}</span>
+         <span class="p">]</span>
 </pre></div>
 
      </div>
@@ -15125,7 +15706,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[27]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
@@ -15158,7 +15739,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[28]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">name_json</span> <span class="o">=</span> <span class="s1">&#39;parameters_ETL_VAT_rebate_quality_china.json&#39;</span>
@@ -15173,7 +15754,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[29]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_json</span><span class="p">)</span> <span class="k">as</span> <span class="n">json_file</span><span class="p">:</span>
@@ -15188,7 +15769,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[30]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">partition_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;year&quot;</span><span class="p">,</span> <span class="s2">&quot;regime&quot;</span><span class="p">,</span> <span class="s2">&quot;geocode4_corr&quot;</span><span class="p">,</span> <span class="s2">&quot;iso_alpha&quot;</span><span class="p">,</span> <span class="s2">&quot;hs6&quot;</span><span class="p">]</span>
@@ -15205,7 +15786,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[31]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">github_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
@@ -15235,7 +15816,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[32]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">list_input</span> <span class="o">=</span> <span class="p">[]</span>
@@ -15252,10 +15833,10 @@ a.anchor-link {
 </div>
 </div>
 
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[33]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">json_etl</span> <span class="o">=</span> <span class="p">{</span>
@@ -15283,6 +15864,46 @@ a.anchor-link {
 </div>
 </div>
 
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[33]:</div>
+
+
+
+
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
+<pre>{&#39;DatabaseName&#39;: &#39;chinese_trade&#39;,
+ &#39;TableName&#39;: &#39;china_vat_quality&#39;,
+ &#39;input&#39;: [&#39;china_export_tariff_tax&#39;,
+  &#39;china_product_quality&#39;,
+  &#39;export_foreign_city_product&#39;,
+  &#39;export_soe_city_product&#39;,
+  &#39;world_bank_gdp_per_capita&#39;,
+  &#39;hs6_homogeneous&#39;,
+  &#39;industry_high_tech&#39;,
+  &#39;industry_energy&#39;,
+  &#39;industry_skilled_oriented&#39;,
+  &#39;industry_rd_oriented&#39;],
+ &#39;target_S3URI&#39;: &#39;s3://datalake-datascience/DATA/ECON/TRADE_DATA/CHINA/VAT_QUALITY&#39;,
+ &#39;from_athena&#39;: &#39;True&#39;,
+ &#39;filename&#39;: &#39;04_baseline_vat_quantity_covariates.ipynb&#39;,
+ &#39;index_final_table&#39;: [0],
+ &#39;if_final&#39;: &#39;True&#39;,
+ &#39;github_url&#39;: &#39;https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/04_baseline_vat_quantity_covariates.md&#39;}</pre>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
@@ -15292,7 +15913,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[34]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">index_to_remove</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
@@ -15313,10 +15934,10 @@ a.anchor-link {
 </div>
 </div>
 
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[35]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Currently, the ETL has </span><span class="si">{}</span><span class="s2"> tables&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;TABLES&#39;</span><span class="p">][</span><span class="s1">&#39;TRANSFORMATION&#39;</span><span class="p">][</span><span class="s1">&#39;STEPS&#39;</span><span class="p">])))</span>
@@ -15325,6 +15946,27 @@ a.anchor-link {
      </div>
 </div>
 </div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>Currently, the ETL has 5 tables
+</pre>
+</div>
+</div>
+
+</div>
+
 </div>
 
 </div>
@@ -15336,7 +15978,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[36]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_json</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">json_file</span><span class="p">:</span>
@@ -15375,10 +16017,10 @@ a.anchor-link {
 ]</code></pre>
 
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[37]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">glue</span><span class="o">.</span><span class="n">update_schema_table</span><span class="p">(</span>
@@ -15392,6 +16034,36 @@ a.anchor-link {
 </div>
 </div>
 
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[37]:</div>
+
+
+
+
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
+<pre>{&#39;ResponseMetadata&#39;: {&#39;RequestId&#39;: &#39;1746ad8a-fb38-41af-8679-0ac72d121e0c&#39;,
+  &#39;HTTPStatusCode&#39;: 200,
+  &#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Sun, 06 Jun 2021 08:54:39 GMT&#39;,
+   &#39;content-type&#39;: &#39;application/x-amz-json-1.1&#39;,
+   &#39;content-length&#39;: &#39;2&#39;,
+   &#39;connection&#39;: &#39;keep-alive&#39;,
+   &#39;x-amzn-requestid&#39;: &#39;1746ad8a-fb38-41af-8679-0ac72d121e0c&#39;},
+  &#39;RetryAttempts&#39;: 0}}</pre>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
@@ -15402,7 +16074,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[38]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#partition_keys = []</span>
@@ -15416,10 +16088,10 @@ a.anchor-link {
 </div>
 </div>
 
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[39]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1">### COUNT DUPLICATES</span>
@@ -15442,6 +16114,58 @@ a.anchor-link {
 </div>
 </div>
 
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output " data-mime-type="text/html">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>CNT</th>
+      <th>CNT_DUPLICATE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>5744631</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
@@ -15450,7 +16174,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[40]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#table = &#39;XX&#39;</span>
@@ -15468,7 +16192,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[41]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
@@ -15480,10 +16204,10 @@ a.anchor-link {
 </div>
 </div>
 
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[42]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">table_top</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="s2">&quot;ANALYSIS&quot;</span><span class="p">][</span><span class="s2">&quot;COUNT_MISSING&quot;</span><span class="p">][</span><span class="s2">&quot;top&quot;</span><span class="p">]</span>
@@ -15524,6 +16248,227 @@ a.anchor-link {
 </div>
 </div>
 
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output " data-mime-type="text/html">
+<style  type="text/css" >
+#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row0_col1{
+            width:  10em;
+             height:  80%;
+            background:  linear-gradient(90deg,#d65f5f 100.0%, transparent 100.0%);
+        }#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row1_col1{
+            width:  10em;
+             height:  80%;
+            background:  linear-gradient(90deg,#d65f5f 99.2%, transparent 99.2%);
+        }#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row2_col1{
+            width:  10em;
+             height:  80%;
+            background:  linear-gradient(90deg,#d65f5f 97.6%, transparent 97.6%);
+        }#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row3_col1{
+            width:  10em;
+             height:  80%;
+            background:  linear-gradient(90deg,#d65f5f 97.3%, transparent 97.3%);
+        }#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row4_col1{
+            width:  10em;
+             height:  80%;
+            background:  linear-gradient(90deg,#d65f5f 71.1%, transparent 71.1%);
+        }#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row5_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row6_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row7_col1{
+            width:  10em;
+             height:  80%;
+            background:  linear-gradient(90deg,#d65f5f 10.9%, transparent 10.9%);
+        }#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row8_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row9_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row10_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row11_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row12_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row13_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row14_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row15_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row16_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row17_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row18_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row19_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row20_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row21_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row22_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row23_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row24_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row25_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row26_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row27_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row28_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row29_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row30_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row31_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row32_col1,#T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row33_col1{
+            width:  10em;
+             height:  80%;
+        }</style><table id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >total_missing</th>        <th class="col_heading level0 col1" >total_missing_pct</th>    </tr></thead><tbody>
+                <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row0" class="row_heading level0 row0" >nb_obs</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row0_col0" class="data row0 col0" >5744631</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row0_col1" class="data row0 col1" >100.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row1" class="row_heading level0 row1" >high_tech</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row1_col0" class="data row1 col0" >5699150</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row1_col1" class="data row1 col1" >99.21%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row2" class="row_heading level0 row2" >skilled</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row2_col0" class="data row2 col0" >5606243</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row2_col1" class="data row2 col1" >97.59%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row3" class="row_heading level0 row3" >rd_oriented</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row3_col0" class="data row3 col0" >5588639</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row3_col1" class="data row3 col1" >97.28%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row4" class="row_heading level0 row4" >energy</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row4_col0" class="data row4 col0" >4086771</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row4_col1" class="data row4 col1" >71.14%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row5" class="row_heading level0 row5" >gni_per_capita</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row5_col0" class="data row5 col0" >626930</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row5_col1" class="data row5 col1" >10.91%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row6" class="row_heading level0 row6" >gpd_per_capita</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row6_col0" class="data row6 col0" >626930</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row6_col1" class="data row6 col1" >10.91%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row7" class="row_heading level0 row7" >income_group</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row7_col0" class="data row7 col0" >626930</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row7_col1" class="data row7 col1" >10.91%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row8" class="row_heading level0 row8" >hs6</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row8_col0" class="data row8 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row8_col1" class="data row8 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row9" class="row_heading level0 row9" >lag_vat_reb_m</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row9_col0" class="data row9 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row9_col1" class="data row9 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row10" class="row_heading level0 row10" >year</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row10_col0" class="data row10 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row10_col1" class="data row10 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row11" class="row_heading level0 row11" >regime</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row11_col0" class="data row11 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row11_col1" class="data row11 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row12" class="row_heading level0 row12" >lag_foreign_export_share_ckr</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row12_col0" class="data row12 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row12_col1" class="data row12 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row13" class="row_heading level0 row13" >lag_soe_export_share_ckr</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row13_col0" class="data row13 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row13_col1" class="data row13 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row14" class="row_heading level0 row14" >ln_lag_import_tax</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row14_col0" class="data row14 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row14_col1" class="data row14 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row15" class="row_heading level0 row15" >lag_import_tax</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row15_col0" class="data row15 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row15_col1" class="data row15 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row16" class="row_heading level0 row16" >ln_lag_tax_rebate</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row16_col0" class="data row16 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row16_col1" class="data row16 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row17" class="row_heading level0 row17" >ln_lag_vat_reb_m</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row17_col0" class="data row17 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row17_col1" class="data row17 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row18" class="row_heading level0 row18" >ln_lag_vat_m</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row18_col0" class="data row18 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row18_col1" class="data row18 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row19" class="row_heading level0 row19" >lag_tax_rebate</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row19_col0" class="data row19 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row19_col1" class="data row19 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row20" class="row_heading level0 row20" >price_adjusted_quality</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row20_col0" class="data row20 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row20_col1" class="data row20 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row21" class="row_heading level0 row21" >lag_vat_m</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row21_col0" class="data row21 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row21_col1" class="data row21 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row22" class="row_heading level0 row22" >hs4</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row22_col0" class="data row22 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row22_col1" class="data row22 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row23" class="row_heading level0 row23" >kandhelwal_quality</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row23_col0" class="data row23 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row23_col1" class="data row23 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row24" class="row_heading level0 row24" >geocode4_corr</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row24_col0" class="data row24 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row24_col1" class="data row24 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row25" class="row_heading level0 row25" >value</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row25_col0" class="data row25 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row25_col1" class="data row25 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row26" class="row_heading level0 row26" >quantity</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row26_col0" class="data row26 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row26_col1" class="data row26 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row27" class="row_heading level0 row27" >income_group_ldc_dc</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row27_col0" class="data row27 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row27_col1" class="data row27 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row28" class="row_heading level0 row28" >iso_alpha</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row28_col0" class="data row28 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row28_col1" class="data row28 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row29" class="row_heading level0 row29" >country_en</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row29_col0" class="data row29 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row29_col1" class="data row29 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row30" class="row_heading level0 row30" >homogeneous</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row30_col0" class="data row30 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row30_col1" class="data row30 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row31" class="row_heading level0 row31" >hs2</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row31_col0" class="data row31 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row31_col1" class="data row31 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row32" class="row_heading level0 row32" >hs3</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row32_col0" class="data row32 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row32_col1" class="data row32 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961level0_row33" class="row_heading level0 row33" >unit_price</th>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row33_col0" class="data row33 col0" >0</td>
+                        <td id="T_dd6c9f22_c6a4_11eb_b3d0_b130e9745961row33_col1" class="data row33 col1" >0.00%</td>
+            </tr>
+    </tbody></table>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
@@ -15534,7 +16479,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[43]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">README</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
@@ -15743,7 +16688,7 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[44]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">shutil</span><span class="o">,</span> <span class="nn">urllib</span><span class="o">,</span> <span class="nn">ipykernel</span><span class="o">,</span> <span class="nn">json</span>
@@ -15763,7 +16708,7 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[45]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">create_report</span><span class="p">(</span><span class="n">extension</span> <span class="o">=</span> <span class="s2">&quot;html&quot;</span><span class="p">,</span> <span class="n">keep_code</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">notebookname</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
@@ -15830,10 +16775,10 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 </div>
 </div>
 
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[46]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">create_report</span><span class="p">(</span><span class="n">extension</span> <span class="o">=</span> <span class="s2">&quot;html&quot;</span><span class="p">,</span> <span class="n">keep_code</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">notebookname</span> <span class="o">=</span>  <span class="n">notebookname</span><span class="p">)</span>
@@ -15842,6 +16787,28 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
      </div>
 </div>
 </div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>Report Available at this adress:
+ /home/ec2-user/VAT_rebate_quality_china/01_data_preprocessing/02_transform_tables/Reports/04_baseline_vat_quantity_covariates.html
+</pre>
+</div>
+</div>
+
+</div>
+
 </div>
 
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
