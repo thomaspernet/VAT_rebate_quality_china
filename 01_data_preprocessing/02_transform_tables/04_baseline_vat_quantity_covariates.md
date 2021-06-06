@@ -322,54 +322,16 @@ FROM
       high_tech, 
       energy, 
       skilled, 
-      rd_oriented,
-      count_hs6, 
-      sum_quantity, 
-      city_average_hs6, 
-      city_average_quantity, 
-      CASE WHEN sum_quantity > city_average_quantity THEN 'LARGE_QUANTITY' ELSE 'SMALL_QUANTITY' END AS size_quantity, 
-      CASE WHEN count_hs6 > city_average_hs6 THEN 'LARGE_COUNT' ELSE 'SMALL_COUNT' END AS size_product
+      rd_oriented--,
+      --count_hs6, 
+      -- sum_quantity, 
+      --city_average_hs6, 
+      --city_average_quantity, 
+      --CASE WHEN sum_quantity > city_average_quantity THEN 'LARGE_QUANTITY' ELSE 'SMALL_QUANTITY' END AS size_quantity, 
+      --CASE WHEN count_hs6 > city_average_hs6 THEN 'LARGE_COUNT' ELSE 'SMALL_COUNT' END AS size_product
     FROM 
-      (
-        SELECT 
-          year, 
-          geocode4_corr, 
-          COUNT(
-            DISTINCT(hs6)
-          ) as count_hs6, 
-          SUM(quantity) as sum_quantity 
-        FROM 
-          merge_ 
-        WHERE 
-          year = '2003' 
-        GROUP BY 
-          geocode4_corr, 
-          year
-      ) as count_n_sum 
-      LEFT JOIN (
-        SELECT 
-          MIN(year) as year, 
-          AVG(count_hs6) as city_average_hs6, 
-          AVG(sum_quantity) as city_average_quantity 
-        FROM 
-          (
-            SELECT 
-              year, 
-              geocode4_corr, 
-              COUNT(
-                DISTINCT(hs6)
-              ) as count_hs6, 
-              SUM(quantity) as sum_quantity 
-            FROM 
-              merge_ 
-            WHERE 
-              year = '2003' 
-            GROUP BY 
-              geocode4_corr, 
-              year
-          ) as count_n_sum
-      ) as city_avg ON count_n_sum.year = city_avg.year 
-      LEFT JOIN merge_ ON merge_.geocode4_corr = count_n_sum.geocode4_corr
+      merge_
+      -- LEFT JOIN merge_ ON merge_.geocode4_corr = count_n_sum.geocode4_corr
       LEFT JOIN chinese_lookup.industry_high_tech
     ON merge_.hs6 = industry_high_tech.hs6
     LEFT JOIN chinese_lookup.industry_energy
@@ -379,7 +341,7 @@ FROM
     LEFT JOIN chinese_lookup.industry_rd_oriented
     ON merge_.hs4 = industry_rd_oriented.hs4
   )
-   LIMIT 10
+    LIMIT 10
 """
 ```
 
@@ -391,6 +353,10 @@ output = s3.run_query(
     filename = 'example_1'
                 )
 output
+```
+
+```python
+output.shape
 ```
 
 # Table `china_vat_quality`
@@ -588,54 +554,9 @@ FROM
       high_tech, 
       energy, 
       skilled, 
-      rd_oriented,
-      count_hs6, 
-      sum_quantity, 
-      city_average_hs6, 
-      city_average_quantity, 
-      CASE WHEN sum_quantity > city_average_quantity THEN 'LARGE_QUANTITY' ELSE 'SMALL_QUANTITY' END AS size_quantity, 
-      CASE WHEN count_hs6 > city_average_hs6 THEN 'LARGE_COUNT' ELSE 'SMALL_COUNT' END AS size_product
+      rd_oriented
     FROM 
-      (
-        SELECT 
-          year, 
-          geocode4_corr, 
-          COUNT(
-            DISTINCT(hs6)
-          ) as count_hs6, 
-          SUM(quantity) as sum_quantity 
-        FROM 
-          merge_ 
-        WHERE 
-          year = '2003' 
-        GROUP BY 
-          geocode4_corr, 
-          year
-      ) as count_n_sum 
-      LEFT JOIN (
-        SELECT 
-          MIN(year) as year, 
-          AVG(count_hs6) as city_average_hs6, 
-          AVG(sum_quantity) as city_average_quantity 
-        FROM 
-          (
-            SELECT 
-              year, 
-              geocode4_corr, 
-              COUNT(
-                DISTINCT(hs6)
-              ) as count_hs6, 
-              SUM(quantity) as sum_quantity 
-            FROM 
-              merge_ 
-            WHERE 
-              year = '2003' 
-            GROUP BY 
-              geocode4_corr, 
-              year
-          ) as count_n_sum
-      ) as city_avg ON count_n_sum.year = city_avg.year 
-      LEFT JOIN merge_ ON merge_.geocode4_corr = count_n_sum.geocode4_corr
+      merge_
       LEFT JOIN chinese_lookup.industry_high_tech
       ON merge_.hs6 = industry_high_tech.hs6
     LEFT JOIN chinese_lookup.industry_energy
@@ -727,12 +648,11 @@ schema = [{'Name': 'geocode4_corr', 'Type': 'string', 'Comment': 'city name'},
  {'Name': 'energy', 'Type': 'string', 'Comment': 'energy consuming product'},
  {'Name': 'skilled', 'Type': 'string', 'Comment': 'skilled sectors'},
  {'Name': 'rd_oriented', 'Type': 'string', 'Comment': 'rd_oriented sectors'},
- {'Name': 'count_hs6', 'Type': 'bigint', 'Comment': 'count hs6'},
- {'Name': 'sum_quantity', 'Type': 'bigint', 'Comment': ''},
- {'Name': 'city_average_hs6', 'Type': 'double', 'Comment': ''},
- {'Name': 'city_average_quantity', 'Type': 'double', 'Comment': ''},
- {'Name': 'size_quantity', 'Type': 'varchar(14)', 'Comment': ''},
- {'Name': 'size_product', 'Type': 'varchar(11)', 'Comment': ''}]
+ #{'Name': 'count_hs6', 'Type': 'bigint', 'Comment': 'count hs6'},
+ #{'Name': 'sum_quantity', 'Type': 'bigint', 'Comment': ''},
+ #{'Name': 'city_hs4_d', 'Type': 'array<bigint>', 'Comment': 'Decile quantity export city industry HS4'},
+ #{'Name': 'size_q_d', 'Type': 'map<double,boolean>', 'Comment': 'Boolean if decile above sum quantity'}
+         ]
 ```
 
 2. Provide a description
