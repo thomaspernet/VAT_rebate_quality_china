@@ -110,8 +110,8 @@ parent_path = str(Path(path).parent.parent)
 
 
 name_credential = 'financial_dep_SO2_accessKeys.csv'
-region = 'eu-west-3'
-bucket = 'datalake-datascience'
+region = 'eu-west-2'
+bucket = 'datalake-london'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 ```
 
@@ -479,7 +479,7 @@ FROM
                 cityen, 
                 geocode4_corr 
               FROM 
-                chinese_lookup.city_cn_en
+                chinese_lookup.china_city_code_normalised
             ) AS city_cn_en ON city_cn_en.citycn = aggregate.city_prod 
             LEFT JOIN chinese_lookup.china_country_name ON china_country_name.country_cn = aggregate.destination 
             INNER JOIN (
