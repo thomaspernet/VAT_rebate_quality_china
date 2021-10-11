@@ -163,7 +163,7 @@ for key, value in enumerate(schema):
 ```
 
 ```sos kernel="SoS"
-download_data = True
+download_data = False
 filename = 'df_{}'.format(table)
 full_path_filename = 'SQL_OUTPUT_ATHENA/CSV/{}.csv'.format(filename)
 path_local = os.path.join(str(Path(path).parent.parent.parent), 
@@ -198,10 +198,6 @@ if download_data:
     #)
     #s3.remove_file(full_path_filename)
     
-```
-
-```sos kernel="SoS"
-df.head()
 ```
 
 ```sos kernel="SoS" nteract={"transient": {"deleting": false}}
@@ -247,16 +243,13 @@ Create the following fixed effect for the baseline regression:
 * Destination-year: `FE_jt`
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
-
-<!-- #endregion -->
-<!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-create_fe = True
+create_fe = False
 if create_fe:
-    df = pd.read_csv(df_path, dtype = dtypes)
+    #df = pd.read_csv(df_path, dtype = dtypes)
     ### city-product
     df["fe_ck"] = pd.factorize(df["geocode4_corr"].astype('str') + 
                                         df["hs6"].astype('str')
@@ -383,12 +376,16 @@ if add_to_dic:
         'new':'\\text{Ln VAT rebate}_{k, t-1}'
         },
         {
+        'old':'rebate',
+        'new':'\\text{VAT refund}_{k, t-1}'
+        },
+        {
         'old':'regimeELIGIBLE',
         'new':'\\text{Regime}^R'
         },
         {
         'old':'ln\_lag\_import\_tax',
-        'new':'\\text{Ln VAT import tax,}_{k, t-1}'
+        'new':'\\text{VAT import tax,}_{k, t-1}'
         },
         {
         'old':'lag\_foreign\_export\_share\_ckr',
@@ -611,27 +608,27 @@ if os.path.exists(folder) == False:
 #t_2 <- change_target(t_2)
 #print('table 2 done')
 ### focus coef -> benchmark
-t_0 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
+t_0 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
             | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final,
             exactDOF = TRUE)
 t_0 <- change_target(t_0)
 print('table 0 done')
 
-t_1 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+t_1 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final,
             exactDOF = TRUE)
 t_1 <- change_target(t_1)
 print('table 1 done')
 
-t_2 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_2 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr + fe_group_shock|0 | hs6, df_final,
             exactDOF = TRUE)
 t_2 <- change_target(t_2)
 print('table 2 done')
 
-t_3 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+t_3 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
   mutate(length = length(unique(year))) %>%
@@ -640,14 +637,14 @@ t_3 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime
 t_3 <- change_target(t_3)
 print('table 3 done')
 
-t_4 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_4 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(lag_vat_m==17),
             exactDOF = TRUE)
 t_4 <- change_target(t_4)
 print('table 4 done')
 
-t_5 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_5 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(lag_vat_reb_m != 0),
             exactDOF = TRUE)
@@ -879,28 +876,28 @@ mutate(
 ```sos kernel="R"
 %get path table
 #### COUNTRIES
-t_0 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_0 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(income_group_ldc_dc == 'LDC'),
             exactDOF = TRUE)
 t_0 <- change_target(t_0)
 print('table 0 done')
 
-t_1 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_1 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(income_group_ldc_dc != 'LDC'),
             exactDOF = TRUE)
 t_1 <- change_target(t_1)
 print('table 1 done')
 #### GOODS
-t_2 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+t_2 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(homogeneous) | homogeneous == 'HOMOGENEOUS'),
             exactDOF = TRUE)
 t_2 <- change_target(t_2)
 print('table 2 done')
 
-t_3 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+t_3 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(homogeneous == 'HETEREGENEOUS'),
             exactDOF = TRUE)
@@ -908,14 +905,14 @@ t_3 <- change_target(t_3)
 print('table 3 done')
 #### CITIES
 ##### city-industry
-t_4 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_4 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, temp %>% filter(size_q_d == 'SMALL'),
             exactDOF = TRUE)
 t_4 <- change_target(t_4)
 print('table 4 done')
 
-t_5 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_5 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, temp %>% filter(size_q_d == 'LARGE'),
             exactDOF = TRUE)
@@ -1069,54 +1066,89 @@ to_remove <- c(
 "31"
 )
 #### RARE HEARTH
-t_0 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_0 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(hs6 != 850511),
             exactDOF = TRUE)
 t_0 <- change_target(t_0)
 print('table 0 done')
 
+t_1 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(hs6 == 850511),
+            exactDOF = TRUE)
+t_1 <- change_target(t_1)
+print('table 0 done')
+
 #### NO LARGE POLLUTED INDUSTRY
-t_1 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+t_2 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(!(hs2 %in% to_remove)),
             exactDOF = TRUE)
-t_1 <- change_target(t_1)
+t_2 <- change_target(t_2)
+print('table 1 done')
+
+t_3 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter((hs2 %in% to_remove)),
+            exactDOF = TRUE)
+t_3 <- change_target(t_3)
 print('table 1 done')
 
 #### HIGH TECH
-t_2 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_4 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(high_tech)),
             exactDOF = TRUE)
-t_2 <- change_target(t_2)
+t_4 <- change_target(t_4)
+print('table 2 done')
+
+t_5 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(!is.na(high_tech)),
+            exactDOF = TRUE)
+t_5 <- change_target(t_5)
 print('table 2 done')
 #### SKILLED
-t_3 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_6 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(skilled)),
             exactDOF = TRUE)
-t_3 <- change_target(t_3)
+t_6 <- change_target(t_6)
+print('table 3 done')
+
+t_7 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(!is.na(skilled)),
+            exactDOF = TRUE)
+t_7 <- change_target(t_7)
 print('table 3 done')
 ##### RD
-t_4 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_8 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(rd_oriented)),
             exactDOF = TRUE)
-t_4 <- change_target(t_4)
+t_8 <- change_target(t_8)
+print('table 4 done')
+
+t_9 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(!is.na(rd_oriented)),
+            exactDOF = TRUE)
+t_9 <- change_target(t_9)
 print('table 4 done')
 
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
-    c("City-product-regime","Yes", "Yes", "Yes", "Yes","Yes"),
+    c("City-product-regime","Yes", "Yes", "Yes", "Yes","Yes","Yes", "Yes", "Yes", "Yes","Yes"),
     
-    c("Product-year","Yes", "Yes", "Yes", "Yes","Yes"),
+    c("Product-year","Yes", "Yes", "Yes", "Yes","Yes","Yes", "Yes", "Yes", "Yes","Yes"),
     
-    c("Destination-year", "Yes", "Yes", "Yes", "Yes","Yes")
+    c("Destination-year", "Yes", "Yes", "Yes", "Yes","Yes", "Yes", "Yes", "Yes", "Yes","Yes")
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4
+    t_0,t_1, t_2, t_3, t_4, t_5, t_6,t_7, t_8, t_9
 ),
     title="VAT export tax and firm’s quality upgrading, characteristics of sensible sectors",
     dep_var = dep,
@@ -1139,23 +1171,23 @@ clustered at the product level appear inparentheses.
 \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
 
 multicolumn ={
-    'No rare-earth': 1,
-    'No polluted intensive': 1,
-    'No high tech': 1,
-    'No RD oriented': 1,
-    'No high skilled oriented': 1,
+    'Rare-earth': 2,
+    'Polluted intensive': 2,
+    'High tech': 2,
+    'RD oriented': 2,
+    'High skilled oriented': 2
 }
 reorder = {
     2:0,
     3:1
 }
 multi_lines_dep = '(city/product/trade regime/year)'
-#new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
+new_r = ['& No', 'Yes', 'No', 'Yes', 'No', 'Yes', 'No', 'Yes', 'No', 'Yes']
 lb.beautify(table_number = table_nb,
             #multi_lines_dep = None,
-            reorder_var = reorder,
+            #reorder_var = reorder,
             multi_lines_dep = multi_lines_dep,
-            new_row= False,
+            new_row= new_r,
             multicolumn = multicolumn,
             table_nte = tbe1,
             jupyter_preview = True,

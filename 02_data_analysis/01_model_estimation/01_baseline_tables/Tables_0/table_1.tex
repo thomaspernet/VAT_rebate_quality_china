@@ -3,9 +3,9 @@
 \usepackage[utf8]{inputenc}
 \usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
 
-\begin{document}% Date and time \times  Sun, Jun 06, 2021 - 09 \times 49 \times 13
+\begin{document}% Date and time \times  Mon, Oct 11, 2021 - 13 \times 23 \times 04
 \begin{table}[!htbp] \centering 
-  \caption{VAT export rebate and product's quality upgrading, baseline regression} 
+  \caption{VAT export \text{VAT refund}_{k, t-1} and product's quality upgrading, baseline regression} 
 \label{}
 \begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
 \begin{tabular}{@{\extracolsep{5pt}}lcccccc} 
@@ -19,9 +19,9 @@
             &\multicolumn{1}{c}{}&\multicolumn{1}{c}{Baseline}&\multicolumn{1}{c}{Shocks}&\multicolumn{1}{c}{Balance}&\multicolumn{1}{c}{Only 17\%}&\multicolumn{1}{c}{No zero rebate}\\
 \\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\ 
 \hline \\[-1.8ex] 
-  \text{Ln VAT rebate}_{k, t-1} \times \text{Regime}^R & 0.281$^{***}$ & 0.263$^{***}$ & 0.259$^{***}$ & 0.263$^{***}$ & 0.276$^{***}$ & 0.244$^{**}$ \\ 
-  & (0.096) & (0.096) & (0.090) & (0.096) & (0.097) & (0.108) \\ 
-  \text{Ln VAT import tax,}_{k, t-1} \times \text{Regime}^R & $-$0.122$^{**}$ & $-$0.120$^{**}$ & $-$0.150$^{***}$ & $-$0.120$^{**}$ & $-$0.117$^{**}$ & $-$0.120$^{**}$ \\ 
+  \text{VAT refund}_{k, t-1} \times \text{Regime}^R & 0.189$^{***}$ & 0.177$^{***}$ & 0.180$^{***}$ & 0.177$^{***}$ & 0.186$^{***}$ & 0.165$^{**}$ \\ 
+  & (0.065) & (0.064) & (0.060) & (0.064) & (0.066) & (0.069) \\ 
+  \text{Ln VAT import tax,}_{k, t-1} \times \text{Regime}^R & $-$0.121$^{**}$ & $-$0.119$^{**}$ & $-$0.149$^{***}$ & $-$0.119$^{**}$ & $-$0.117$^{**}$ & $-$0.119$^{**}$ \\ 
   & (0.048) & (0.048) & (0.051) & (0.048) & (0.048) & (0.048) \\ 
   \text{lag foreign export share}_{ck, t-1}^R &  & 0.039$^{***}$ & 0.036$^{***}$ & 0.039$^{***}$ & 0.038$^{***}$ & 0.038$^{***}$ \\ 
   &  & (0.009) & (0.009) & (0.009) & (0.009) & (0.009) \\ 
