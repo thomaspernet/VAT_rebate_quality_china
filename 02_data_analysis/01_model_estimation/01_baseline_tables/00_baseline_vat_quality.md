@@ -87,8 +87,8 @@ parent_path = str(Path(path).parent.parent.parent)
 
 
 name_credential = 'financial_dep_SO2_accessKeys.csv'
-region = 'eu-west-3'
-bucket = 'datalake-datascience'
+region = 'eu-west-2'
+bucket = 'datalake-london'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 ```
 
@@ -163,7 +163,7 @@ for key, value in enumerate(schema):
 ```
 
 ```sos kernel="SoS"
-download_data = False
+download_data = True
 filename = 'df_{}'.format(table)
 full_path_filename = 'SQL_OUTPUT_ATHENA/CSV/{}.csv'.format(filename)
 path_local = os.path.join(str(Path(path).parent.parent.parent), 
@@ -189,14 +189,19 @@ if download_data:
                 )
     except:
         pass
-    s3.download_file(
-        key = full_path_filename
-    )
-    shutil.move(
-        filename + '.csv',
-        os.path.join(path_local, filename + '.csv')
-    )
-    s3.remove_file(full_path_filename)
+    #s3.download_file(
+    #    key = full_path_filename
+    #)
+    #shutil.move(
+    #    filename + '.csv',
+    #    os.path.join(path_local, filename + '.csv')
+    #)
+    #s3.remove_file(full_path_filename)
+    
+```
+
+```sos kernel="SoS"
+df.head()
 ```
 
 ```sos kernel="SoS" nteract={"transient": {"deleting": false}}
@@ -242,11 +247,14 @@ Create the following fixed effect for the baseline regression:
 * Destination-year: `FE_jt`
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
+
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-create_fe = False
+create_fe = True
 if create_fe:
     df = pd.read_csv(df_path, dtype = dtypes)
     ### city-product
@@ -423,7 +431,8 @@ mutate(
     regime = relevel(as.factor(regime), ref='NOT_ELIGIBLE'),
     ln_rebate = ln_lag_tax_rebate * (-1),
     ln_rebate_1 = log((lag_vat_reb_m / lag_vat_m) +1),
-    ln_rebate_2 = log(lag_vat_reb_m + 1)
+    ln_rebate_2 = log(lag_vat_reb_m + 1),
+    rebate = lag_vat_reb_m / lag_vat_m
       )
 ```
 
