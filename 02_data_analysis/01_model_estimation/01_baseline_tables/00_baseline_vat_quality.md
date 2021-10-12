@@ -243,6 +243,9 @@ Create the following fixed effect for the baseline regression:
 * Destination-year: `FE_jt`
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
+
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
 
@@ -1007,6 +1010,22 @@ Sector is defined as the GBT 4 digits
 <!-- #endregion -->
 
 ```sos kernel="SoS"
+folder = 'Tables_0'
+table_nb = 3
+table = 'table_{}'.format(table_nb)
+path = os.path.join(folder, table + '.txt')
+if os.path.exists(folder) == False:
+        os.mkdir(folder)
+#for ext in ['.txt', '.tex', '.pdf']:
+#    x = [a for a in os.listdir(folder) if a.endswith(ext)]
+#    [os.remove(os.path.join(folder, i)) for i in x]
+```
+
+<!-- #region kernel="SoS" -->
+### Download polluted sectors
+<!-- #endregion -->
+
+```sos kernel="SoS"
 db = 'environment'
 query = """
 WITH temp AS (
@@ -1036,119 +1055,305 @@ list_polluted
 
 ```sos kernel="SoS"
 (
-    list_polluted.loc[lambda x: x['sum_tso2'] >=np.quantile(list_polluted['sum_tso2'], 0.75)]
-    .reindex(columns = ['ind2', 'short'])
+    list_polluted.assign(polluted = lambda x: x['sum_tso2'] >=np.quantile(x['sum_tso2'], 0.75))
+    .reindex(columns = ['ind2', 'short', 'polluted'])
+    .rename(columns = {'ind2':'hs2'})
+    .to_csv('polluted_vs_no_polluted.csv', index = False)
 )
 ```
 
 ```sos kernel="SoS"
-folder = 'Tables_0'
-table_nb = 3
-table = 'table_{}'.format(table_nb)
-path = os.path.join(folder, table + '.txt')
-if os.path.exists(folder) == False:
-        os.mkdir(folder)
-#for ext in ['.txt', '.tex', '.pdf']:
-#    x = [a for a in os.listdir(folder) if a.endswith(ext)]
-#    [os.remove(os.path.join(folder, i)) for i in x]
+df_final_polluted <-  df_final %>% left_join(
+    read_csv('polluted_vs_no_polluted.csv',
+             col_types = cols(hs2 = col_double()))
+) %>%
+mutate_at(c('polluted'), ~replace(., is.na(.), FALSE))
+```
+
+<!-- #region kernel="SoS" -->
+### Download high tech sectors
+
+- We use the economic complexity: https://atlas.cid.harvard.edu/rankings/product and saved in Google Drive: [Product Complexity Rankings 1995 - 2019](https://docs.google.com/spreadsheets/d/1Jzef1jfTT-vMn80cQz1pVgF85QAIxKVIKZhbMUvYxT8/edit?usp=sharing)
+- see paper: https://www.atlantis-press.com/article/55913101.pdf
+
+![image.png](attachment:dcd45d20-44f0-47f3-bab3-ffe32026149f.png)
+<!-- #endregion -->
+
+```sos kernel="SoS"
+#!pip install --upgrade git+git://github.com/thomaspernet/GoogleDrive-python
+```
+
+```sos kernel="python3"
+from GoogleDrivePy.google_drive import connect_drive
+from GoogleDrivePy.google_authorization import authorization_service
+import os
+import numpy as np
+import pandas as pd
+```
+
+```sos kernel="SoS"
+try:
+    os.mkdir("creds")
+except:
+    pass
+```
+
+```sos kernel="SoS"
+s3.download_file(key = "CREDS/Financial_dependency_pollution/creds/token.pickle", path_local = "creds")
+```
+
+```sos kernel="python3"
+auth = authorization_service.get_authorization(
+    #path_credential_gcp=os.path.join(parent_path, "creds", "service.json"),
+    path_credential_drive=os.path.join(os.getcwd(), "creds"),
+    verbose=False,
+    scope=['https://www.googleapis.com/auth/spreadsheets.readonly',
+           "https://www.googleapis.com/auth/drive"]
+)
+gd_auth = auth.authorization_drive(path_secret=os.path.join(
+    os.getcwd(), "creds"))
+drive = connect_drive.drive_operations(gd_auth)
+```
+
+```sos kernel="python3"
+FILENAME_SPREADSHEET = "Product Complexity Rankings 1995 - 2019"
+spreadsheet_id = drive.find_file_id(FILENAME_SPREADSHEET, to_print=False)
+df_complexity = (
+    drive.upload_data_from_spreadsheet(
+        sheetID=spreadsheet_id,
+        sheetName="Product Complexity Rankings 1995 - 2019.csv",
+        to_dataframe=True,
+    )
+    .rename(columns={"PCI 2002": "PCI_2002"})
+    .assign(PCI_2002=lambda x: pd.to_numeric(x["PCI_2002"]))
+    .assign(
+        hs4=lambda x: np.where(
+            x["HS4 Code"].astype("str").str.len() == 3,
+            "0" + x["HS4 Code"].astype("str"),
+            x["HS4 Code"].astype("str"),
+        ),
+        rank_2002=lambda x: pd.qcut(
+            x["PCI_2002"], 4, labels=["Low-tech Complexity", 
+                                      "Lower-middle-tech",
+                                      "Upper-middle-tech",
+                                     "High-tech"]
+        ),
+        dummy_tech_1 = lambda x: x['rank_2002'].isin(["Upper-middle-tech",
+                                     "High-tech"]), # 50%
+        dummy_tech_2 = lambda x: x['rank_2002'].isin(["High-tech"]), #75%
+        dummy_tech_3 = lambda x:  x['PCI_2002'] >=0.910580, #80%
+        dummy_tech_4 = lambda x:  x['PCI_2002'] >=1.271060, #90%
+        dummy_tech_5 = lambda x:  x['PCI_2002'] >=1.535260 #95%
+    )
+)
+df_complexity.to_csv('rank_complexity.csv', index = False)
+```
+
+```sos kernel="python3"
+df_complexity.head(2)
+```
+
+```sos kernel="python3"
+df_complexity['PCI_2002'].describe(percentiles= [.75, .80, .90, .95])
+```
+
+```sos kernel="python3"
+df_complexity.groupby('rank_2002')['PCI_2002'].describe()
+```
+
+```sos kernel="R"
+df_final_1 <- df_final %>% 
+left_join(read_csv('rank_complexity.csv',
+                                           col_types = cols(
+                                               hs4 = col_double()
+                                           )
+                                          )%>%select(Product,
+                                           hs4,
+                                           rank_2002,
+                                           dummy_tech_1,
+                                           dummy_tech_2,
+                                           dummy_tech_3,
+                                                     dummy_tech_4,
+                                                     dummy_tech_5
+                                                    )) %>%
+mutate_at(c('rank_2002'), ~replace(., is.na(.), 'Low-tech Complexity'))%>%
+mutate_at(c('dummy_tech_1',
+            'dummy_tech_2',
+            'dummy_tech_3',
+            'dummy_tech_4',
+            'dummy_tech_5'
+           ), ~replace(., is.na(.), FALSE),
+         )
+
+```
+
+```sos kernel="R"
+table(df_final_1$dummy_tech_1)
+```
+
+```sos kernel="R"
+table(df_final_1$dummy_tech_2)
+```
+
+```sos kernel="R"
+table(df_final_1$dummy_tech_3)
+```
+
+```sos kernel="R"
+table(df_final_1$dummy_tech_4)
+```
+
+```sos kernel="R"
+table(df_final_1$dummy_tech_5)
+```
+
+<!-- #region kernel="R" -->
+### Download RD oriented
+<!-- #endregion -->
+
+```sos kernel="SoS"
+query = """
+SELECT SUBSTRING(cic, 1, 2) as hs2,
+SUM(rdfee) as rdfee,
+SUM(total_asset) as total_asset,
+CAST(
+          SUM(rdfee) AS DECIMAL(16, 5)
+        ) / NULLIF(
+          CAST(
+            SUM(total_asset) AS DECIMAL(16, 5)
+          ), 
+          0
+        ) AS rd_total_asset,
+CAST(
+          SUM(rdfee) AS DECIMAL(16, 5)
+        ) / NULLIF(
+          CAST(
+            SUM(output) AS DECIMAL(16, 5)
+          ), 
+          0
+        ) AS rd_output
+FROM (
+SELECT 
+cic, rdfee,output,  CASE WHEN (
+      c80 + c81 + c82 + c79 + tofixed - cudepre + (c91 + c92)
+    ) - (c95 + c97 + c99) > 0 THEN (c95 + c97 + c99) + ABS(
+      (
+        c80 + c81 + c82 + c79 + tofixed - cudepre + (c91 + c92)
+      ) - (c95 + c97 + c99)
+    ) ELSE (c95 + c97 + c99) END AS total_right, 
+    CASE WHEN (
+      c80 + c81 + c82 + c79 + tofixed - cudepre + (c91 + c92)
+    ) - (c95 + c97 + c99) < 0 THEN (
+      c80 + c81 + c82 + c79 + tofixed - cudepre + (c91 + c92)
+    ) + ABS(
+      (
+        c80 + c81 + c82 + c79 + tofixed - cudepre + (c91 + c92)
+      ) - (c95 + c97 + c99)
+    ) ELSE (
+      c80 + c81 + c82 + c79 + tofixed - cudepre + (c91 + c92)
+    ) END AS total_asset
+    FROM firms_survey.asif_firms_prepared  
+WHERE year = '2005'
+)
+GROUP BY SUBSTRING(cic, 1, 2)
+ORDER BY rd_total_asset
+"""
+list_rd = s3.run_query(
+            query=query,
+            database=db,
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename='rd',  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+        )
+list_rd
+```
+
+```sos kernel="SoS"
+(
+    list_rd
+    .assign(
+        #hs4=lambda x: np.where(
+        #    x["cic"].astype("str").str.len() == 3,
+        #    "0" + x["cic"].astype("str"),
+        #   x["cic"].astype("str"),
+        #),
+        rd_asset = lambda x: x['rd_total_asset'] >=np.quantile(x['rd_total_asset'], 0.75),
+        rd_output = lambda x: x['rd_output'] >=np.quantile(x['rd_output'], 0.75)
+    )
+    .reindex(columns = [
+        #'hs4',
+        'hs2', 'rd_asset', 'rd_output'
+    ])
+    .to_csv('rd_vs_no_rd.csv', index = False)
+)
+```
+
+```sos kernel="R"
+df_final_rd <-  df_final %>% left_join(
+    read_csv('rd_vs_no_rd.csv',
+             col_types = cols(
+                 hs2 = col_double(),
+                 hs4 = col_double()
+             ))
+) %>%
+mutate_at(c('rd_asset','rd_output'), ~replace(., is.na(.), FALSE))
+```
+
+```sos kernel="R"
+table(df_final_rd$rd)
+```
+
+<!-- #region kernel="R" -->
+### Dummy
+<!-- #endregion -->
+
+```sos kernel="R"
+%get path table
+t_1 <- felm(kandhelwal_quality ~rebate* regime* polluted + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_polluted,
+            exactDOF = TRUE)
+t_1 <- change_target(t_1)
+
+print('table 1 done')
+t_2 <- felm(kandhelwal_quality ~rebate* regime * dummy_tech_2 + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_1,
+            exactDOF = TRUE)
+t_2 <- change_target(t_2)
+print('table 2 done')
+
+t_3 <- felm(kandhelwal_quality ~rebate* regime * rd_output + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd,
+            exactDOF = TRUE)
+t_3 <- change_target(t_3)
+print('table 4 done')
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    c("City-product-regime","Yes", "Yes", "Yes"),
+    
+    c("Product-year","Yes", "Yes", "Yes", "Yes","Yes"),
+    
+    c("Destination-year", "Yes", "Yes", "Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_1, t_2, t_3
+),
+    title="VAT export tax and firm’s quality upgrading, characteristics of sensible sectors",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name=path
+) 
 ```
 
 ```sos kernel="R"
 %get path table
-to_remove <- c(
-  "13",
-"17",
-"22",
-"25",
-"33",
-"26",
-"32",
-"31"
-)
-#### RARE HEARTH
-t_0 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(hs6 != 850511),
-            exactDOF = TRUE)
-t_0 <- change_target(t_0)
-print('table 0 done')
-
-t_1 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(hs6 == 850511),
-            exactDOF = TRUE)
-t_1 <- change_target(t_1)
-print('table 0 done')
-
-#### NO LARGE POLLUTED INDUSTRY
-t_2 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(!(hs2 %in% to_remove)),
-            exactDOF = TRUE)
-t_2 <- change_target(t_2)
-print('table 1 done')
-
-t_3 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter((hs2 %in% to_remove)),
-            exactDOF = TRUE)
-t_3 <- change_target(t_3)
-print('table 1 done')
-
-#### HIGH TECH
-t_4 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(high_tech)),
-            exactDOF = TRUE)
-t_4 <- change_target(t_4)
-print('table 2 done')
-
-t_5 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(!is.na(high_tech)),
-            exactDOF = TRUE)
-t_5 <- change_target(t_5)
-print('table 2 done')
-#### SKILLED
-t_6 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(skilled)),
-            exactDOF = TRUE)
-t_6 <- change_target(t_6)
-print('table 3 done')
-
-t_7 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(!is.na(skilled)),
-            exactDOF = TRUE)
-t_7 <- change_target(t_7)
-print('table 3 done')
-##### RD
-t_8 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(rd_oriented)),
-            exactDOF = TRUE)
-t_8 <- change_target(t_8)
-print('table 4 done')
-
-t_9 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(!is.na(rd_oriented)),
-            exactDOF = TRUE)
-t_9 <- change_target(t_9)
-print('table 4 done')
-
-dep <- "Dependent variable: Product quality"
-fe1 <- list(
-    c("City-product-regime","Yes", "Yes", "Yes", "Yes","Yes","Yes", "Yes", "Yes", "Yes","Yes"),
-    
-    c("Product-year","Yes", "Yes", "Yes", "Yes","Yes","Yes", "Yes", "Yes", "Yes","Yes"),
-    
-    c("Destination-year", "Yes", "Yes", "Yes", "Yes","Yes", "Yes", "Yes", "Yes", "Yes","Yes")
-             )
-
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4, t_5, t_6,t_7, t_8, t_9
+    t_1, t_2, t_3
 ),
     title="VAT export tax and firm’s quality upgrading, characteristics of sensible sectors",
     dep_var = dep,
@@ -1183,6 +1388,149 @@ reorder = {
 }
 multi_lines_dep = '(city/product/trade regime/year)'
 new_r = ['& No', 'Yes', 'No', 'Yes', 'No', 'Yes', 'No', 'Yes', 'No', 'Yes']
+lb.beautify(table_number = table_nb,
+            #multi_lines_dep = None,
+            #reorder_var = reorder,
+            #multi_lines_dep = multi_lines_dep,
+            #new_row= new_r,
+            #multicolumn = multicolumn,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 180,
+            folder = folder)
+```
+
+<!-- #region kernel="SoS" -->
+### subset
+<!-- #endregion -->
+
+```sos kernel="SoS"
+folder = 'Tables_0'
+table_nb = 4
+table = 'table_{}'.format(table_nb)
+path = os.path.join(folder, table + '.txt')
+```
+
+```sos kernel="R"
+%get path table
+#### RARE HEARTH
+#t_0 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+#            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(hs6 != 850511),
+#            exactDOF = TRUE)
+#t_0 <- change_target(t_0)
+#print('table 0 done')
+
+#t_1 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+#            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(hs6 == 850511),
+#            exactDOF = TRUE)
+#t_1 <- change_target(t_1)
+#print('table 0 done')
+
+#### NO LARGE POLLUTED INDUSTRY
+t_1 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_polluted %>% filter(polluted == TRUE),
+            exactDOF = TRUE)
+t_1 <- change_target(t_1)
+print('table 1 done')
+
+t_2 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_polluted %>% filter(polluted == FALSE),
+            exactDOF = TRUE)
+t_2 <- change_target(t_2)
+print('table 1 done')
+
+#### LARGEST COMPLEXITY ->ONE WITH BEST POTENTIAL
+t_3 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_1 %>% filter(dummy_tech_2 == TRUE),
+            exactDOF = TRUE)
+t_3 <- change_target(t_3)
+print('table 2 done')
+
+t_4 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_1 %>% filter(dummy_tech_2 == FALSE),
+            exactDOF = TRUE)
+t_4 <- change_target(t_4)
+print('table 2 done')
+#### SKILLED
+#t_6 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+#            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(skilled)),
+#            exactDOF = TRUE)
+#t_6 <- change_target(t_6)
+#print('table 3 done')
+
+#t_7 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+#            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(!is.na(skilled)),
+#            exactDOF = TRUE)
+#t_7 <- change_target(t_7)
+#print('table 3 done')
+##### RD
+t_5 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd %>% filter(rd_output == TRUE),
+            exactDOF = TRUE)
+t_5 <- change_target(t_5)
+print('table 3 done')
+
+t_6 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd %>% filter(rd_output == FALSE),
+            exactDOF = TRUE)
+t_6 <- change_target(t_6)
+print('table 3 done')
+
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    c("City-product-regime","Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    
+    c("Product-year","Yes", "Yes", "Yes", "Yes","Yes","Yes"),
+    
+    c("Destination-year", "Yes", "Yes", "Yes", "Yes","Yes", "Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_1, t_2, t_3, t_4, t_5, t_6
+),
+    title="VAT export tax and firm’s quality upgrading, characteristics of sensible sectors",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name=path
+) 
+```
+
+```sos kernel="SoS"
+tbe1  = """
+This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
+
+multicolumn ={
+    #'Rare-earth': 2,
+    'Polluted intensive': 2,
+    'High tech': 2,
+    'RD oriented': 2,
+    #1'High skilled oriented': 2
+}
+reorder = {
+    2:0,
+    3:1
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+new_r = ['& Yes', 'No', 'Yes', 'No', 'Yes', 'No']
 lb.beautify(table_number = table_nb,
             #multi_lines_dep = None,
             #reorder_var = reorder,

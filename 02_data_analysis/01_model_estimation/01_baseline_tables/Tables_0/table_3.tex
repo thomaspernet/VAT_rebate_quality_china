@@ -3,36 +3,38 @@
 \usepackage[utf8]{inputenc}
 \usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
 
-\begin{document}% Date and time \times  Sun, Jun 06, 2021 - 10 \times 20 \times 29
+\begin{document}% Date and time \times  Tue, Oct 12, 2021 - 08 \times 15 \times 13
 \begin{table}[!htbp] \centering 
   \caption{VAT export tax and firm’s quality upgrading, characteristics of sensible sectors} 
 \label{}
 \begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
-\begin{tabular}{@{\extracolsep{5pt}}lccccc} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
 \\[-1.8ex]\hline 
 \hline \\[-1.8ex] 
-& \multicolumn{5}{c}{Dependent variable: Product quality} \\
-&\multicolumn{5}{c}{(city/product/trade regime/year)} \\ 
-\cline{2-6}
-            
-\\[-1.8ex]
-            &\multicolumn{1}{c}{No rare-earth}&\multicolumn{1}{c}{No polluted intensive}&\multicolumn{1}{c}{No high tech}&\multicolumn{1}{c}{No RD oriented}&\multicolumn{1}{c}{No high skilled oriented}\\
-\\[-1.8ex] & (1) & (2) & (3) & (4) & (5)\\ 
+ & \multicolumn{3}{c}{Dependent variable: Product quality} \\ 
+\cline{2-4} 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
 \hline \\[-1.8ex] 
-  \text{Ln VAT rebate}_{k, t-1} \times \text{Regime}^R & 0.265$^{***}$ & 0.266$^{***}$ & 0.294$^{***}$ & 0.273$^{***}$ & 0.302$^{***}$ \\ 
-  & (0.096) & (0.100) & (0.095) & (0.096) & (0.095) \\ 
-  \text{Ln VAT import tax,}_{k, t-1} \times \text{Regime}^R & $-$0.120$^{**}$ & $-$0.124$^{***}$ & $-$0.123$^{**}$ & $-$0.126$^{**}$ & $-$0.125$^{***}$ \\ 
-  & (0.048) & (0.048) & (0.049) & (0.049) & (0.048) \\ 
-  \text{lag foreign export share}_{ck, t-1}^R & 0.038$^{***}$ & 0.038$^{***}$ & 0.039$^{***}$ & 0.039$^{***}$ & 0.040$^{***}$ \\ 
-  & (0.009) & (0.009) & (0.009) & (0.009) & (0.009) \\ 
-  \text{lag SOE export share}_{ck, t-1}^R & 0.125$^{***}$ & 0.124$^{***}$ & 0.126$^{***}$ & 0.125$^{***}$ & 0.124$^{***}$ \\ 
-  & (0.009) & (0.009) & (0.009) & (0.009) & (0.009) \\ 
+  \text{lag foreign export share}_{ck, t-1}^R & 0.039$^{***}$ & 0.039$^{***}$ & 0.039$^{***}$ \\ 
+  & (0.009) & (0.009) & (0.009) \\ 
+  \text{lag SOE export share}_{ck, t-1}^R & 0.125$^{***}$ & 0.126$^{***}$ & 0.125$^{***}$ \\ 
+  & (0.009) & (0.009) & (0.009) \\ 
+  \text{VAT refund}_{k, t-1} \times \text{Regime}^R & 0.179$^{***}$ & 0.130$^{*}$ & 0.256$^{***}$ \\ 
+  & (0.066) & (0.069) & (0.065) \\ 
+  \text{VAT import tax,}_{k, t-1} \times \text{Regime}^R & $-$0.119$^{**}$ & $-$0.119$^{**}$ & $-$0.122$^{**}$ \\ 
+  & (0.048) & (0.048) & (0.048) \\ 
+  \text{VAT refund}_{k, t-1} \times \text{Regime}^R \times polluted & $-$0.030 &  &  \\ 
+  & (0.170) &  &  \\ 
+  \text{VAT refund}_{k, t-1} \times \text{Regime}^R \times dummy\_tech\_2 &  & 0.141 &  \\ 
+  &  & (0.102) &  \\ 
+  \text{VAT refund}_{k, t-1} \times \text{Regime}^R \times rd\_output &  &  & $-$0.393$^{***}$ \\ 
+  &  &  & (0.105) \\ 
  \hline \\[-1.8ex] 
-City-product-regime & Yes & Yes & Yes & Yes & Yes \\ 
-Product-year & Yes & Yes & Yes & Yes & Yes \\ 
-Destination-year & Yes & Yes & Yes & Yes & Yes \\ 
-Observations & 5,739,657 & 5,638,182 & 5,699,150 & 5,606,243 & 5,588,639 \\ 
-R$^{2}$ & 0.269 & 0.268 & 0.269 & 0.264 & 0.265 \\ 
+City-product-regime & Yes & Yes & Yes \\ 
+Product-year & Yes & Yes & Yes \\ 
+Destination-year & Yes & Yes & Yes \\ 
+Observations & 5,744,631 & 5,744,631 & 5,744,631 \\ 
+R$^{2}$ & 0.269 & 0.269 & 0.269 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular}
