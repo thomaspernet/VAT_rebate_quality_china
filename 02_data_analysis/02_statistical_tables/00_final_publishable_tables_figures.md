@@ -10,9 +10,9 @@ jupyter:
   kernel_info:
     name: python3
   kernelspec:
-    display_name: SoS
-    language: sos
-    name: sos
+    display_name: Python 3
+    language: python
+    name: python3
 ---
 
 <!-- #region kernel="SoS" -->
@@ -66,28 +66,30 @@ kandhelwal_quality
 # Connexion server
 <!-- #endregion -->
 
-```sos kernel="python3"
+```python kernel="python3"
 from awsPy.aws_authorization import aws_connector
 from awsPy.aws_s3 import service_s3
 from awsPy.aws_glue import service_glue
 from pathlib import Path
 import pandas as pd
 import numpy as np
-#import seaborn as sns
+import matplotlib.pyplot as plt
+import seaborn as sns
 import os, shutil, json
 import sys
+import janitor
 
 path = os.getcwd()
 parent_path = str(Path(path).parent.parent)
 
 
 name_credential = 'financial_dep_SO2_accessKeys.csv'
-region = 'eu-west-3'
-bucket = 'datalake-datascience'
+region = 'eu-west-2'
+bucket = 'datalake-london'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 con = aws_connector.aws_instantiate(credential = path_cred,
                                        region = region)
 client= con.client_boto()
@@ -96,7 +98,7 @@ s3 = service_s3.connect_S3(client = client,
 glue = service_glue.connect_glue(client = client) 
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 pandas_setting = True
 if pandas_setting:
     #cm = sns.light_palette("green", as_cmap=True)
@@ -104,9 +106,64 @@ if pandas_setting:
     pd.set_option('display.max_colwidth', None)
 ```
 
-```sos kernel="python3" nteract={"transient": {"deleting": false}}
+```python kernel="python3" nteract={"transient": {"deleting": false}}
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
+```
+
+filter data: Need to keep only same product-city-destination by regime
+
+```python
+query = """
+SELECT 
+  *
+FROM 
+  chinese_trade.china_vat_quality 
+  LEFT JOIN (
+    SELECT 
+      * 
+    FROM 
+      (
+        SELECT 
+          year, 
+          hs6, 
+          geocode4_corr, 
+          country_en, 
+          COUNT(
+            DISTINCT(regime)
+          ) as cn,
+          COUNT(*
+          ) as cn_1
+        FROM 
+          chinese_trade.china_vat_quality 
+        GROUP BY 
+          year, 
+          hs6, 
+          geocode4_corr, 
+          country_en
+      )
+  ) as cn on china_vat_quality.year = cn.year 
+  and china_vat_quality.hs6 = cn.hs6
+  and china_vat_quality.geocode4_corr = cn.geocode4_corr
+  and china_vat_quality.country_en = cn.country_en
+  WHERE cn = 2
+"""
+df_unique = s3.run_query(
+            query=query,
+            database="chinese_trade",
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename='fig1',  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = {'hs6':'string'}
+)
+```
+
+```python
+list_to_keep = list(df_unique['hs6'].astype(str).unique())
+```
+
+```python
+len(list_to_keep)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -141,17 +198,18 @@ ggsave("violin.png")
 ```
 <!-- #endregion -->
 
-```sos kernel="python3"
+```python kernel="python3"
 db = 'chinese_trade'
 table = 'china_vat_quality'
 ```
 
-```sos kernel="python3" nteract={"transient": {"deleting": false}}
+```python kernel="python3" nteract={"transient": {"deleting": false}}
 query = """
 WITH temp AS (
 SELECT distinct(hs6),  hs2, lag_vat_reb_m, lag_vat_m
 FROM {}.{}  
-WHERE year = '2004'
+
+WHERE year = '2003'
 )
 SELECT hs2, AVG(lag_vat_reb_m/lag_vat_m) as share_rebate, stddev(lag_vat_reb_m/lag_vat_m) as std
 FROM temp
@@ -160,7 +218,7 @@ ORDER BY hs2
 
 """.format(db, table)
 
-df = s3.run_query(
+df = (s3.run_query(
             query=query,
             database=db,
             s3_output='SQL_OUTPUT_ATHENA',
@@ -168,22 +226,23 @@ df = s3.run_query(
             destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
             dtype = {'hs6':'string', 'hs2':'string'}
 )
-        
+      .loc[lambda x: x['hs2'].isin(
+          list(set(sorted([int(i[:2]) for i in list_to_keep])))
+                  )
+          ]
+     )
+df.head()        
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 df.shape
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 df.sort_values(by =['std']).loc[lambda x: x['std'].isin([0])].count()/df.shape[0]
 ```
 
-```sos kernel="python3"
-import matplotlib.pyplot as plt
-```
-
-```sos kernel="python3"
+```python kernel="python3"
 fig, ax = plt.subplots(figsize=(10, 8))
 ax.scatter(df['hs2'], df['share_rebate'], label = 'blah')
 ax.errorbar(df['hs2'], df['share_rebate'], yerr = df['std'], xerr = None, ls='none') 
@@ -225,7 +284,7 @@ ggplot(violin, aes(x=share_rebate)) + geom_density(aes(group=t, colour=t, fill=t
 ```
 <!-- #endregion -->
 
-```sos kernel="python3"
+```python kernel="python3"
 query = """
 WITH temp AS (
 SELECT distinct(hs6), year, lag_vat_reb_m/lag_vat_m as share_rebate
@@ -246,11 +305,11 @@ df = s3.run_query(
 )
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 import seaborn as sns
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 sns.kdeplot(
    data=df, x="share_rebate", hue="year",
    fill=True, common_norm=False, palette="crest",
@@ -262,7 +321,7 @@ sns.kdeplot(
 Create a table
 <!-- #endregion -->
 
-```sos kernel="python3"
+```python kernel="python3"
 df_latex = (
     pd.concat(
     [
@@ -287,17 +346,17 @@ df_latex = (
 )
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 df_latex
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 import tex2pix
 from PyPDF2 import PdfFileMerger
 from wand.image import Image as WImage
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 folder = 'Tables'
 table_number = 1
 title = 'Distribution of unique rebate share at the HS6 product level'
@@ -341,11 +400,140 @@ resolution = 200)
 display(img)
 ```
 
+# Figure 
+
+![image.png](attachment:9cfb186e-d443-4755-abc9-d76a965bb18f.png)
+
+```python
+query = """
+SELECT * , vat_reb_m / vat_m as refund
+FROM "chinese_trade"."hs6_china_vat_rebate"
+WHERE hs6 in ('{}')
+ORDER BY hs6, year
+""".format("', '".join(list(df_unique.assign(cn_2 = lambda x: x.groupby([
+          "hs6", 
+          "geocode4_corr", 
+          "country_en"])['regime'].transform("size")
+                ).loc[lambda x: x['cn_2'].isin([16])]['hs6'].unique().astype(str)))
+          )
+df = s3.run_query(
+            query=query,
+            database=db,
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename='fig1',  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = {'hs6':'string'}
+)
+```
+
+```python
+(
+    df
+    .loc[lambda x: x['year'] <= 2010]
+    .assign(
+         #hs6=lambda x: np.where(
+         #   x["hs6"].astype("str").str.len() == 5,
+         #   "00" + x["hs6"].astype("str"),
+         #   x["hs6"].astype("str"),
+        #),
+        hs6 = lambda x: x['hs6'].astype(str),
+        pct_change = lambda x: x.groupby('hs6')['refund'].transform("pct_change"),
+        min_ = lambda x: x.groupby('hs6')['refund'].transform("min"),
+        max_= lambda x: x.groupby('hs6')['refund'].transform("max"),
+        
+    )
+    .replace([np.inf, -np.inf], np.nan)
+    .dropna()
+    .loc[lambda x: x['min_'] != x['max_']]
+    #.loc[lambda x: x['hs6'].isin(['110813'])]
+    .assign(
+    size_= lambda x: x.groupby('hs6')['refund'].transform("size")
+    )
+    .loc[lambda x: x['size_'] > 1]
+    .assign(
+        min_ = lambda x: x.groupby('hs6')['year'].transform("min"),
+        max_= lambda x: x.groupby('hs6')['year'].transform("max"),
+    )
+    .loc[lambda x:
+         x['min_'].isin([2003])
+        &
+         x['max_'].isin([2010])
+        ]
+    .set_index(['hs6', 'year'])
+    .reindex(columns = ['refund'])
+    .unstack(-1)
+    #.loc[lambda x: x[('refund', 2003)] < x[('refund', 2010)]]
+    .sort_values(by = [('refund', 2003)])
+)
+```
+
+```python
+id_ = 940190
+query = """
+SELECT year, regime, AVG(kandhelwal_quality) as kandhelwal_quality
+FROM chinese_trade.china_vat_quality
+WHERE hs6 in ('{}')
+GROUP BY year, regime
+ORDER BY year, regime
+""".format(id_)
+df_1 = s3.run_query(
+            query=query,
+            database=db,
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename='fig1',  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = {'hs6':'string'}
+)
+df_temp = (
+    df
+    .loc[lambda x: x['hs6'].isin([id_])]
+    .set_index(['year'])
+    .reindex(columns = ['refund'])
+    .merge(
+    (
+    df_1
+    .set_index(['year', 'regime'])
+    .unstack(-1)
+    
+    .collapse_levels(sep='_')
+),left_index=True, right_index=True
+    )
+)
+fig, ax1 = plt.subplots(figsize=(15,10))
+
+ax2 = ax1.twinx()
+ax1.plot(df_temp.index, df_temp['kandhelwal_quality_ELIGIBLE'], 'g-') ### eligible
+ax1.plot(df_temp.index, df_temp['kandhelwal_quality_NOT_ELIGIBLE'], 'r-')
+ax2.plot(df_temp.index, df_temp['refund'], 'b-')
+
+ax1.set_xlabel('Year')
+ax1.set_ylabel('Product Quality', color='g')
+ax2.set_ylabel('VAT Refund', color='b')
+
+plt.show()
+```
+
+```python
+
+```
+
+```python
+sns.lmplot(x="refund", 
+           y="kandhelwal_quality", 
+           hue="regime",
+           data=df_unique.assign(refund = lambda x: x['lag_vat_reb_m']/x['lag_vat_m']), 
+           height=10)
+plt.xlabel("VAT refund")
+plt.ylabel("Product quality")
+#plt.savefig("How_To_Add_Regression_Line_per_group_Seaborn.png",
+#                    format='png',dpi=150)
+```
+
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
 # Generate reports
 <!-- #endregion -->
 
-```sos kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
+```python kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
 import os, time, shutil, urllib, ipykernel, json
 from pathlib import Path
 from notebook import notebookapp
@@ -357,16 +545,16 @@ import make_toc
 import create_report
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 name_json = 'parameters_ETL_VAT_rebate_quality_china.json'
 path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
 ```
 
-```sos kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
+```python kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
 create_report.create_report(extension = "html", keep_code = False, notebookname = "00_final_publishable_tables_figures.ipynb")
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 ### Update TOC in Github
 for p in [parent_path,
           str(Path(path).parent),
