@@ -174,8 +174,35 @@ if download_data:
     s3 = service_s3.connect_S3(client = client,
                           bucket = bucket, verbose = False)
     query = """
-    SELECT * 
-    FROM {}.{}
+    SELECT 
+  * 
+FROM 
+  chinese_trade.china_vat_quality 
+  LEFT JOIN (
+    SELECT 
+      * 
+    FROM 
+      (
+        SELECT 
+          year, 
+          hs6, 
+          geocode4_corr, 
+          country_en, 
+          COUNT(
+            DISTINCT(regime)
+          ) as cn 
+        FROM 
+          chinese_trade.china_vat_quality 
+        GROUP BY 
+          year, 
+          hs6, 
+          geocode4_corr, 
+          country_en
+      )
+  ) as cn on china_vat_quality.year = cn.year 
+  and china_vat_quality.hs6 = cn.hs6
+  and china_vat_quality.geocode4_corr = cn.geocode4_corr
+  and china_vat_quality.country_en = cn.country_en 
     """.format(db, table)
     try:
         df = (s3.run_query(
@@ -243,15 +270,13 @@ Create the following fixed effect for the baseline regression:
 * Destination-year: `FE_jt`
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
-
-<!-- #endregion -->
-<!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
 
 ```sos kernel="SoS"
 create_fe = False
 if create_fe:
+    df = df.loc[lambda x: x['cn'] == 2]
     #df = pd.read_csv(df_path, dtype = dtypes)
     ### city-product
     df["fe_ck"] = pd.factorize(df["geocode4_corr"].astype('str') + 
@@ -437,7 +462,7 @@ mutate(
 ```
 
 ```sos kernel="R"
-head(df_final)
+dim(df_final)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -1029,7 +1054,7 @@ if os.path.exists(folder) == False:
 db = 'environment'
 query = """
 WITH temp AS (
-SELECT ind2, SUM(tso2) as sum_tso2
+SELECT ind2, SUM(tso2) as sum_tso2, SUM(tso2) / SUM(ttoutput) as so2_intensity 
 FROM environment.china_city_sector_pollution  
 WHERE year = '2002'
 GROUP BY ind2
@@ -1055,19 +1080,30 @@ list_polluted
 
 ```sos kernel="SoS"
 (
-    list_polluted.assign(polluted = lambda x: x['sum_tso2'] >=np.quantile(x['sum_tso2'], 0.75))
-    .reindex(columns = ['ind2', 'short', 'polluted'])
-    .rename(columns = {'ind2':'hs2'})
+    list_polluted.assign(
+        polluted = lambda x: x['sum_tso2'] >=np.quantile(x['sum_tso2'], 0.5),
+        polluted_int = lambda x: x['so2_intensity'] >=np.quantile(x['so2_intensity'], 0.5),
+    )
+    .reindex(columns = ['ind2', 'short', 'polluted', 'polluted_int'])
+    .rename(columns = {'indus_code':'hs4','ind2':'hs2'})
     .to_csv('polluted_vs_no_polluted.csv', index = False)
 )
 ```
 
-```sos kernel="SoS"
+```sos kernel="R"
 df_final_polluted <-  df_final %>% left_join(
     read_csv('polluted_vs_no_polluted.csv',
              col_types = cols(hs2 = col_double()))
 ) %>%
-mutate_at(c('polluted'), ~replace(., is.na(.), FALSE))
+mutate_at(c('polluted', 'polluted_int'), ~replace(., is.na(.), FALSE))
+```
+
+```sos kernel="R"
+table(df_final_polluted$polluted)
+```
+
+```sos kernel="R"
+table(df_final_polluted$polluted_int)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -1284,7 +1320,7 @@ list_rd
         #'hs4',
         'hs2', 'rd_asset', 'rd_output'
     ])
-    .to_csv('rd_vs_no_rd.csv', index = False)
+    #.to_csv('rd_vs_no_rd.csv', index = False)
 )
 ```
 
@@ -1300,7 +1336,11 @@ mutate_at(c('rd_asset','rd_output'), ~replace(., is.na(.), FALSE))
 ```
 
 ```sos kernel="R"
-table(df_final_rd$rd)
+table(df_final_rd$rd_output)
+```
+
+```sos kernel="R"
+table(df_final_rd$rd_asset)
 ```
 
 <!-- #region kernel="R" -->
@@ -1338,20 +1378,6 @@ fe1 <- list(
     c("Destination-year", "Yes", "Yes", "Yes")
              )
 
-table_1 <- go_latex(list(
-    t_1, t_2, t_3
-),
-    title="VAT export tax and firm’s quality upgrading, characteristics of sensible sectors",
-    dep_var = dep,
-    addFE=fe1,
-    save=TRUE,
-    note = FALSE,
-    name=path
-) 
-```
-
-```sos kernel="R"
-%get path table
 table_1 <- go_latex(list(
     t_1, t_2, t_3
 ),
