@@ -203,6 +203,7 @@ FROM
   and china_vat_quality.hs6 = cn.hs6
   and china_vat_quality.geocode4_corr = cn.geocode4_corr
   and china_vat_quality.country_en = cn.country_en 
+  WHERE cn = 2
     """.format(db, table)
     try:
         df = (s3.run_query(
@@ -270,13 +271,16 @@ Create the following fixed effect for the baseline regression:
 * Destination-year: `FE_jt`
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
+
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
 
 ```sos kernel="SoS"
 create_fe = False
 if create_fe:
-    df = df.loc[lambda x: x['cn'] == 2]
+    df = df#.loc[lambda x: x['cn'] == 2]
     #df = pd.read_csv(df_path, dtype = dtypes)
     ### city-product
     df["fe_ck"] = pd.factorize(df["geocode4_corr"].astype('str') + 
@@ -413,7 +417,7 @@ if add_to_dic:
         },
         {
         'old':'ln\_lag\_import\_tax',
-        'new':'\\text{VAT import tax,}_{k, t-1}'
+        'new':'\\text{Import tax,}_{k, t-1}'
         },
         {
         'old':'lag\_foreign\_export\_share\_ckr',
@@ -1197,6 +1201,10 @@ df_complexity['PCI_2002'].describe(percentiles= [.75, .80, .90, .95])
 df_complexity.groupby('rank_2002')['PCI_2002'].describe()
 ```
 
+```sos kernel="python3"
+df_complexity.loc[lambda x: x['rank_2002'].isin(['High-tech'])].sort_values(by = ['PCI_2002']).tail()['Product']
+```
+
 ```sos kernel="R"
 df_final_1 <- df_final %>% 
 left_join(read_csv('rank_complexity.csv',
@@ -1249,6 +1257,7 @@ table(df_final_1$dummy_tech_5)
 
 ```sos kernel="SoS"
 query = """
+WITH test AS (
 SELECT SUBSTRING(cic, 1, 2) as hs2,
 SUM(rdfee) as rdfee,
 SUM(total_asset) as total_asset,
@@ -1293,6 +1302,14 @@ WHERE year = '2005'
 )
 GROUP BY SUBSTRING(cic, 1, 2)
 ORDER BY rd_total_asset
+) 
+SELECT *
+FROM test
+LEFT JOIN (
+    SELECT cic as ind2, short
+    FROM chinese_lookup.ind_cic_2_name
+    ) as ind_name
+    ON test.hs2 = ind_name.ind2
 """
 list_rd = s3.run_query(
             query=query,
@@ -1318,7 +1335,7 @@ list_rd
     )
     .reindex(columns = [
         #'hs4',
-        'hs2', 'rd_asset', 'rd_output'
+        'hs2', 'rd_asset', 'rd_output', 'short'
     ])
     #.to_csv('rd_vs_no_rd.csv', index = False)
 )
