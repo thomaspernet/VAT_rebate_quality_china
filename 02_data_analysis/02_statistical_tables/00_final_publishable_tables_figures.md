@@ -168,6 +168,72 @@ list_to_keep = list(df_unique['hs6'].astype(str).unique())
 len(list_to_keep)
 ```
 
+# Figure 0
+
+Share of rebate -> need to use actual not lag
+
+```python kernel="python3"
+query ="""
+SELECT * FROM hs6_china_vat_rebate
+"""
+df_tax = s3.run_query(
+            query=query,
+            database="chinese_trade",
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename='fig1',  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = {'hs6':'string'}
+)
+```
+
+```python
+df_refund = (
+    df_tax
+    .assign(
+         hs6=lambda x: np.where(
+            x["hs6"].astype("str").str.len() == 5,
+            "00" + x["hs6"].astype("str"),
+            x["hs6"].astype("str"),
+        ),
+        refund = lambda x: x['vat_reb_m']/x['vat_m']
+    )
+    .dropna()
+    .loc[lambda x: x['hs6'].isin(list_to_keep)]
+    .groupby('year')
+    .agg(
+    {
+        'vat_reb_m':'mean',
+        'vat_m':'mean',
+        'refund':'mean'
+    })
+)
+```
+
+```python
+fig, ax1 = plt.subplots(figsize=(15,10))
+
+ax2 = ax1.twinx()
+lns1 = ax1.plot(df_refund.index, df_refund['vat_reb_m'], 'g-', label = "Discount rate") ### eligible
+lns2 = ax1.plot(df_refund.index, df_refund['vat_m'], 'r-', label = "VAT rate")
+lns3 = ax2.plot(df_refund.index, df_refund['refund'], 'b-', label = "Percentage share refunded")
+
+
+# added these three lines
+lns = lns1+lns2+lns3
+labs = [l.get_label() for l in lns]
+ax1.legend(lns, labs,bbox_to_anchor=(1.08, 1), loc=2, borderaxespad=0.)
+ax1.set_xlabel('Year')
+ax1.set_ylabel('Discount rate')
+ax1.set_ylim([0,18])
+ax2.set_ylabel('Percentage share refunded')
+ax2.set_ylim([0.4,1])
+
+#plt.show()
+plt.savefig("Figures/fig_0.png",
+            bbox_inches='tight',
+            dpi=600)
+```
+
 <!-- #region kernel="SoS" -->
 # Replicate figure 1
 
@@ -200,7 +266,7 @@ ggsave("violin.png")
 ```
 <!-- #endregion -->
 
-```python kernel="python3"
+```python
 db = 'chinese_trade'
 table = 'china_vat_quality'
 ```
