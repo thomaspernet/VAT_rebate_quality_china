@@ -10,9 +10,9 @@ jupyter:
   kernel_info:
     name: python3
   kernelspec:
-    display_name: SoS
-    language: sos
-    name: sos
+    display_name: Python 3
+    language: python
+    name: python3
 ---
 
 <!-- #region kernel="SoS" -->
@@ -66,7 +66,7 @@ kandhelwal_quality
 # Connexion server
 <!-- #endregion -->
 
-```sos kernel="python3"
+```python kernel="python3"
 from awsPy.aws_authorization import aws_connector
 from awsPy.aws_s3 import service_s3
 from awsPy.aws_glue import service_glue
@@ -89,7 +89,7 @@ bucket = 'datalake-london'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 con = aws_connector.aws_instantiate(credential = path_cred,
                                        region = region)
 client= con.client_boto()
@@ -98,7 +98,7 @@ s3 = service_s3.connect_S3(client = client,
 glue = service_glue.connect_glue(client = client) 
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 pandas_setting = True
 if pandas_setting:
     #cm = sns.light_palette("green", as_cmap=True)
@@ -106,7 +106,7 @@ if pandas_setting:
     pd.set_option('display.max_colwidth', None)
 ```
 
-```sos kernel="python3" nteract={"transient": {"deleting": false}}
+```python kernel="python3" nteract={"transient": {"deleting": false}}
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 ```
@@ -115,7 +115,7 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 filter data: Need to keep only same product-city-destination by regime
 <!-- #endregion -->
 
-```sos kernel="python3"
+```python kernel="python3"
 query = """
 SELECT 
   *
@@ -160,11 +160,11 @@ df_unique = s3.run_query(
 )
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 list_to_keep = list(df_unique['hs6'].astype(str).unique())
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 len(list_to_keep)
 ```
 
@@ -200,12 +200,12 @@ ggsave("violin.png")
 ```
 <!-- #endregion -->
 
-```sos kernel="python3"
+```python kernel="python3"
 db = 'chinese_trade'
 table = 'china_vat_quality'
 ```
 
-```sos kernel="python3" nteract={"transient": {"deleting": false}}
+```python kernel="python3" nteract={"transient": {"deleting": false}}
 query = """
 WITH temp AS (
 SELECT distinct(hs6),  hs2, lag_vat_reb_m, lag_vat_m
@@ -236,15 +236,15 @@ df = (s3.run_query(
 df.head()        
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 df.shape
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 df.sort_values(by =['std']).loc[lambda x: x['std'].isin([0])].count()/df.shape[0]
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 fig, ax = plt.subplots(figsize=(10, 8))
 ax.scatter(df['hs2'], df['share_rebate'], label = 'blah')
 ax.errorbar(df['hs2'], df['share_rebate'], yerr = df['std'], xerr = None, ls='none') 
@@ -254,7 +254,7 @@ ax.spines['top'].set_visible(False)
 ax.set_xlim(df['hs2'].min(), df['hs2'].max())
 plt.xlabel('HS2')
 plt.ylabel('Average HS2 VAT rebate')
-plt.title('Average VAT rebate share and standard error within each HS2 (2003).')
+#plt.title('Average VAT rebate share and standard error within each HS2 (2003).')
 plt.savefig("Figures/fig_1.png",
             bbox_inches='tight',
             dpi=600)
@@ -286,7 +286,7 @@ ggplot(violin, aes(x=share_rebate)) + geom_density(aes(group=t, colour=t, fill=t
 ```
 <!-- #endregion -->
 
-```sos kernel="python3"
+```python kernel="python3"
 query = """
 WITH temp AS (
 SELECT distinct(hs6), year, lag_vat_reb_m/lag_vat_m as share_rebate
@@ -310,11 +310,11 @@ df = (s3.run_query(
 df.head()
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 import seaborn as sns
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 sns.kdeplot(
    data=df, x="share_rebate", hue="year",
    fill=True, common_norm=False, palette="crest",
@@ -326,7 +326,7 @@ sns.kdeplot(
 Create a table
 <!-- #endregion -->
 
-```sos kernel="python3"
+```python kernel="python3"
 df_latex = (
     pd.concat(
     [
@@ -351,17 +351,17 @@ df_latex = (
 )
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 df_latex
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 import tex2pix
 from PyPDF2 import PdfFileMerger
 from wand.image import Image as WImage
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 folder = 'Tables'
 table_number = 1
 title = 'Distribution of unique rebate share at the HS6 product level'
@@ -411,7 +411,7 @@ display(img)
 ![image.png](attachment:9cfb186e-d443-4755-abc9-d76a965bb18f.png)
 <!-- #endregion -->
 
-```sos kernel="SoS"
+```python kernel="SoS"
 query = """
 SELECT * , vat_reb_m / vat_m as refund
 FROM "chinese_trade"."hs6_china_vat_rebate"
@@ -433,7 +433,7 @@ df = s3.run_query(
 )
 ```
 
-```sos kernel="SoS"
+```python kernel="SoS"
 (
     df
     .loc[lambda x: x['year'] <= 2010]
@@ -474,7 +474,7 @@ df = s3.run_query(
 )
 ```
 
-```sos kernel="SoS"
+```python kernel="SoS"
 id_ = 940190
 query = """
 SELECT year, regime, AVG(kandhelwal_quality) as kandhelwal_quality
@@ -520,7 +520,7 @@ ax2.set_ylabel('VAT Refund', color='b')
 plt.show()
 ```
 
-```sos kernel="SoS"
+```python kernel="SoS"
 sns.lmplot(x="refund", 
            y="kandhelwal_quality", 
            hue="regime",
@@ -536,7 +536,7 @@ plt.ylabel("Product quality")
 # Generate reports
 <!-- #endregion -->
 
-```sos kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
+```python kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
 import os, time, shutil, urllib, ipykernel, json
 from pathlib import Path
 from notebook import notebookapp
@@ -548,16 +548,16 @@ import make_toc
 import create_report
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 name_json = 'parameters_ETL_VAT_rebate_quality_china.json'
 path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
 ```
 
-```sos kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
+```python kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
 create_report.create_report(extension = "html", keep_code = False, notebookname = "00_final_publishable_tables_figures.ipynb")
 ```
 
-```sos kernel="python3"
+```python kernel="python3"
 ### Update TOC in Github
 for p in [parent_path,
           str(Path(path).parent),
