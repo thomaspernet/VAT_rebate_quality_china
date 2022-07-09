@@ -96,6 +96,9 @@ var = (
             pd.read_csv('ds-0002-02-ntm_csv/NTM_HS1996.csv', dtype={
                 'ID': 'str', 'HS1996': 'str', 'HScombined': 'str'
             }).rename(columns={'ID': 'id', 'HS1996': 'hs1996', 'HScombined': 'hs_combined'})
+            .assign(hs1996 = lambda x: x['hs1996'].str.zfill(6),
+            hs_combined = lambda x: x['hs_combined'].str.zfill(6)
+            )
             .groupby('id')
             .agg({'hs1996': 'unique', 'hs_combined': 'unique'})
             .reset_index()
@@ -110,7 +113,6 @@ var = (
     convert_to_text(x['hs_combined']),axis =1)
     )
 )
-
 
 var.to_csv("wiif_non_tariff_measures.csv", index=False)
 # SAVE S3
