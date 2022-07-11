@@ -332,6 +332,10 @@ df_ntm_world = (
 ```
 
 ```sos kernel="SoS"
+df_ntm_world
+```
+
+```sos kernel="SoS"
 df_ntm_china = (
     df_ntm
     .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
@@ -560,6 +564,335 @@ df_ntm_env['lag_ntm_env'].value_counts()
 ```
 
 ```sos kernel="SoS"
+df.head(2)
+```
+
+<!-- #region kernel="SoS" -->
+Compute frequency, coverage and prevalence ratio:
+
+- D is a dummy variable reflecting the presence of one or more NTMs
+- M indicates whether there are imports of good i (also a dummy variable)
+- V is the value of imports in product i.
+- N is the number of NTMs on product i
+
+To make things simpler, we create different queries
+<!-- #endregion -->
+
+```sos kernel="SoS"
+query = """
+SELECT 
+    t as year, 
+    iso_3digit_alpha_d, 
+    COUNT(DISTINCT(hs6)) as M
+  FROM 
+    "trade"."baci_2002_2020" 
+  WHERE 
+    t IN (
+      '2002', '2003', '2004', '2005', '2006', 
+      '2007', '2008', '2009', '2010', '2011'
+    ) 
+  GROUP BY 
+    t, 
+    iso_3digit_alpha_d
+"""
+df_M = (s3.run_query(
+            query=query,
+            database="trade",
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename=filename,  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = dtypes
+        )
+        .dropna(subset = ['year', 'iso_3digit_alpha_d'])
+       )
+            
+```
+
+```sos kernel="SoS"
+query = """
+SELECT DISTINCT(hs6), t as year
+FROM baci_2002_2020
+WHERE 
+    t IN (
+      '2002', '2003', '2004', '2005', '2006', 
+      '2007', '2008', '2009', '2010', '2011'
+    ) 
+GROUP BY t, hs6
+"""
+df_hs_baci = (s3.run_query(
+            query=query,
+            database="trade",
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename=filename,  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = dtypes
+)
+              .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+       )
+```
+
+```sos kernel="SoS"
+df_hs_baci.groupby(['year'])['hs6'].nunique()
+```
+
+```sos kernel="SoS"
+df_hs_baci.shape
+```
+
+```sos kernel="SoS"
+query = """
+SELECT 
+    t as year, 
+    iso_3digit_alpha_d, 
+    hs6,
+    SUM(v) as v
+  FROM 
+    "trade"."baci_2002_2020" 
+  WHERE 
+    t IN (
+      '2002', '2003', '2004', '2005', '2006', 
+      '2007', '2008', '2009', '2010', '2011'
+    ) 
+  GROUP BY 
+    t, 
+    iso_3digit_alpha_d,
+    hs6
+"""
+df_hs_baci_v = (s3.run_query(
+            query=query,
+            database="trade",
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename=filename,  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = dtypes
+)
+              .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+       )
+```
+
+```sos kernel="SoS"
+df_hs_baci_v.head()
+```
+
+```sos kernel="SoS"
+query = """
+ WITH test as ( 
+ SELECT 
+                year_initiation as year, 
+                imp_iso3 as iso_3digit_alpha_d, 
+                split(hs_combined, '|') as hs_combined 
+              FROM 
+                wto_wiiw_ntm
+            )
+           SELECT 
+              year, 
+              iso_3digit_alpha_d, 
+              hs6
+            FROM 
+              test CROSS 
+              JOIN UNNEST(hs_combined) AS t (hs6)           
+"""
+df_DM = (s3.run_query(
+            query=query,
+            database="trade",
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename=filename,  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = dtypes
+        )
+          .dropna(subset = ['year', 'iso_3digit_alpha_d','hs6'])
+          .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+          #.groupby(['year', 'iso_3digit_alpha_d'])
+          #.agg({'hs6':'nunique'})
+          #.reset_index()
+          #.rename(columns = {'hs6':'DM'})
+       )
+```
+
+```sos kernel="SoS"
+query = """
+WITH test as ( 
+ SELECT 
+                id,
+                year_initiation as year, 
+                imp_iso3 as iso_3digit_alpha_d, 
+                split(hs_combined, '|') as hs_combined 
+              FROM 
+                wto_wiiw_ntm
+            )
+           SELECT 
+              year, 
+              iso_3digit_alpha_d, 
+              hs6,
+              COUNT(id) as NM
+            FROM 
+              test CROSS 
+              JOIN UNNEST(hs_combined) AS t (hs6)  
+            GROUP BY 
+            year, 
+              iso_3digit_alpha_d, 
+              hs6
+"""
+df_DN = (s3.run_query(
+            query=query,
+            database="trade",
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename=filename,  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = dtypes
+        )
+          .dropna(subset = ['year', 'iso_3digit_alpha_d','hs6'])
+          .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+          #.groupby(['year', 'iso_3digit_alpha_d'])
+          #.agg({'hs6':'nunique'})
+          #.reset_index()
+          #.rename(columns = {'hs6':'DM'})
+       )
+```
+
+```sos kernel="SoS"
+df_DN
+```
+
+```sos kernel="SoS"
+
+```
+
+```sos kernel="SoS"
+df_freq = (
+    df_M.merge(
+        (
+            df_DM.loc[
+                lambda x: x["year"].isin(
+                    [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011]
+                )
+            ]
+            .merge(df_hs_baci)
+            .groupby(["year", "iso_3digit_alpha_d"])
+            .agg({"hs6": "nunique"})
+            .rename(columns={"hs6": "DM"})
+            .reset_index()
+        ),
+        how="left",
+    ).fillna(0)
+    .assign(
+    frequency = lambda x: x['DM'] / x['M']
+    )
+    .set_index(['year', 'iso_3digit_alpha_d'])
+    .assign(
+    frequency = lambda x: x['frequency'].clip(upper=1)
+    )
+    .reset_index()
+    .rename(columns={"iso_3digit_alpha_d": "iso_alpha"})
+    .sort_values(by=["iso_alpha", "year"])
+            .assign(
+                lag_frequency=lambda x: x.groupby(["iso_alpha"])["frequency"].transform(
+                    "shift"
+                ),
+            )
+)
+```
+
+```sos kernel="SoS"
+df_prev = (
+    df_M.merge(
+        (
+            df_DN.loc[
+                lambda x: x["year"].isin(
+                    [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011]
+                )
+            ]
+            .merge(df_hs_baci)
+            .groupby(["year", "iso_3digit_alpha_d"])
+            .agg({"NM": "sum"})
+            #.rename(columns={"hs6": "DN"})
+            .reset_index()
+        ),
+        how="left",
+    ).fillna(0)
+    .assign(
+    prevalence = lambda x: x['NM'] / x['M']
+    )
+    .rename(columns={"iso_3digit_alpha_d": "iso_alpha"})
+    .sort_values(by=["iso_alpha", "year"])
+            .assign(
+                lag_prevalence=lambda x: x.groupby(["iso_alpha"])["prevalence"].transform(
+                    "shift"
+                ),
+            )
+)
+```
+
+```sos kernel="SoS"
+df_hs_baci_v.shape
+```
+
+```sos kernel="SoS"
+import janitor
+```
+
+```sos kernel="SoS"
+df_cov = (
+    df_hs_baci_v.merge(
+        (
+            df_DM.loc[
+                lambda x: x["year"].isin(
+                    [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011]
+                )
+            ]
+            .merge(df_hs_baci)
+            .drop_duplicates()
+        ),
+        how="left", indicator = True
+    )
+    .loc[lambda x: x['_merge'].isin(['left_only','both'])]
+    .groupby(["year","iso_3digit_alpha_d",'_merge'])
+    .agg({'v':'sum'})
+    .fillna(0)
+    .unstack(-1)
+    .collapse_levels(sep='_')
+    .assign(coverage = lambda x: x['v_both']/ (x['v_left_only'] + x['v_both']))
+    .drop(columns = ['v_right_only'])
+    .reset_index()
+    .rename(columns={"iso_3digit_alpha_d": "iso_alpha"})
+    .sort_values(by=["iso_alpha", "year"])
+            .assign(
+                lag_coverage=lambda x: x.groupby(["iso_alpha"])["coverage"].transform(
+                    "shift"
+                ),
+            )
+)
+```
+
+```sos kernel="SoS"
+df.dtypes
+```
+
+```sos kernel="SoS"
+#df_ntm_country.loc[lambda x: x["iso_3digit_alpha_d"].isin(["CHN"])].groupby(['year','iso_3digit_alpha_d'])['frequency'].describe()
+```
+
+```sos kernel="SoS"
+df_baci.head()
+```
+
+```sos kernel="SoS"
+df_baci['iso_alpha'].value_counts()
+```
+
+```sos kernel="SoS"
 df_final = (
     df.drop(columns=["year.1", "hs6.1", "geocode4_corr.1", "country_en.1"])
     .assign(hs6=lambda x: x["hs6"].astype(str).str.zfill(6))
@@ -570,7 +903,29 @@ df_final = (
     .merge(list_ntm[1].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
     .merge(list_ntm[2].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
     .merge(df_country.drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
-    # .assign(ntm = lambda x: x['ntm'].fillna('FALSE'), ntm_china = lambda x: x['ntm_china'].fillna('FALSE'))
+    .merge(
+        df_freq,
+        on=["year", "iso_alpha"],
+        how="left",
+    )
+    .merge(
+        df_prev.drop(columns = ['M']),
+        on=["year", "iso_alpha"],
+        how="left",
+    )
+    .merge(
+        df_cov,
+        on=["year", "iso_alpha"],
+        how="left",
+    )
+    .assign(
+        frequency=lambda x: x["frequency"].fillna(0),
+        lag_frequency=lambda x: x["lag_frequency"].fillna(0),
+        coverage=lambda x: x["coverage"].fillna(0),
+        lag_coverage=lambda x: x["lag_coverage"].fillna(0),
+        prevalence=lambda x: x["prevalence"].fillna(0),
+        lag_prevalence=lambda x: x["lag_prevalence"].fillna(0),
+    )
 )
 df_final = df_final.assign(
     **{
@@ -580,33 +935,27 @@ df_final = df_final.assign(
             "stock_ntm",
             "lag_count",
             "lag_stock_ntm",
-            
             "count_china",
             "stock_ntm_china",
             "lag_count_china",
             "lag_stock_ntm_china",
-            
             "count_env",
             "stock_ntm_env",
             "lag_count_env",
-            "lag_stock_ntm_env",  
-            
+            "lag_stock_ntm_env",
             "count_TBT",
             "stock_ntm_TBT",
             "lag_count_TBT",
             "lag_stock_ntm_TBT",
-            
             "count_SPS",
             "stock_ntm_SPS",
             "lag_count_SPS",
             "lag_stock_ntm_SPS",
-            
             "count_ADP",
             "stock_ntm_ADP",
             "lag_count_ADP",
             "lag_stock_ntm_ADP",
-            
-             "count_dvp_c",
+            "count_dvp_c",
             "stock_ntm_dvp_c",
             "lag_count_dvp_c",
             "lag_stock_ntm_dvp_c",
@@ -791,6 +1140,26 @@ if add_to_dic:
         {
         'old':'lag\_soe\_export\_share\_ckr',
         'new':'\\text{lag SOE export share}_{ck, t-1}^R'
+        },
+        
+         {
+        'old':'lag\_stock\_ntm',
+        'new':'\\text{lag stock ntm}_{ck, t-1}'
+        },
+        
+        {
+        'old':'lag\_frequency',
+        'new':'\\text{lag frequency}_{ck, t-1}'
+        },
+        
+        {
+        'old':'lag\_prevalence',
+        'new':'\\text{lag prevalence}_{ck, t-1}'
+        },
+        
+        {
+        'old':'lag\_coverage',
+        'new':'\\text{lag coverage}_{ck, t-1}'
         }
     ]
 
@@ -1966,123 +2335,179 @@ lb.beautify(table_number = table_nb,
 - Model is located here: [checkpoint-2562](https://drive.google.com/drive/folders/13rpnm5X5UG-MgLAFb8r1Pu2F-hvGA443?usp=sharing)
 <!-- #endregion -->
 
+```sos kernel="SoS"
+folder = 'Tables_0'
+table_nb = 5
+table = 'table_{}'.format(table_nb)
+path = os.path.join(folder, table + '.txt')
+
+for ext in ['.txt', '.tex', '.pdf']:
+    x = [a for a in os.listdir(folder) if a.endswith(ext)]
+    [os.remove(os.path.join(folder, i)) for i in x]
+```
+
 ```sos kernel="R"
-summary(
-    felm(
+summary(felm(
     kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_china + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final,
+    rebate * regime * lag_stock_ntm + 
+    rebate * regime * lag_frequency + 
+    rebate * regime * lag_prevalence + 
+    rebate * regime * lag_coverage + 
+    ln_lag_import_tax * regime +
+        ln_lag_import_tax  
+            | fe_ckr  + fe_kt + fe_jtr |0 , df_final %>%select(-lag_stock_ntm) %>% 
+    rename(lag_stock_ntm = lag_stock_ntm_china),
+            exactDOF = TRUE))
+```
+
+```sos kernel="R"
+%get path table
+t_0 <- felm(
+    kandhelwal_quality ~
+    rebate * regime * lag_stock_ntm + 
+    rebate * regime * lag_frequency + 
+    rebate * regime * lag_prevalence + 
+    rebate * regime * lag_coverage + 
+    ln_lag_import_tax * regime +
+        ln_lag_import_tax  
+            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final %>%select(-lag_stock_ntm) %>% 
+    rename(lag_stock_ntm = lag_stock_ntm_china),
             exactDOF = TRUE)
-       )
+   
+#### ENV
+t_1 <- felm(
+    kandhelwal_quality ~
+    rebate * regime * lag_stock_ntm + 
+    rebate * regime * lag_frequency + 
+    rebate * regime * lag_prevalence + 
+    rebate * regime * lag_coverage + 
+    ln_lag_import_tax * regime +
+        ln_lag_import_tax  
+            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final %>%select(-lag_stock_ntm) %>% 
+    rename(lag_stock_ntm = lag_stock_ntm_env),
+            exactDOF = TRUE)
+
+### TBT
+t_2 <- felm(
+    kandhelwal_quality ~
+    rebate * regime * lag_stock_ntm + 
+    rebate * regime * lag_frequency + 
+    rebate * regime * lag_prevalence + 
+    rebate * regime * lag_coverage + 
+    ln_lag_import_tax * regime +
+        ln_lag_import_tax  
+            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final %>%select(-lag_stock_ntm) %>% 
+    rename(lag_stock_ntm = lag_stock_ntm_TBT),
+            exactDOF = TRUE)
+
+### SPS
+t_3 <- felm(
+    kandhelwal_quality ~
+    rebate * regime * lag_stock_ntm + 
+    rebate * regime * lag_frequency + 
+    rebate * regime * lag_prevalence + 
+    rebate * regime * lag_coverage + 
+    ln_lag_import_tax * regime +
+        ln_lag_import_tax  
+            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final %>%select(-lag_stock_ntm) %>% 
+    rename(lag_stock_ntm = lag_stock_ntm_SPS),
+            exactDOF = TRUE)
+### ADP
+t_4 <- felm(
+    kandhelwal_quality ~
+    rebate * regime * lag_stock_ntm + 
+    rebate * regime * lag_frequency + 
+    rebate * regime * lag_prevalence + 
+    rebate * regime * lag_coverage + 
+    ln_lag_import_tax * regime +
+        ln_lag_import_tax  
+            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final %>%select(-lag_stock_ntm) %>% 
+    rename(lag_stock_ntm = lag_stock_ntm_ADP),
+            exactDOF = TRUE)
+### DVP vs L DVP
+t_5 <- felm(
+    kandhelwal_quality ~
+    rebate * regime * lag_stock_ntm + 
+    rebate * regime * lag_frequency + 
+    rebate * regime * lag_prevalence + 
+    rebate * regime * lag_coverage + 
+    ln_lag_import_tax * regime +
+        ln_lag_import_tax  
+            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final %>%select(-lag_stock_ntm) %>% 
+    rename(lag_stock_ntm = lag_stock_ntm_dvp_c),
+            exactDOF = TRUE)
+
+### prevalence
+t_6 <- felm(
+    kandhelwal_quality ~
+    rebate * regime * lag_stock_ntm + 
+    rebate * regime * lag_frequency + 
+    rebate * regime * lag_prevalence + 
+    rebate * regime * lag_coverage + 
+    ln_lag_import_tax * regime +
+        ln_lag_import_tax  
+            | fe_ckr  + fe_kt + fe_jtr |0 | hs6,  df_final %>%select(-lag_stock_ntm) %>% 
+    rename(lag_stock_ntm = lag_stock_ntm_china),
+            exactDOF = TRUE)
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    c("City-product-regime","Yes", "Yes", "Yes", "Yes","Yes","Yes","Yes","Yes"),
+    
+    c("Product-year","Yes", "Yes", "Yes", "Yes","Yes","Yes","Yes","Yes"),
+    
+    c("Destination-year", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes","Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4, t_5#, t_6
+),
+    title="VAT export tax and firm’s quality upgrading NTM anaysis",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name=path
+) 
 ```
 
 ```sos kernel="SoS"
-df_final['year'].value_counts()
+tbe1  = """
+This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
+
+multicolumn ={
+    'Baseline': 1,
+    'Environnement': 1,
+    'classification': 3,
+    'Developped': 1,
+    #'Destination': 1
+}
+reorder = {
+    12:2,
+    #5:1
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+new_r = ['& ', '', 'TBT', 'SPS', 'ADP', '','','']
+lb.beautify(table_number = table_nb,
+            #multi_lines_dep = None,
+            #reorder_var = reorder,
+            multi_lines_dep = multi_lines_dep,
+            new_row= new_r,
+            multicolumn = multicolumn,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 180,
+            folder = folder)
 ```
 
 ```sos kernel="SoS"
-df_ntm_env['lag_stock_ntm_env'].describe()
-```
 
-```sos kernel="SoS"
-list_ntm[0]['lag_stock_ntm_TBT'].describe()
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_env + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final,
-    cluster ='hs6'
-    )
-       )
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_env + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final %>% filter(!year %in% c('2003', '2004','2005')),
-    cluster ='hs6'
-    )
-       )
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_TBT + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final,
-    cluster ='hs6'
-    )
-       )
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_SPS + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final,
-    cluster ='hs6'
-    )
-       )
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_ADP + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final,
-    cluster ='hs6'
-    )
-       )
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_env + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final,
-    cluster ='hs6'
-    )
-       )
-```
-
-```sos kernel="SoS"
-df_country['lag_stock_ntm_dvp_c'].describe()
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_dvp_c + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final,
-    cluster ='hs6'
-    )
-       )
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
