@@ -976,6 +976,112 @@ df_final.head(1)
 ```
 
 <!-- #region kernel="SoS" -->
+### Robustness check
+
+- Use different values of sigma:
+    -  Set sigma to the elasticity as 5 and 10
+        - [Credit Constraints, Quality, and Export Prices: Theory and Evidence from China](https://drive.google.com/file/d/1FnIIq2kwWdcIgg6jm-ydIvzj9f-UApYR/view?usp=sharing)
+        - [Credit constraints, quality, and export prices: Theory and evidence from China](https://drive.google.com/file/d/1FnIIq2kwWdcIgg6jm-ydIvzj9f-UApYR/view?usp=sharing)
+        
+-> code from [01_preparation_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/01_preparation_quality.md#steps)
+<!-- #endregion -->
+```sos kernel="SoS"
+compute_quality = False
+if compute_quality:
+    from sklearn.pipeline import make_pipeline
+    from sklearn.linear_model import LinearRegression
+    from sklearn.preprocessing import OneHotEncoder
+    from sklearn.compose import make_column_transformer
+    query = """
+    SELECT geocode4_corr,country_en,year,regime,hs6,iso_alpha,unit_price,quantity
+    FROM chinese_trade.china_export_tariff_tax
+    """.format(db, table)
+    df_vat = (
+        s3.run_query(
+        query=query,
+        database="chinese_trade",
+        s3_output="SQL_OUTPUT_ATHENA",
+        filename="trade_vat",  # Add filename to print dataframe
+        destination_key=None,  # Add destination key if need to copy output
+    )
+        .assign(
+                  year = lambda x: x['year'].astype('Int64'),
+                  hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+              )
+    )
+    df_quality = (
+        df_vat.assign(
+        hs2 = lambda x: x['hs6'].str[:2],
+        hs3 = lambda x: x['hs6'].str[:3],
+        hs4 = lambda x: x['hs6'].str[:4],
+        sigma_3 = 3,
+        sigma_10 = 10
+
+    )
+        .assign(
+            sigma_price3 = lambda x: x['sigma_3'].astype('float') * np.log(x['unit_price']),
+            sigma_price5 = lambda x: x['sigma_3'].astype('float') * np.log(x['unit_price']),
+            sigma_price10 = lambda x: x['sigma_10'].astype('float') * np.log(x['unit_price']),
+            y3 = lambda x : np.log(x['quantity']) + x['sigma_price3'],
+            y5 = lambda x : np.log(x['quantity']) + x['sigma_price3'],
+            y10 = lambda x : np.log(x['quantity']) + x['sigma_price10']
+        )
+    )
+    df_quality["FE_ct"] = pd.factorize(df_quality["year"].astype('string') + 
+                                       df_quality["country_en"])[0]
+    cat_proc = make_pipeline(
+        OneHotEncoder()
+    )
+    preprocessor = make_column_transformer(
+        (cat_proc, tuple(['hs6', 'FE_ct']))
+    )
+    clf = make_pipeline(preprocessor,
+                        LinearRegression(fit_intercept=True, normalize=False))
+    #%%time
+    print('begin model 3')
+    MODEL3 = clf.fit(df_quality[['hs6', 'FE_ct']], df_quality['y3']) 
+    print('begin model 5')
+    MODEL5 = clf.fit(df_quality[['hs6', 'FE_ct']], df_quality['y5']) 
+    print('begin model 10')
+    MODEL10 = clf.fit(df_quality[['hs6', 'FE_ct']], df_quality['y10']) 
+    from joblib import dump, load
+    dump(MODEL3, 'filename3.joblib') 
+    dump(MODEL5, 'filename5.joblib') 
+    dump(MODEL10, 'filename10.joblib') 
+```
+
+```sos kernel="SoS"
+df_quality = df_quality.assign(
+    prediction3 = lambda x: load('filename3.joblib') .predict(x[['hs6', 'FE_ct']]),
+    residual3 = lambda x: x['y3'] - x['prediction3'],
+    kandhelwal_quality3 = lambda x: x['residual3'] / (x['sigma_3'].astype('float') -1),
+    prediction5 = lambda x: load('filename5.joblib') .predict(x[['hs6', 'FE_ct']]),
+    residual5 = lambda x: x['y5'] - x['prediction5'],
+    kandhelwal_quality5 = lambda x: x['residual5'] / (x['sigma_5'].astype('float') -1),
+    prediction10 = lambda x: load('filename10.joblib') .predict(x[['hs6', 'FE_ct']]),
+    residual10 = lambda x: x['y10'] - x['prediction10'],
+    kandhelwal_quality10 = lambda x: x['residual10'] / (x['sigma_10'].astype('float') -1),
+)  
+```
+
+```sos kernel="SoS"
+df_final = (
+    df_final
+    .merge(
+    df_quality.reindex(
+    columns = ['geocode4_corr','year','regime','hs6','iso_alpha',
+              'kandhelwal_quality3','kandhelwal_quality5','kandhelwal_quality10']
+    )
+    )
+    #.to_csv(os.path.join(path_local, 'df_final_robusntess' + '.csv'), index = False)
+)
+```
+
+```sos kernel="SoS"
+df_final.head()
+```
+
+<!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
 
@@ -1220,126 +1326,6 @@ Use ln_rebate_1 = log((lag_vat_reb_m / lag_vat_m) +1)  → share of rebate and F
 * Exclude rebates 0% 
 <!-- #endregion -->
 
-```sos kernel="SoS" nteract={"transient": {"deleting": false}}
-#folder = 'Tables_0'
-#table_nb = 1
-#table = 'table_{}'.format(table_nb)
-#path = os.path.join(folder, table + '.txt')
-#if os.path.exists(folder) == False:
-#        os.mkdir(folder)
-#for ext in ['.txt', '.tex', '.pdf']:
-#    x = [a for a in os.listdir(folder) if a.endswith(ext)]
-#    [os.remove(os.path.join(folder, i)) for i in x]
-```
-
-```sos kernel="R"
-#%get path table
-### unit price
-#t_0 <- felm(log(unit_price) ~ln_rebate+ ln_lag_import_tax  
-#            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
-#            exactDOF = TRUE)
-
-#print('table 0 done')
-#t_1 <- felm(log(unit_price) ~ln_rebate + ln_lag_import_tax 
-#            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
-#            exactDOF = TRUE)
-
-#print('table 1 done')
-#t_2 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-#            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_2 <- change_target(t_2)
-
-#print('table 2 done')
-#t_3 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_3 <- change_target(t_3)
-
-#print('table 3 done')
-#t_4 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_4 <- change_target(t_4)
-#print('table 4 done')
-#t_5 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_5 <- change_target(t_5)
-#print('table 5 done')
-
-#dep <- "Dependent variable: unit price"
-#fe1 <- list(
-#    c("City-product fixed effects", "Yes", "Yes", "No", "No", "No", "No"
-#     ),
-#    
-#    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No", "No", "No"
-#     ),
-#    
-#    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No", "Yes", "No"
-#     ),
-#   
-#    c("City-product-regime fixed effects","No", "No", "Yes", "Yes", "Yes", "Yes"
-#     ),
-#    
-#    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes", "Yes", "Yes"
-#     ),
-#    
-#    c("Product-year fixed effects", "No", "No", "No", "Yes", "No", "Yes"
-#     ),
-#    
-#    c("City-product-destination fixed effects", "No", "No", "No", "No","Yes", "Yes"
-#     )
-#    
-#            )
-
-#table_1 <- go_latex(list(
-#    t_0,t_1, t_2, t_3, t_4, t_5
-#),
-#    title="VAT export tax and product's unit price, baseline regression",
-#    dep_var = dep,
-#    addFE=fe1,
-#    save=TRUE,
-#    note = FALSE,
-#    name=path
-#) 
-```
-
-```sos kernel="SoS"
-#tbe1  = "This table estimates eq(3). " \
-#"A positive value of Ln VAT rebate means the product has lower tax" \
-#"Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group." \
-#"Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund." \
-#"Sectors are defined following the Chinese 4-digit GB/T industry" \
-#"classification and regroup several products." \
-#"Heteroskedasticity-robust standard errors" \
-#"clustered at the product level appear inparentheses."\
-#"\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."
-
-#multicolumn ={
-#    'Eligible': 1,
-#   'Non-Eligible': 1,
-#    'All': 1,
-#    'All benchmark': 1,
-#    'All': 1,
-#    'All benchmark': 1,
-#}
-
-#multi_lines_dep = '(city/product/trade regime/year)'
-#new_r = ['& test1', 'test2']
-#lb.beautify(table_number = table_nb,
-            #reorder_var = reorder,
-#            multi_lines_dep = multi_lines_dep,
-            #new_row= new_r,
-#            multicolumn = multicolumn,
-#            table_nte = tbe1,
-#            jupyter_preview = True,
-#            resolution = 150,
-#            folder = folder)
-```
-
 <!-- #region kernel="SoS" -->
 ### Quality
 <!-- #endregion -->
@@ -1363,22 +1349,6 @@ for ext in ['.txt', '.tex', '.pdf']:
 ```sos kernel="R"
 %get path table
 ### Quality
-#t_0 <- felm(kandhelwal_quality ~ln_rebate_1+ ln_lag_import_tax  
-#            | fe_ck  + fe_kt + fe_jt|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
-#            exactDOF = TRUE)
-
-#print('table 0 done')
-#t_1 <- felm(kandhelwal_quality ~ln_rebate_1 + ln_lag_import_tax 
-#            | fe_ck  + fe_kt + fe_jt|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
-#            exactDOF = TRUE)
-### all coefs
-#print('table 1 done')
-#t_2 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-#            | fe_ck  + fe_kt + fe_jt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_2 <- change_target(t_2)
-#print('table 2 done')
-
 t_0 <- felm(kandhelwal_quality ~rebate + ln_lag_import_tax +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ck  + hs6 + fe_jt|0|hs6, df_final %>% filter(regime != 'ELIGIBLE'),
@@ -1432,80 +1402,46 @@ t_7 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_
             exactDOF = TRUE)
 t_7 <- change_target(t_7)
 print('table 5 done')
-### all coefs + covariates
-#t_4 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-#            +  lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ck  + fe_kt + fe_jt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_4 <- change_target(t_4)
-#print('table 4 done')
+t_8 <- felm(kandhelwal_quality3 ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_8 <- change_target(t_8)
+print('table 6 done')
 
-### focus coef + covariates
+t_9 <- felm(kandhelwal_quality5 ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final,
+            exactDOF = TRUE)
+t_9 <- change_target(t_9)
+print('table 6 done')
 
-#t_6 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ckr + fe_csrt+fe_ckj + fe_kt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_6 <- change_target(t_6)
-#print('table 6 done')
-
-### quality-adjusted price is net-quality price
-#t_6 <- felm(price_adjusted_quality ~ln_rebate_1+ ln_lag_import_tax  
-#            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
-#            exactDOF = TRUE)
-
-
-#print('table 6 done')
-#t_7 <- felm(price_adjusted_quality ~ln_rebate_1 + ln_lag_import_tax 
-#            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
-#            exactDOF = TRUE)
-
-#print('table 7 done')
-#t_8 <- felm(price_adjusted_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-#            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_8 <- change_target(t_8)
-
-#print('table 8 done')
-#t_9 <- felm(price_adjusted_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_9 <- change_target(t_9)
-
-#print('table 9 done')
-#t_10 <- felm(price_adjusted_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_10 <- change_target(t_10)
-#print('table 10 done')
-#t_11 <- felm(price_adjusted_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_11 <- change_target(t_11)
-#print('table 11 done')
+t_10 <- felm(kandhelwal_quality10 ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr + fe_group_shock|0 , df_final,
+            exactDOF = TRUE)
+t_10 <- change_target(t_10)
 
 
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
     c("product",
-      "Yes", "Yes", "No", "No", "No","No", "No","No"
+      "Yes", "Yes", "No", "No", "No","No", "No","No", "No","No"
      ),
     c("City-product-regime",
-      "Yes", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes"
+      "Yes", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes","Yes"
      ),
     c("Product-year",
-      "No", "No", "Yes", "Yes", "Yes","Yes", "Yes","Yes"
+      "No", "No", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes","Yes"
      ),
     c("Destination-year",
-      "Yes", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes"
+      "Yes", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes","Yes"
      )
 )
 
 table_1 <- go_latex(list(
     t_0,t_1, #t_2,
-    t_3, t_4,t_5,t_6, t_7
+    t_3, t_4,t_5,t_6, t_7, t_8, t_9,t_10
     #, t_8, t_9, t_10, t_11
 ),
     title="VAT export rebate and product's quality upgrading, baseline regression",
@@ -1539,7 +1475,10 @@ multicolumn ={
     'Shocks': 1,
     'Balance': 1,
     'Only 17\%': 1,
-    'No zero rebate': 1
+    'No zero rebate': 1,
+    'Sigma 3': 1,
+    'Sigma 5': 1,
+    'Sigma 10': 1
 }
 multi_lines_dep = '(city/product/trade regime/year)'
 new_r = [
@@ -1562,6 +1501,13 @@ lb.beautify(table_number = table_nb,
             jupyter_preview = True,
             resolution = 180,
             folder = folder)
+```
+
+```sos kernel="R"
+summary(felm(kandhelwal_quality10 ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr + fe_group_shock|0 , df_final,
+            exactDOF = TRUE))
 ```
 
 <!-- #region kernel="SoS" -->
@@ -2492,50 +2438,6 @@ lb.beautify(table_number = table_nb,
             jupyter_preview = True,
             resolution = 180,
             folder = folder)
-```
-
-<!-- #region kernel="SoS" -->
-# Robustness check
-
-- Use different values of sigma:
-    -  Set sigma to the elasticity as 5 and 10
-        - [Credit Constraints, Quality, and Export Prices: Theory and Evidence from China](https://drive.google.com/file/d/1FnIIq2kwWdcIgg6jm-ydIvzj9f-UApYR/view?usp=sharing)
-        - [Credit constraints, quality, and export prices: Theory and evidence from China](https://drive.google.com/file/d/1FnIIq2kwWdcIgg6jm-ydIvzj9f-UApYR/view?usp=sharing)
-        
--> code from [01_preparation_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/01_preparation_quality.md#steps)
-<!-- #endregion -->
-
-```sos kernel="SoS"
-query = """
-SELECT * 
-FROM chinese_trade.china_export_tariff_tax
-""".format(db, table)
-df_vat = s3.run_query(
-    query=query,
-    database="chinese_trade",
-    s3_output="SQL_OUTPUT_ATHENA",
-    filename="trade_vat",  # Add filename to print dataframe
-    destination_key=None,  # Add destination key if need to copy output
-)
-```
-
-```sos kernel="SoS"
-df_quality = (
-    df_vat.assign(
-    hs2 = lambda x: x['hs6'].str[:2],
-    hs3 = lambda x: x['hs6'].str[:3],
-    hs4 = lambda x: x['hs6'].str[:4],
-    sigma_3 = 3,
-    sigma_10 = 10
-        
-)
-    .assign(
-        sigma_price3 = lambda x: x['sigma_3'].astype('float') * np.log(x['unit_price']),
-        sigma_price10 = lambda x: x['sigma_10'].astype('float') * np.log(x['unit_price']),
-        y3 = lambda x : np.log(x['quantity']) + x['sigma_price3'],
-        y10 = lambda x : np.log(x['quantity']) + x['sigma_price10']
-    )
-)
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
