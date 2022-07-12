@@ -767,10 +767,6 @@ df_DN
 ```
 
 ```sos kernel="SoS"
-
-```
-
-```sos kernel="SoS"
 df_freq = (
     df_M.merge(
         (
@@ -882,14 +878,6 @@ df.dtypes
 
 ```sos kernel="SoS"
 #df_ntm_country.loc[lambda x: x["iso_3digit_alpha_d"].isin(["CHN"])].groupby(['year','iso_3digit_alpha_d'])['frequency'].describe()
-```
-
-```sos kernel="SoS"
-df_baci.head()
-```
-
-```sos kernel="SoS"
-df_baci['iso_alpha'].value_counts()
 ```
 
 ```sos kernel="SoS"
@@ -2506,8 +2494,48 @@ lb.beautify(table_number = table_nb,
             folder = folder)
 ```
 
-```sos kernel="SoS"
+<!-- #region kernel="SoS" -->
+# Robustness check
 
+- Use different values of sigma:
+    -  Set sigma to the elasticity as 5 and 10
+        - [Credit Constraints, Quality, and Export Prices: Theory and Evidence from China](https://drive.google.com/file/d/1FnIIq2kwWdcIgg6jm-ydIvzj9f-UApYR/view?usp=sharing)
+        - [Credit constraints, quality, and export prices: Theory and evidence from China](https://drive.google.com/file/d/1FnIIq2kwWdcIgg6jm-ydIvzj9f-UApYR/view?usp=sharing)
+        
+-> code from [01_preparation_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/01_preparation_quality.md#steps)
+<!-- #endregion -->
+
+```sos kernel="SoS"
+query = """
+SELECT * 
+FROM chinese_trade.china_export_tariff_tax
+""".format(db, table)
+df_vat = s3.run_query(
+    query=query,
+    database="chinese_trade",
+    s3_output="SQL_OUTPUT_ATHENA",
+    filename="trade_vat",  # Add filename to print dataframe
+    destination_key=None,  # Add destination key if need to copy output
+)
+```
+
+```sos kernel="SoS"
+df_quality = (
+    df_vat.assign(
+    hs2 = lambda x: x['hs6'].str[:2],
+    hs3 = lambda x: x['hs6'].str[:3],
+    hs4 = lambda x: x['hs6'].str[:4],
+    sigma_3 = 3,
+    sigma_10 = 10
+        
+)
+    .assign(
+        sigma_price3 = lambda x: x['sigma_3'].astype('float') * np.log(x['unit_price']),
+        sigma_price10 = lambda x: x['sigma_10'].astype('float') * np.log(x['unit_price']),
+        y3 = lambda x : np.log(x['quantity']) + x['sigma_price3'],
+        y10 = lambda x : np.log(x['quantity']) + x['sigma_price10']
+    )
+)
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
