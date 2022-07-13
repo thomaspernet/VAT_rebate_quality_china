@@ -1015,15 +1015,16 @@ if compute_quality:
         hs3 = lambda x: x['hs6'].str[:3],
         hs4 = lambda x: x['hs6'].str[:4],
         sigma_3 = 3,
+        sigma_5 = 5,
         sigma_10 = 10
 
     )
         .assign(
             sigma_price3 = lambda x: x['sigma_3'].astype('float') * np.log(x['unit_price']),
-            sigma_price5 = lambda x: x['sigma_3'].astype('float') * np.log(x['unit_price']),
+            sigma_price5 = lambda x: x['sigma_5'].astype('float') * np.log(x['unit_price']),
             sigma_price10 = lambda x: x['sigma_10'].astype('float') * np.log(x['unit_price']),
             y3 = lambda x : np.log(x['quantity']) + x['sigma_price3'],
-            y5 = lambda x : np.log(x['quantity']) + x['sigma_price3'],
+            y5 = lambda x : np.log(x['quantity']) + x['sigma_price5'],
             y10 = lambda x : np.log(x['quantity']) + x['sigma_price10']
         )
     )
@@ -1055,9 +1056,11 @@ df_quality = df_quality.assign(
     prediction3 = lambda x: load('filename3.joblib') .predict(x[['hs6', 'FE_ct']]),
     residual3 = lambda x: x['y3'] - x['prediction3'],
     kandhelwal_quality3 = lambda x: x['residual3'] / (x['sigma_3'].astype('float') -1),
+    
     prediction5 = lambda x: load('filename5.joblib') .predict(x[['hs6', 'FE_ct']]),
     residual5 = lambda x: x['y5'] - x['prediction5'],
     kandhelwal_quality5 = lambda x: x['residual5'] / (x['sigma_5'].astype('float') -1),
+    
     prediction10 = lambda x: load('filename10.joblib') .predict(x[['hs6', 'FE_ct']]),
     residual10 = lambda x: x['y10'] - x['prediction10'],
     kandhelwal_quality10 = lambda x: x['residual10'] / (x['sigma_10'].astype('float') -1),
@@ -1285,7 +1288,7 @@ library(lfe)
 
 ```sos kernel="R"
 library(tidyverse)
-library(fixest)
+#library(fixest)
 ```
 
 ```sos kernel="R"
@@ -1501,13 +1504,6 @@ lb.beautify(table_number = table_nb,
             jupyter_preview = True,
             resolution = 180,
             folder = folder)
-```
-
-```sos kernel="R"
-summary(felm(kandhelwal_quality10 ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr + fe_group_shock|0 , df_final,
-            exactDOF = TRUE))
 ```
 
 <!-- #region kernel="SoS" -->
@@ -2275,23 +2271,9 @@ table_nb = 5
 table = 'table_{}'.format(table_nb)
 path = os.path.join(folder, table + '.txt')
 
-for ext in ['.txt', '.tex', '.pdf']:
-    x = [a for a in os.listdir(folder) if a.endswith(ext)]
-    [os.remove(os.path.join(folder, i)) for i in x]
-```
-
-```sos kernel="R"
-summary(felm(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm + 
-    rebate * regime * lag_frequency + 
-    rebate * regime * lag_prevalence + 
-    rebate * regime * lag_coverage + 
-    ln_lag_import_tax * regime +
-        ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr |0 , df_final %>%select(-lag_stock_ntm) %>% 
-    rename(lag_stock_ntm = lag_stock_ntm_china),
-            exactDOF = TRUE))
+#for ext in ['.txt', '.tex', '.pdf']:
+#    x = [a for a in os.listdir(folder) if a.endswith(ext)]
+#    [os.remove(os.path.join(folder, i)) for i in x]
 ```
 
 ```sos kernel="R"
