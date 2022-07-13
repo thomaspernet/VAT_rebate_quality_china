@@ -3,36 +3,41 @@
 \usepackage[utf8]{inputenc}
 \usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
 
-\begin{document}% Date and time \times  Tue, Oct 12, 2021 - 12 \times 13 \times 43
+\begin{document}% Date and time \times  Wed, Jul 13, 2022 - 04 \times 32 \times 08
 \begin{table}[!htbp] \centering 
   \caption{VAT export \text{VAT refund}_{k, t-1} and product's quality upgrading, baseline regression} 
 \label{}
 \begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
-\begin{tabular}{@{\extracolsep{5pt}}lcccccc} 
+\begin{tabular}{@{\extracolsep{5pt}}lcccccccccc} 
 \\[-1.8ex]\hline 
 \hline \\[-1.8ex] 
-& \multicolumn{6}{c}{Dependent variable: Product quality} \\
-&\multicolumn{6}{c}{(city/product/trade regime/year)} \\ 
-\cline{2-7}
+& \multicolumn{10}{c}{Dependent variable: Product quality} \\
+&\multicolumn{10}{c}{(city/product/trade regime/year)} \\ 
+\cline{2-11}
             
 \\[-1.8ex]
-            &\multicolumn{1}{c}{}&\multicolumn{1}{c}{Baseline}&\multicolumn{1}{c}{Shocks}&\multicolumn{1}{c}{Balance}&\multicolumn{1}{c}{Only 17\%}&\multicolumn{1}{c}{No zero rebate}\\
-\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\ 
+            &\multicolumn{1}{c}{Non eligible}&\multicolumn{1}{c}{Eligible}&\multicolumn{1}{c}{Baseline}&\multicolumn{1}{c}{Shocks}&\multicolumn{1}{c}{Balance}&\multicolumn{1}{c}{Only 17\%}&\multicolumn{1}{c}{No zero rebate}&\multicolumn{1}{c}{Sigma 3}&\multicolumn{1}{c}{Sigma 5}&\multicolumn{1}{c}{Sigma 10}\\
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) & (10)\\ 
 \hline \\[-1.8ex] 
-  \text{VAT refund}_{k, t-1} \times \text{Regime}^R & 0.265$^{***}$ & 0.262$^{***}$ & 0.260$^{***}$ & 0.262$^{***}$ & 0.264$^{***}$ & 0.273$^{***}$ \\ 
-  & (0.073) & (0.073) & (0.073) & (0.073) & (0.074) & (0.075) \\ 
-  \text{VAT import tax,}_{k, t-1} \times \text{Regime}^R & $-$0.197$^{***}$ & $-$0.196$^{***}$ & $-$0.195$^{***}$ & $-$0.195$^{***}$ & $-$0.196$^{***}$ & $-$0.196$^{***}$ \\ 
-  & (0.068) & (0.068) & (0.068) & (0.068) & (0.068) & (0.068) \\ 
-  \text{lag foreign export share}_{ck, t-1}^R &  & 0.047$^{**}$ & 0.059$^{***}$ & 0.047$^{**}$ & 0.049$^{**}$ & 0.047$^{**}$ \\ 
-  &  & (0.019) & (0.018) & (0.020) & (0.020) & (0.019) \\ 
-  \text{lag SOE export share}_{ck, t-1}^R &  & 0.072$^{***}$ & 0.110$^{***}$ & 0.072$^{***}$ & 0.071$^{***}$ & 0.075$^{***}$ \\ 
-  &  & (0.023) & (0.022) & (0.023) & (0.023) & (0.023) \\ 
+  \text{VAT refund}_{k, t-1} \times \text{Regime}^R &  &  & 0.262$^{***}$ & 0.260$^{***}$ & 0.262$^{***}$ & 0.264$^{***}$ & 0.273$^{***}$ & 0.225$^{***}$ & 0.134$^{**}$ & 0.083$^{**}$ \\ 
+  &  &  & (0.073) & (0.073) & (0.073) & (0.074) & (0.075) & (0.071) & (0.057) & (0.035) \\ 
+  \text{Import tax,}_{k, t-1} \times \text{Regime}^R &  &  & $-$0.196$^{***}$ & $-$0.195$^{***}$ & $-$0.195$^{***}$ & $-$0.196$^{***}$ & $-$0.196$^{***}$ & $-$0.156$^{***}$ & $-$0.097$^{***}$ & $-$0.064$^{***}$ \\ 
+  &  &  & (0.068) & (0.068) & (0.068) & (0.068) & (0.068) & (0.049) & (0.036) & (0.018) \\ 
+ \text{VAT refund}_{k, t-1} & $-$0.125 & 0.138$^{***}$ &  &  &  &  &  &  &  &  \\ 
+  & (0.144) & (0.046) &  &  &  &  &  &  &  &  \\ 
+  \text{Import tax,}_{k, t-1} & $-$0.057 & $-$0.255$^{***}$ &  &  &  &  &  &  &  &  \\ 
+  & (0.114) & (0.024) &  &  &  &  &  &  &  &  \\ 
+  \text{lag foreign export share}_{ck, t-1}^R & 0.020 & 0.110$^{***}$ & 0.047$^{**}$ & 0.059$^{***}$ & 0.047$^{**}$ & 0.049$^{**}$ & 0.047$^{**}$ & 0.052$^{***}$ & 0.026$^{**}$ & 0.021$^{**}$ \\ 
+  & (0.030) & (0.021) & (0.019) & (0.018) & (0.020) & (0.020) & (0.019) & (0.015) & (0.012) & (0.008) \\ 
+  \text{lag SOE export share}_{ck, t-1}^R & $-$0.084$^{***}$ & 0.481$^{***}$ & 0.072$^{***}$ & 0.110$^{***}$ & 0.072$^{***}$ & 0.071$^{***}$ & 0.075$^{***}$ & 0.067$^{***}$ & 0.034$^{**}$ & 0.030$^{***}$ \\ 
+  & (0.030) & (0.030) & (0.023) & (0.022) & (0.023) & (0.023) & (0.023) & (0.017) & (0.014) & (0.009) \\ 
  \hline \\[-1.8ex] 
-City-product-regime & Yes & Yes & Yes & Yes & Yes & Yes \\ 
-Product-year & Yes & Yes & Yes & Yes & Yes & Yes \\ 
-Destination-year & Yes & Yes & Yes & Yes & Yes & Yes \\ 
-Observations & 639,722 & 639,722 & 639,722 & 635,976 & 626,760 & 634,232 \\ 
-R$^{2}$ & 0.338 & 0.338 & 0.582 & 0.334 & 0.337 & 0.336 \\ 
+product & Yes & Yes & No & No & No & No & No & No & No & No \\ 
+City-product-regime & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Product-year & No & No & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Destination-year & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Observations & 319,861 & 319,861 & 639,722 & 639,722 & 635,976 & 626,760 & 634,232 & 639,722 & 639,722 & 639,722 \\ 
+R$^{2}$ & 0.293 & 0.259 & 0.338 & 0.582 & 0.334 & 0.337 & 0.336 & 0.943 & 0.297 & 0.582 \\ 
 \hline 
 \hline \\[-1.8ex] 
 \end{tabular}
