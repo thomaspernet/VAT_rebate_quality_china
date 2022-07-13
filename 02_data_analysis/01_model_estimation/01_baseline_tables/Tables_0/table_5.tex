@@ -1,0 +1,80 @@
+
+\documentclass[preview]{standalone} 
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
+
+\begin{document}% Date and time \times  Wed, Jul 13, 2022 - 04 \times 38 \times 05
+\begin{table}[!htbp] \centering 
+  \caption{VAT export tax and firm’s quality upgrading NTM anaysis} 
+\label{}
+\begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
+\begin{tabular}{@{\extracolsep{5pt}}lcccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+& \multicolumn{6}{c}{Dependent variable: Product quality} \\
+&\multicolumn{6}{c}{(city/product/trade regime/year)} \\ 
+\cline{2-7}
+            
+\\[-1.8ex]
+            &\multicolumn{1}{c}{Baseline}&\multicolumn{1}{c}{Environnement}&\multicolumn{3}{c}{classification}&\multicolumn{1}{c}{Developped}\\
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\
+ \\[-1.8ex]&  &  & TBT & SPS & ADP &  &  & \\
+ \hline \\[-1.8ex] 
+  \text{lag frequency}_{ck, t-1} & 0.627 & 0.624 & 0.660 & 0.627 & 0.618 & 0.618 \\ 
+  & (2.039) & (2.040) & (2.039) & (2.040) & (2.040) & (2.040) \\ 
+  \text{lag prevalence}_{ck, t-1} & 0.009 & 0.009 & 0.008 & 0.008 & 0.009 & 0.009 \\ 
+  & (0.075) & (0.075) & (0.075) & (0.075) & (0.075) & (0.075) \\ 
+  \text{lag coverage}_{ck, t-1} & 1.287 & 1.292 & 1.261 & 1.290 & 1.298 & 1.298 \\ 
+  & (2.012) & (2.013) & (2.012) & (2.013) & (2.013) & (2.013) \\ 
+  \text{VAT refund}_{k, t-1} \times \text{Regime}^R & 0.239$^{***}$ & 0.292$^{***}$ & 0.225$^{***}$ & 0.295$^{***}$ & 0.292$^{***}$ & 0.292$^{***}$ \\ 
+  & (0.081) & (0.078) & (0.082) & (0.078) & (0.078) & (0.078) \\ 
+  \text{Regime}^R \times \text{lag stock ntm}_{ck, t-1} & $-$0.029$^{*}$ & 14.426$^{***}$ & $-$0.055$^{***}$ & 0.013 & $-$0.359 & $-$0.446 \\ 
+  & (0.015) & (2.799) & (0.020) & (0.029) & (0.242) & (0.306) \\ 
+  \text{VAT refund}_{k, t-1} \times \text{lag frequency}_{ck, t-1} & 2.216$^{***}$ & 2.204$^{***}$ & 2.211$^{***}$ & 2.204$^{***}$ & 2.208$^{***}$ & 2.208$^{***}$ \\ 
+  & (0.664) & (0.663) & (0.664) & (0.663) & (0.663) & (0.663) \\ 
+  \text{Regime}^R \times \text{lag frequency}_{ck, t-1} & 0.858 & 0.874 & 0.779 & 0.869 & 0.880 & 0.880 \\ 
+  & (2.691) & (2.690) & (2.692) & (2.690) & (2.690) & (2.690) \\ 
+  \text{VAT refund}_{k, t-1} \times \text{lag prevalence}_{ck, t-1} & $-$0.108$^{**}$ & $-$0.107$^{**}$ & $-$0.108$^{**}$ & $-$0.108$^{**}$ & $-$0.108$^{**}$ & $-$0.108$^{**}$ \\ 
+  & (0.046) & (0.046) & (0.046) & (0.046) & (0.046) & (0.046) \\ 
+  \text{Regime}^R \times \text{lag prevalence}_{ck, t-1} & $-$0.053 & $-$0.052 & $-$0.051 & $-$0.052 & $-$0.053 & $-$0.053 \\ 
+  & (0.105) & (0.105) & (0.105) & (0.105) & (0.105) & (0.105) \\ 
+  \text{VAT refund}_{k, t-1} \times \text{lag coverage}_{ck, t-1} & $-$2.001$^{***}$ & $-$1.990$^{***}$ & $-$2.000$^{***}$ & $-$1.990$^{***}$ & $-$1.994$^{***}$ & $-$1.993$^{***}$ \\ 
+  & (0.665) & (0.665) & (0.665) & (0.665) & (0.665) & (0.665) \\ 
+  \text{Regime}^R \times \text{lag coverage}_{ck, t-1} & 0.814 & 0.792 & 0.883 & 0.797 & 0.788 & 0.788 \\ 
+  & (2.781) & (2.780) & (2.783) & (2.780) & (2.780) & (2.780) \\ 
+  \text{Regime}^R \times \text{Import tax,}_{k, t-1} & $-$0.196$^{***}$ & $-$0.196$^{***}$ & $-$0.196$^{***}$ & $-$0.196$^{***}$ & $-$0.196$^{***}$ & $-$0.196$^{***}$ \\ 
+  & (0.068) & (0.068) & (0.068) & (0.068) & (0.068) & (0.068) \\ 
+  \text{VAT refund}_{k, t-1} \times \text{Regime}^R \times \text{lag stock ntm}_{ck, t-1} & 0.036$^{*}$ & $-$15.374$^{***}$ & 0.065$^{***}$ & $-$0.020 & 0.898$^{*}$ & 1.036$^{*}$ \\ 
+  & (0.019) & (2.918) & (0.024) & (0.042) & (0.499) & (0.577) \\ 
+  \text{VAT refund}_{k, t-1} \times \text{Regime}^R \times \text{lag frequency}_{ck, t-1} & $-$1.753$^{***}$ & $-$1.728$^{**}$ & $-$1.743$^{**}$ & $-$1.728$^{**}$ & $-$1.736$^{**}$ & $-$1.736$^{**}$ \\ 
+  & (0.679) & (0.677) & (0.679) & (0.677) & (0.677) & (0.677) \\ 
+  \text{VAT refund}_{k, t-1} \times \text{Regime}^R \times \text{lag prevalence}_{ck, t-1} & 0.059 & 0.058 & 0.058 & 0.058 & 0.058 & 0.058 \\ 
+  & (0.051) & (0.052) & (0.051) & (0.052) & (0.052) & (0.052) \\ 
+  \text{VAT refund}_{k, t-1} \times \text{Regime}^R \times \text{lag coverage}_{ck, t-1} & 1.345$^{**}$ & 1.323$^{*}$ & 1.344$^{**}$ & 1.323$^{*}$ & 1.330$^{**}$ & 1.330$^{**}$ \\ 
+  & (0.679) & (0.678) & (0.679) & (0.678) & (0.678) & (0.678) \\ 
+ \hline \\[-1.8ex] 
+City-product-regime & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Product-year & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Destination-year & Yes & Yes & Yes & Yes & Yes & Yes \\ 
+Observations & 639,722 & 639,722 & 639,722 & 639,722 & 639,722 & 639,722 \\ 
+R$^{2}$ & 0.338 & 0.338 & 0.338 & 0.338 & 0.338 & 0.338 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\end{tabular}
+\end{adjustbox}
+\begin{tablenotes} 
+ \small 
+ \item \\ 
+
+This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%. 
+\end{tablenotes}
+\end{table}
+
+\end{document}
