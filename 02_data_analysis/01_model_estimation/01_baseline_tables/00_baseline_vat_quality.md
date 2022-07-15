@@ -81,6 +81,7 @@ import numpy as np
 #import seaborn as sns
 import os, shutil, json
 import sys
+import janitor
 
 path = os.getcwd()
 parent_path = str(Path(path).parent.parent.parent)
@@ -258,43 +259,16 @@ df_ntm.to_csv('ntm.csv')
 ```
 
 <!-- #region kernel="SoS" -->
-# compute fixed effect
-
-| Benchmark | Origin            | Name                     | Description                                                                                                                                                                                                                                                                                                                                    | Math_notebook     |
-|-----------|-------------------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|
-| Yes       | Current           | city-product             |                                                                                                                                                                                                                                                                                                                                                | $\alpha_{ck}$     |
-| Yes       | Current           | city-product-regime      |                                                                                                                                                                                                                                                                                                                                                | $\alpha_{ck}^R$   |
-| Yes       | Current           | city-sector-year         | Sector is defined as GBT 4 digit                                                                                                                                                                                                                                                                                                               | $\alpha_{cst}$    |
-| Yes       | Current           | city-sectorーregime-year | Sector is defined as GBT 4 digit                                                                                                                                                                                                                                                                                                               | $\alpha_{cst}^R$  |
-| Yes       | Current           | product-destination      |                                                                                                                                                                                                                                                                                                                                                | $\alpha_{pj}$     |
-| Yes       | Previous baseline | Product-year             | account for all factors that affect product-level export irrespective of the trade regime in a given year                                                                                                                                                                                                                                      | $\alpha_{pt}$     |
-| No        | Previous baseline | firm-product-eligibility | captures all the factors that affect firms regardless of the time and type of regime. This firm‒product pair eliminates the demand shocks that firms face and that are not correlated with the types of status. The fixed effects are also responsible for potential correlations between subsidies, R&D, or trade policies and VAT rebates.   | $\alpha^{E}_{it}$ |
-| No        | Previous baseline | HS4-year-eligibility     |                                                                                                                                                                                                                                                                                                                                                | $\alpha^{E}_{st}$ |
-| No        | Previous baseline | city-year                | captures the differences in demand, capital intensity, or labor supply that prevail between cities each year                                                                                                                                                                                                                                   | $\alpha_{ct}$     |
-| No        | Candidate         | destination-year         | Captures additional level of control, encompassing all the shocks and developments in the economies to which China exports.                                                                                                                                                                                                                    | $\alpha_{dt}$     |
-
-
-Create the following fixed effect for the baseline regression:
-
-**index**
-
-* city: `c`
-* product: `k`
-* sector: `s`
-* year: `t`
-* Destination: `j`
-* regime: `r`
-
-**FE**
-
-* city-product: `FE_ck`
-* City-sector-year: `FE_cst`
-* City-product-regime: `FE_ckr`
-* City-sector-regime-year: `FE_csrt`
-* Product-year: `FE_kt`
-* Product-destination: `FE_pj`
-* Destination-year: `FE_jt`
+# Compute NTM and quality variables
 <!-- #endregion -->
+<!-- #region kernel="SoS" -->
+## NTM 
+<!-- #endregion -->
+
+<!-- #region kernel="SoS" -->
+### China import and world
+<!-- #endregion -->
+
 ```sos kernel="SoS"
 df.shape
 ```
@@ -372,6 +346,10 @@ df_ntm_china = (
                        'lag_ntm':'lag_ntm_china',
                    })
 )
+```
+
+```sos kernel="SoS"
+df_ntm_china
 ```
 
 <!-- #region kernel="SoS" -->
@@ -836,10 +814,6 @@ df_hs_baci_v.shape
 ```
 
 ```sos kernel="SoS"
-import janitor
-```
-
-```sos kernel="SoS"
 df_cov = (
     df_hs_baci_v.merge(
         (
@@ -876,6 +850,386 @@ df_cov = (
 df.dtypes
 ```
 
+<!-- #region kernel="SoS" -->
+### NTM Chinese city
+<!-- #endregion -->
+
+```sos kernel="SoS"
+query = """
+SELECT 
+year,
+geocode4_corr,
+--regime,
+hs6,
+SUM(value) as V
+FROM (
+SELECT 
+    date as year, 
+    geocode4_corr,
+    origin_and_destination, 
+    CASE WHEN trade_type = '进料加工贸易' 
+    OR trade_type = '一般贸易' THEN 'ELIGIBLE' ELSE 'NOT_ELIGIBLE' END as regime, 
+    hs as hs6,
+    value
+  FROM 
+    "chinese_trade"."china_import_export" 
+INNER JOIN (
+        SELECT 
+          DISTINCT(citycn) as citycn, 
+          geocode4_corr 
+        FROM 
+          chinese_lookup.china_city_code_normalised
+      ) AS city_cn_en ON city_cn_en.citycn = china_import_export.city_prod    
+  WHERE 
+    date in (
+      '2002', '2003', '2004', '2005', '2006', 
+      '2007', '2008', '2009', '2010'
+    ) 
+    AND imp_exp = '进口' 
+    AND (
+      trade_type = '进料加工贸易' 
+      OR trade_type = '一般贸易' 
+      OR trade_type = '来料加工装配贸易' 
+      OR trade_type = '加工贸易'
+    ) 
+    AND intermediate = 'No' 
+    AND (
+      business_type = '国有企业' 
+      OR business_type = '私营企业' 
+      OR business_type = '集体企业' 
+      OR business_type = '国有' 
+      OR business_type = '私营' 
+      OR business_type = '集体'
+    ) 
+    AND quantity > 0 
+    AND value > 0
+      )
+      GROUP BY year,
+geocode4_corr,
+--regime,
+hs6
+"""
+df_VC = (s3.run_query(
+            query=query,
+            database="chinese_trade",
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename=filename,  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = dtypes
+        )
+    .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+        )
+```
+
+<!-- #region kernel="SoS" -->
+- count_ntm_china:  Number of new policy per year
+- stock_ntm_china:  Number of active policy 
+- new_ntm_china: Equal to 1 if a new policy is added
+- active_ntm_china: Equal to 1 if the policy is active
+<!-- #endregion -->
+
+```sos kernel="SoS"
+from transformers import pipeline
+classifier = pipeline("zero-shot-classification",
+                      model="facebook/bart-large-mnli")
+```
+
+```sos kernel="SoS"
+def compute_score(source, candidate_labels):
+    return classifier(source, candidate_labels, multi_label=True)
+```
+
+```sos kernel="SoS"
+(
+    df_ntm
+    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
+    ['ntm'].value_counts()
+)
+```
+
+```sos kernel="SoS"
+(
+    df_ntm
+    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
+    .loc[lambda x: x['ntm'].isin([
+        #'TBT',
+        #'SPS',
+        'ADP'
+    ])]
+    #['keywords'].value_counts()
+    #.reset_index()
+    #.to_excel('test.xlsx')
+)
+```
+
+```sos kernel="SoS"
+(
+    df_ntm
+    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
+    .loc[lambda x: x['ntm'].isin([
+        'TBT',
+        'SPS',
+        #'ADP'
+    ])]
+    ['keywords'].value_counts()
+    .reset_index()
+)
+```
+
+```sos kernel="SoS"
+from tqdm.notebook import tqdm
+import json
+keywords = (
+    df_ntm
+    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
+    .loc[lambda x: x['ntm'].isin([
+        'TBT',
+        'SPS',
+        #'ADP'
+    ])]
+    ['keywords'].value_counts()
+    .reset_index()
+)
+list_keywords = []
+for i in tqdm(range(0,keywords.shape[0])):
+    score = compute_score(keywords.loc[i]['index'], ['animal','food', 'safety'])
+    list_keywords.append(score)
+    with open('TEMP/sentence_{}.json'.format(i), 'w') as outfile:
+        json.dump(score, outfile)
+```
+
+```sos kernel="SoS"
+to_exclude = list(
+    pd.DataFrame(list_keywords)
+    .assign(
+    max_proba = lambda x: x['scores'].apply(max),
+        to_remove = lambda x: x['max_proba'] >.5
+    )
+    .loc[lambda x: x['to_remove'].isin([True])]
+    ['sequence'].unique()
+)
+len(to_exclude)
+```
+
+```sos kernel="SoS"
+df_ntm_c = (
+    df_ntm
+    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
+    .loc[lambda x: x['ntm'].isin([
+        #'TBT',
+        #'SPS',
+        'ADP'
+    ])]
+    #.loc[lambda x: ~x['keywords'].isin(to_exclude)]
+    .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
+    .dropna(subset = ['year'])
+    .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
+    .explode("hs6")
+    .groupby(["iso_alpha", "year", "hs6"])
+    .agg({"id": "nunique"})
+    .rename(columns={"id": "count"})
+    .sort_values(by=["iso_alpha", "year", "hs6"])
+    .reset_index()
+    
+    .pivot_table(
+        values="count",
+        index=["hs6"],
+        columns="year",
+        aggfunc="sum",
+        fill_value=0,
+    )
+    .stack()
+    .reset_index()
+    .rename(columns={0: "count_ntm_china"})
+    .assign(
+        stock_ntm_china=lambda x: x.groupby(["hs6"])[
+            "count_ntm_china"
+        ].transform("cumsum"),
+        new_ntm_china=lambda x: np.where(x["count_ntm_china"] > 0, 1, 0),
+        active_ntm_china=lambda x: np.where(x["stock_ntm_china"] > 0, 1, 0),
+    )
+    #.loc[lambda x: x['hs6'].isin(['400270'])]
+
+)
+df_ntm_c[["count_ntm_china",'stock_ntm_china','new_ntm_china','active_ntm_china']].describe()
+```
+
+```sos kernel="SoS"
+df_ntm_c.loc[lambda x: x['hs6'].isin(['400270'])]
+```
+
+<!-- #region kernel="SoS" -->
+Frequency
+<!-- #endregion -->
+
+```sos kernel="SoS"
+# 656185
+df_VC_NTM_C = (
+    df_VC
+    .merge(df_ntm_c, how = 'left', indicator = True)
+)
+df_VC_NTM_C['_merge'].value_counts()
+```
+
+```sos kernel="SoS"
+df_VC_NTM_C.head()
+```
+
+```sos kernel="SoS"
+df_freq_c = (
+    df_VC_NTM_C.set_index([
+        "year",
+        "geocode4_corr",
+        "hs6",
+        "_merge",
+        #"regime"
+    ])
+    .fillna(0)
+    .groupby([
+        "year",
+        "geocode4_corr",
+        #"regime"
+    ])
+    .agg({"active_ntm_china": "sum"})
+    .rename(columns = {'active_ntm_china':'DM_C'})
+    .merge(
+        (df_VC_NTM_C.groupby(["year", "geocode4_corr"]).agg({"hs6": "nunique"}).rename(columns = {'hs6':'M_C'})),
+        left_index=True,
+        right_index=True,
+        how="right",
+    )
+    .assign(
+    F_C = lambda x: x['DM_C']/x['M_C'],
+    )
+    .reset_index()
+    .sort_values(by = [
+        'geocode4_corr',
+        'year',
+        #"regime"
+    ])
+    .assign(
+        lag_DM_C=lambda x: x.groupby(["geocode4_corr", 
+                                      #"regime"
+                                     ])["DM_C"].transform(
+           "shift"
+        ),
+    lag_F_C=lambda x: x.groupby(["geocode4_corr", 
+                                      #"regime"
+                                     ])["F_C"].transform(
+           "shift"
+        )
+    )
+)
+#df_freq_c.head(6)
+df_freq_c[["DM_C","M_C","F_C",'lag_DM_C',"lag_F_C"]].describe(percentiles = np.arange(0,1, .05))
+
+```
+
+<!-- #region kernel="SoS" -->
+coverage
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df_cov_c = (
+    df_VC_NTM_C.set_index([
+        "year",
+        "geocode4_corr",
+        "hs6",
+        "_merge",
+        #"regime"
+    ])
+    .fillna(0)
+    .loc[lambda x: x['active_ntm_china'] > 0]
+    .groupby([
+        "year",
+        "geocode4_corr",
+        #"regime"
+    ])
+    .agg({"V": "sum"})
+    .rename(columns = {'V':'DV_C'})
+    .merge(
+    (df_VC_NTM_C.groupby(["year", "geocode4_corr"]).agg({"V": "sum"}).rename(columns = {'V':'V_C'})),
+    left_index= True,right_index = True, how = 'right')
+    .assign(
+    DV_C = lambda x: x['DV_C'].fillna(0),    
+    C_C = lambda x: x['DV_C']/x['V_C'],
+    )
+    .reset_index()
+    .sort_values(by = [
+        'geocode4_corr',
+        'year',
+        #"regime"
+    ])
+    .assign(
+        lag_DV_C=lambda x: x.groupby(["geocode4_corr", 
+                                     #"regime"
+                                     ])["DV_C"].transform(
+            "shift"
+        ),
+    lag_C_C=lambda x: x.groupby(["geocode4_corr", 
+                                      #"regime"
+                                     ])["C_C"].transform(
+            "shift"
+        )
+    )
+)
+df_cov_c[["DV_C","V_C","C_C","lag_DV_C","lag_C_C"]].describe(percentiles = np.arange(0,1, .05))
+```
+
+```sos kernel="SoS"
+df_prev_c = (
+    df_VC_NTM_C.set_index([
+        "year",
+        "geocode4_corr",
+        "hs6",
+        "_merge",
+    #"regime"
+    ])
+    .fillna(0)
+    .groupby([
+        "year",
+        "geocode4_corr",
+        #"regime"
+    ])
+    .agg({"stock_ntm_china": "sum"})
+    .rename(columns = {'stock_ntm_china':'NM_C'})
+    .merge(
+        (df_VC_NTM_C.groupby(["year", "geocode4_corr"]).agg({"hs6": "nunique"}).rename(columns = {'hs6':'M_C'})),
+        left_index=True,
+        right_index=True,
+        how="right",
+    )
+    .assign(
+    P_C = lambda x: x['NM_C']/x['M_C'],
+    )
+    .reset_index()
+    .sort_values(by = [
+        'geocode4_corr',
+        'year',
+        #"regime"
+    ])
+    .assign(
+    lag_P_C=lambda x: x.groupby(["geocode4_corr", 
+                                      #"regime"
+                                     ])["P_C"].transform(
+            "shift"
+        )
+    )
+)
+df_prev_c[["NM_C","M_C","P_C","lag_P_C"]].describe(percentiles = np.arange(0,1, .05))
+```
+
+```sos kernel="SoS"
+df_prev_c.loc[lambda x: x['geocode4_corr'].isin(['1307'])]
+```
+
+<!-- #region kernel="SoS" -->
+### Merge all NTM
+<!-- #endregion -->
+
 ```sos kernel="SoS"
 #df_ntm_country.loc[lambda x: x["iso_3digit_alpha_d"].isin(["CHN"])].groupby(['year','iso_3digit_alpha_d'])['frequency'].describe()
 ```
@@ -904,6 +1258,51 @@ df_final = (
     .merge(
         df_cov,
         on=["year", "iso_alpha"],
+        how="left",
+    )
+    .merge(
+        df_freq_c.reindex(columns = [
+            "geocode4_corr",
+            "year",
+            #'regime',
+            "DM_C",
+            "F_C",
+            "lag_DM_C",
+            "lag_F_C"
+                                    ]),
+        on=["year", "geocode4_corr",
+            #'regime'
+           ],
+        how="left",
+    )
+    .merge(
+        df_cov_c.reindex(columns = [
+            "geocode4_corr",
+            "year",
+            #'regime',
+            "DV_C",
+            "V_C",
+            "C_C",
+            "lag_DV_C",
+            "lag_C_C"
+                                   ]),
+        on=["year", "geocode4_corr",
+            #'regime'
+           ],
+        how="left",
+    )
+    .merge(
+        df_prev_c.reindex(columns = [
+            "geocode4_corr",
+            "year",
+            #'regime',
+            "NM_C",
+            "P_C",
+            "lag_P_C"
+        ]),
+        on=["year", "geocode4_corr",
+            #'regime'
+           ],
         how="left",
     )
     .assign(
@@ -947,6 +1346,18 @@ df_final = df_final.assign(
             "stock_ntm_dvp_c",
             "lag_count_dvp_c",
             "lag_stock_ntm_dvp_c",
+            "DM_C",
+            "F_C",
+            "lag_DM_C",
+            "lag_F_C",
+            "DV_C",
+            "V_C",
+            "C_C",
+            "lag_DV_C",
+            "lag_C_C",
+            "NM_C",
+            "P_C",
+            "lag_P_C"
         ]
     },
     **{
@@ -969,14 +1380,11 @@ df_final = df_final.assign(
         ]
     },
 )
-```
-
-```sos kernel="SoS"
 df_final.head(1)
 ```
 
 <!-- #region kernel="SoS" -->
-### Robustness check
+## Quality variable: different sigma
 
 - Use different values of sigma:
     -  Set sigma to the elasticity as 5 and 10
@@ -986,50 +1394,51 @@ df_final.head(1)
 -> code from [01_preparation_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/01_preparation_quality.md#steps)
 <!-- #endregion -->
 ```sos kernel="SoS"
+query = """
+SELECT geocode4_corr,country_en,year,regime,hs6,iso_alpha,unit_price,quantity
+FROM chinese_trade.china_export_tariff_tax
+""".format(db, table)
+df_vat = (
+    s3.run_query(
+    query=query,
+    database="chinese_trade",
+    s3_output="SQL_OUTPUT_ATHENA",
+    filename="trade_vat",  # Add filename to print dataframe
+    destination_key=None,  # Add destination key if need to copy output
+)
+    .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+)
+df_quality = (
+    df_vat.assign(
+    hs2 = lambda x: x['hs6'].str[:2],
+    hs3 = lambda x: x['hs6'].str[:3],
+    hs4 = lambda x: x['hs6'].str[:4],
+    sigma_3 = 3,
+    sigma_5 = 5,
+    sigma_10 = 10
+
+)
+    .assign(
+        sigma_price3 = lambda x: x['sigma_3'].astype('float') * np.log(x['unit_price']),
+        sigma_price5 = lambda x: x['sigma_5'].astype('float') * np.log(x['unit_price']),
+        sigma_price10 = lambda x: x['sigma_10'].astype('float') * np.log(x['unit_price']),
+        y3 = lambda x : np.log(x['quantity']) + x['sigma_price3'],
+        y5 = lambda x : np.log(x['quantity']) + x['sigma_price5'],
+        y10 = lambda x : np.log(x['quantity']) + x['sigma_price10']
+    )
+)
+df_quality["FE_ct"] = pd.factorize(df_quality["year"].astype('string') + 
+                                       df_quality["country_en"])[0]
 compute_quality = False
 if compute_quality:
     from sklearn.pipeline import make_pipeline
     from sklearn.linear_model import LinearRegression
     from sklearn.preprocessing import OneHotEncoder
     from sklearn.compose import make_column_transformer
-    query = """
-    SELECT geocode4_corr,country_en,year,regime,hs6,iso_alpha,unit_price,quantity
-    FROM chinese_trade.china_export_tariff_tax
-    """.format(db, table)
-    df_vat = (
-        s3.run_query(
-        query=query,
-        database="chinese_trade",
-        s3_output="SQL_OUTPUT_ATHENA",
-        filename="trade_vat",  # Add filename to print dataframe
-        destination_key=None,  # Add destination key if need to copy output
-    )
-        .assign(
-                  year = lambda x: x['year'].astype('Int64'),
-                  hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
-              )
-    )
-    df_quality = (
-        df_vat.assign(
-        hs2 = lambda x: x['hs6'].str[:2],
-        hs3 = lambda x: x['hs6'].str[:3],
-        hs4 = lambda x: x['hs6'].str[:4],
-        sigma_3 = 3,
-        sigma_5 = 5,
-        sigma_10 = 10
-
-    )
-        .assign(
-            sigma_price3 = lambda x: x['sigma_3'].astype('float') * np.log(x['unit_price']),
-            sigma_price5 = lambda x: x['sigma_5'].astype('float') * np.log(x['unit_price']),
-            sigma_price10 = lambda x: x['sigma_10'].astype('float') * np.log(x['unit_price']),
-            y3 = lambda x : np.log(x['quantity']) + x['sigma_price3'],
-            y5 = lambda x : np.log(x['quantity']) + x['sigma_price5'],
-            y10 = lambda x : np.log(x['quantity']) + x['sigma_price10']
-        )
-    )
-    df_quality["FE_ct"] = pd.factorize(df_quality["year"].astype('string') + 
-                                       df_quality["country_en"])[0]
+    
     cat_proc = make_pipeline(
         OneHotEncoder()
     )
@@ -1052,6 +1461,7 @@ if compute_quality:
 ```
 
 ```sos kernel="SoS"
+from joblib import dump, load
 df_quality = df_quality.assign(
     prediction3 = lambda x: load('filename3.joblib') .predict(x[['hs6', 'FE_ct']]),
     residual3 = lambda x: x['y3'] - x['prediction3'],
@@ -1078,12 +1488,51 @@ df_final = (
     )
     #.to_csv(os.path.join(path_local, 'df_final_robusntess' + '.csv'), index = False)
 )
-```
-
-```sos kernel="SoS"
 df_final.head()
 ```
 
+```sos kernel="SoS"
+df_final.shape
+```
+
+<!-- #region kernel="SoS" -->
+# compute fixed effect
+
+| Benchmark | Origin            | Name                     | Description                                                                                                                                                                                                                                                                                                                                    | Math_notebook     |
+|-----------|-------------------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|
+| Yes       | Current           | city-product             |                                                                                                                                                                                                                                                                                                                                                | $\alpha_{ck}$     |
+| Yes       | Current           | city-product-regime      |                                                                                                                                                                                                                                                                                                                                                | $\alpha_{ck}^R$   |
+| Yes       | Current           | city-sector-year         | Sector is defined as GBT 4 digit                                                                                                                                                                                                                                                                                                               | $\alpha_{cst}$    |
+| Yes       | Current           | city-sectorーregime-year | Sector is defined as GBT 4 digit                                                                                                                                                                                                                                                                                                               | $\alpha_{cst}^R$  |
+| Yes       | Current           | product-destination      |                                                                                                                                                                                                                                                                                                                                                | $\alpha_{pj}$     |
+| Yes       | Previous baseline | Product-year             | account for all factors that affect product-level export irrespective of the trade regime in a given year                                                                                                                                                                                                                                      | $\alpha_{pt}$     |
+| No        | Previous baseline | firm-product-eligibility | captures all the factors that affect firms regardless of the time and type of regime. This firm‒product pair eliminates the demand shocks that firms face and that are not correlated with the types of status. The fixed effects are also responsible for potential correlations between subsidies, R&D, or trade policies and VAT rebates.   | $\alpha^{E}_{it}$ |
+| No        | Previous baseline | HS4-year-eligibility     |                                                                                                                                                                                                                                                                                                                                                | $\alpha^{E}_{st}$ |
+| No        | Previous baseline | city-year                | captures the differences in demand, capital intensity, or labor supply that prevail between cities each year                                                                                                                                                                                                                                   | $\alpha_{ct}$     |
+| No        | Candidate         | destination-year         | Captures additional level of control, encompassing all the shocks and developments in the economies to which China exports.                                                                                                                                                                                                                    | $\alpha_{dt}$     |
+
+
+Create the following fixed effect for the baseline regression:
+
+**index**
+
+* city: `c`
+* product: `k`
+* sector: `s`
+* year: `t`
+* Destination: `j`
+* regime: `r`
+
+**FE**
+
+* city-product: `FE_ck`
+* City-sector-year: `FE_cst`
+* City-product-regime: `FE_ckr`
+* City-sector-regime-year: `FE_csrt`
+* Product-year: `FE_kt`
+* Product-destination: `FE_pj`
+* Destination-year: `FE_jt`
+<!-- #endregion -->
 <!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
@@ -1169,6 +1618,18 @@ if create_fe:
         df_final["year"].astype('str'))[0]
     
     df_final.to_csv(os.path.join(path_local, filename + '.csv'), index = False)
+```
+
+```sos kernel="SoS"
+df_final.groupby(['regime'])['lag_F_C'].describe()
+```
+
+```sos kernel="SoS"
+df_final.groupby(['regime'])['lag_C_C'].describe()
+```
+
+```sos kernel="SoS"
+df_final.groupby(['regime'])['lag_P_C'].describe()
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
@@ -1288,7 +1749,6 @@ library(lfe)
 
 ```sos kernel="R"
 library(tidyverse)
-#library(fixest)
 ```
 
 ```sos kernel="R"
@@ -1307,6 +1767,10 @@ mutate(
 
 ```sos kernel="R"
 df_final %>% select(lag_vat_reb_m, lag_vat_m, rebate) %>% head(2)
+```
+
+```sos kernel="R"
+df_final %>% group_by(regime) %>%summarize(mean(lag_F_C))
 ```
 
 ```sos kernel="R"
@@ -2420,6 +2884,52 @@ lb.beautify(table_number = table_nb,
             jupyter_preview = True,
             resolution = 180,
             folder = folder)
+```
+
+```sos kernel="R"
+summary(
+felm(
+    kandhelwal_quality ~
+    rebate * regime * lag_DV_C +
+    ln_lag_import_tax * regime 
+            | group_id+fe_ckr +fe_kt + fe_jtr|0, df_final
+    %>% group_by(geocode4_corr,year, regime
+) %>% mutate(group_id = group_indices())
+    ,
+            exactDOF = TRUE)
+)
+```
+
+```sos kernel="R"
+summary(
+felm(
+    kandhelwal_quality ~
+    rebate * regime * DV_C +
+    ln_lag_import_tax * regime 
+            | group_id+group_id1+fe_ckr +fe_kt + fe_jtr|0, df_final
+    %>% group_by(geocode4_corr,year, regime
+) %>% mutate(group_id = group_indices())
+    ,
+            exactDOF = TRUE)
+)
+```
+
+```sos kernel="R"
+summary(
+felm(
+    kandhelwal_quality ~
+    rebate * regime * lag_DV_C +
+    ln_lag_import_tax * regime 
+            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final,
+            exactDOF = TRUE)
+)
+```
+
+```sos kernel="SoS"
+ "DM_C",
+            "lag_DM_C",
+            "DV_C",
+            "lag_DV_C"
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
