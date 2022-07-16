@@ -1057,10 +1057,76 @@ df_final.head()
 df_final.shape
 ```
 
+```sos kernel="SoS"
+manova = "credit_constraint_cic - tabula-Manova et al. 2015 - Firm Exports and Multinational Activity Under Credit Constraints.csv"
+jarreau = "credit_constraint_cic - Poncet_ISIC_industry.csv"
+df_final = df_final.merge(
+    (
+        pd.read_csv(
+            "concordance_sic_hs.csv", dtype={"hs6": "str", "concordance_hs": "str"}
+        )
+        .merge(
+            pd.read_csv(manova, dtype={"ISIC": "str"},).rename(
+                columns={"ISIC": "concordance_hs"}
+            ),
+            how="inner",
+        )
+        .rename(
+            columns={
+                "ext_finance": "ext_finance_m",
+                "inventory_ratio": "inventory_ratio_m",
+                "asset_tangibility": "asset_tangibility_m",
+                "trade_credit_intensity": "trade_credit_intensity_m",
+                "liquidity_needs": "liquidity_needs_m",
+            }
+        )
+        .drop(columns=["Unnamed: 0"])
+    ),
+    how="inner",
+).merge(
+    (
+        pd.read_csv(
+            "concordance_sic_hs.csv", dtype={"hs6": "str", "concordance_hs": "str"}
+        )
+        .merge(
+            pd.read_csv(jarreau, dtype={"ISIC": "str"},).rename(
+                columns={"ISIC": "concordance_hs"}
+            ),
+            how="inner",
+        )
+        .rename(
+            columns={
+                "External dependence": "ext_finance_j",
+                "R&D intensity": "rd_intensity_j",
+                "Liquidity needs": "liquidity_needs_j",
+            }
+        )
+        .drop(
+            columns=[
+                "Unnamed: 0",
+                "Name of sector",
+                "CIC",
+                "Hum. cap. intensity",
+                "Phys. cap. intensity",
+                "Foreign share",
+                "rank",
+                "concordance_hs",
+            ]
+        )
+    ),
+    how="inner",
+)
+
+df_final = df_final.loc[lambda x: 
+                        (x['kandhelwal_quality'] > -15)
+                        &
+                        (x['kandhelwal_quality'] < 15)
+                       ]
+```
+
 <!-- #region kernel="SoS" -->
 ### Summary statistics Quality
 
--
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -1098,43 +1164,333 @@ df_quality_stat = (
 ```
 
 ```sos kernel="SoS"
-df_quality_stat.shape
+(
+    df_final
+    ['kandhelwal_quality'].describe()
+)
 ```
 
+<!-- #region kernel="SoS" -->
+- Average quality
+- Average quality per dvp/dvpg
+- Average quality per product type
+<!-- #endregion -->
+
+<!-- #region kernel="SoS" -->
+Construct table for the product: Homogenous vs heterogeneous
+<!-- #endregion -->
+
 ```sos kernel="SoS"
-(
-    df_quality_stat
-    .groupby(['year', 'regime','income_group_ldc_dc'])
-    .agg(
-    {
-        'kandhelwal_quality':'median'
-    })
-    .unstack(-1)
+t_all_product = pd.concat(
+    [
+        #### ALL QUALITY
+        (
+            pd.concat(
+                [
+                    (
+                        df_final
+                        .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+                        .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+                        .groupby(["homogeneous"])
+                        .agg({"kandhelwal_quality": "mean"})
+                        .rename_axis(index={"homogeneous": ""})
+                        .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        ),
+        #### ALL REBATE
+        (
+            pd.concat(
+                [
+                    (
+                        df_final
+                        .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+                        .assign(
+                            rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"]
+                        )
+                        .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+                        .groupby(["homogeneous"])
+                        .agg({"rebate": "mean"})
+                        .rename_axis(index={"homogeneous": ""})
+                        .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        ),
+        #### NB OF OBS
+        (
+            pd.concat(
+                [
+                    (
+                        df_final
+                        .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+                        .assign(
+                            rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"]
+                        )
+                        .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+                        .groupby(["homogeneous"])
+                        .agg({"rebate": "count"})
+                        .rename(columns={"rebate": "nb of obs"})
+                        .rename_axis(index={"homogeneous": ""})
+                        .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        ),
+    ]
+)
+
+t_regime_product = pd.concat(
+    [
+        #### QUALITY REGIME
+        (
+            df_final
+            .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+            .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+            .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+            .groupby(["homogeneous", "regime"])
+            .agg({"kandhelwal_quality": "mean"})
+            .rename_axis(index={"homogeneous": ""})
+            .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+            .T
+        ),
+        #### REBATE REGIME
+        (
+            df_final
+            .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+            .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+            .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+            .assign(rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"])
+            .groupby(["homogeneous", "regime"])
+            .agg({"rebate": "mean"})
+            .rename_axis(index={"homogeneous": ""})
+            .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+            .T
+        ),
+        #### NB OBS REGIME
+        (
+            df_final
+            .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+            .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+            .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+            .assign(rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"])
+            .groupby(["homogeneous", "regime"])
+            .agg({"rebate": "count"})
+            .rename(columns={"rebate": "nb of obs"})
+            .rename_axis(index={"homogeneous": ""})
+            .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+            .T
+        ),
+    ]
+)
+```
+
+<!-- #region kernel="SoS" -->
+Construct table for the countryes: LDC vs DC
+<!-- #endregion -->
+
+```sos kernel="SoS"
+t_all_country = pd.concat(
+    [
+        #### ALL QUALITY
+        (
+            pd.concat(
+                [
+                    (
+                        df_final.groupby(["income_group_ldc_dc"])
+                        .agg({"kandhelwal_quality": "mean"})
+                        .rename_axis(index={"income_group_ldc_dc": ""})
+                        .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        ),
+        #### ALL REBATE
+        (
+            pd.concat(
+                [
+                    (
+                        df_final.assign(
+                            rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"]
+                        )
+                        .groupby(["income_group_ldc_dc"])
+                        .agg({"rebate": "mean"})
+                        .rename_axis(index={"income_group_ldc_dc": ""})
+                        .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        ),
+        #### NB OF OBS
+        (
+            pd.concat(
+                [
+                    (
+                        df_final.assign(
+                            rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"]
+                        )
+                        .groupby(["income_group_ldc_dc"])
+                        .agg({"rebate": "count"})
+                        .rename(columns={"rebate": "nb of obs"})
+                        .rename_axis(index={"income_group_ldc_dc": ""})
+                        .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        ),
+    ]
+)
+t_regime_country = pd.concat(
+    [
+        #### QUALITY REGIME
+        (
+            df_final
+            .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+            .groupby(["income_group_ldc_dc", "regime"])
+            .agg({"kandhelwal_quality": "mean"})
+            .rename_axis(index={"income_group_ldc_dc": ""})
+            .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+            .T
+        ),
+        #### REBATE REGIME
+        (
+            df_final
+            .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+            .assign(rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"])
+            .groupby(["income_group_ldc_dc", "regime"])
+            .agg({"rebate": "mean"})
+            .rename_axis(index={"income_group_ldc_dc": ""})
+            .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+            .T
+        ),
+        #### NB OBS REGIME
+        (
+            df_final
+            .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+            .assign(rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"])
+            .groupby(["income_group_ldc_dc", "regime"])
+            .agg({"rebate": "count"})
+            .rename(columns={"rebate": "nb of obs"})
+            .rename_axis(index={"income_group_ldc_dc": ""})
+            .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+            .T
+        ),
+    ]
 )
 ```
 
 ```sos kernel="SoS"
-(
-    df_quality_stat
-    .groupby(['year', 'regime','homogeneous'])
-    .agg(
-    {
-        'kandhelwal_quality':'median'
-    })
-    .unstack(-1)
+t_final = (
+    pd.concat(
+        [
+            pd.concat(
+                [
+                    pd.concat(
+                        [
+                            pd.concat(
+                                [
+                                    pd.concat(
+                                        [
+                                            df_final[["kandhelwal_quality"]]
+                                            .rename(
+                                                columns={
+                                                    "kandhelwal_quality": "Estimated quality"
+                                                }
+                                            )
+                                            .mean()
+                                        ],
+                                        keys=["all"],
+                                        axis=1,
+                                    ),
+                                    pd.concat(
+                                        [
+                                            df_final.assign(
+                                                rebate=lambda x: x["lag_vat_reb_m"]
+                                                / x["lag_vat_m"]
+                                            )[["rebate"]].mean()
+                                        ],
+                                        keys=["all"],
+                                        axis=1,
+                                    ),
+                                    pd.concat(
+                                        [
+                                            df_final[["kandhelwal_quality"]]
+                                            .count()
+                                            .rename({"kandhelwal_quality": "nb of obs"})
+                                        ],
+                                        keys=["all"],
+                                        axis=1,
+                                    ),
+                                ],
+                            )
+                        ],
+                        keys=["Full"],
+                        axis=1,
+                    ),
+                    (
+                        pd.concat([t_all_country, t_regime_country], axis=1).sort_index(
+                            axis=1, level=[0, 1], ascending=[True, False]
+                        )
+                    ),
+                    (
+                        pd.concat([t_all_product, t_regime_product], axis=1).sort_index(
+                            axis=1, level=[0, 1], ascending=[True, False]
+                        )
+                    ),
+                ],
+                axis=1,
+            ).T,
+            (
+                pd.DataFrame(
+                    l,
+                    pd.MultiIndex.from_product(
+                        [
+                            ["Full", "DC", "LDC", "Heterogenous", "Homogeneous"],
+                            ["all", "Not eligible", "Eligible"],
+                        ],
+                        names=["", ""],
+                    ),
+                    ["condition"],
+                ).loc[
+                    lambda x: ~x.index.isin(
+                        [("Full", "Not eligible"), ("Full", "Eligible")]
+                    )
+                ]
+            ),
+        ],
+        axis=1,
+    )
+    .assign(
+        nb_of_obs=lambda x: np.where(x["condition"].isin(["-"]), "-", x["nb of obs"]),
+        rebate_=lambda x: np.where(x["condition"].isin(["-"]), "-", np.round(x["rebate"],3))
+    )
+    .drop(columns=["nb of obs", "condition"])
+    .rename(columns={"nb_of_obs": "nb of obs"})
 )
+t_final
 ```
 
 ```sos kernel="SoS"
-(
-    df_quality_stat
-    .groupby(['year', 'regime'])
-    .agg(
-    {
-        'kandhelwal_quality':'median'
-    })
-    .unstack(-1)
-)
+print(t_final.to_latex(index=True,float_format="{:0.3f}".format))
 ```
 
 ```sos kernel="SoS"
@@ -1147,77 +1503,33 @@ sns.set(style="whitegrid")
 ```
 
 ```sos kernel="SoS"
-plt.figure(figsize = (15,8))
+plt.figure(figsize = (15,10))
+var = 'kandhelwal_quality'
 temp = (
     df_quality_stat
-    .loc[lambda x: x['year'].isin(['2003','2010'])]
-    .groupby(['year'])
-    .sample(frac = .5)
-    .reindex(columns = ['year','kandhelwal_quality'])
-    .loc[lambda x: x['kandhelwal_quality'] < 3.066821e+00]
-    .loc[lambda x: x['kandhelwal_quality'] > -3.215393e+00]
-    .assign(year = lambda x: x['year'].astype(str))
-)
-
-# Without transparency
-sns.kdeplot(data=temp, x="kandhelwal_quality", hue="year", cut=0, fill=False, common_norm=False, alpha=.5)
-plt.show()
-```
-
-```sos kernel="SoS"
-
-temp = (
-    df_quality_stat
+    .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
     .groupby(['regime'])
     .sample(frac = .5)
-    .reindex(columns = ['regime','kandhelwal_quality'])
-    .loc[lambda x: x['kandhelwal_quality'] < 3.066821e+00]
-    .loc[lambda x: x['kandhelwal_quality'] > -3.215393e+00]
+    .reindex(columns = ['regime',var])
+    .loc[lambda x: x[var] < 15]#df_quality_stat[var].describe(percentiles = [.95])['95%']]
+    .loc[lambda x: x[var] > -15]#df_quality_stat[var].describe(percentiles = [.05])['5%']]
+    .rename(columns = {'kandhelwal_quality':'Estimated quality'})
     
 )
-sns.set(style="whitegrid")
+sns.set(style="white")
 
 # Without transparency
-sns.kdeplot(data=temp, x="kandhelwal_quality", hue="regime", cut=0, fill=False, common_norm=False, alpha=.5)
-plt.show()
+sns.kdeplot(data=temp, x='Estimated quality', hue="regime", cut=0, fill=False, common_norm=False, alpha=.5)
+plt.savefig("Figures/fig_2.png",
+            bbox_inches='tight',
+            dpi=600)
+#plt.show()
 ```
 
 ```sos kernel="SoS"
 pd.DataFrame({
     'hs6':df_final['hs6'].unique()
 }).to_csv('hs6.csv', index = False)
-```
-
-```sos kernel="SoS"
-(
-    pd.read_csv('concordance_sic_hs.csv', dtype = {'hs6':'str', 'concordance_hs':'str'})
-    .merge(
-        pd.read_csv(
-            "credit_constraint_cic - Poncet_ISIC_industry.csv", dtype={"ISIC": "str"}
-        ).rename(columns={"ISIC": "concordance_hs"}), how ='inner'
-    )
-    .drop(columns = ['Unnamed: 0'])
-)
-```
-
-```sos kernel="SoS"
-df_final = (
-    df_final.merge(
-        (
-            pd.read_csv(
-                "concordance_sic_hs.csv", dtype={"hs6": "str", "concordance_hs": "str"}
-            )
-            .merge(
-                pd.read_csv(
-                    "credit_constraint_cic - Poncet_ISIC_industry.csv",
-                    dtype={"ISIC": "str"},
-                ).rename(columns={"ISIC": "concordance_hs"}),
-                how="inner",
-            )
-            .drop(columns=["Unnamed: 0"])
-        ), how = 'left'
-    )
-)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -1259,6 +1571,9 @@ Create the following fixed effect for the baseline regression:
 * Destination-year: `FE_jt`
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
+
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
 
@@ -1291,7 +1606,7 @@ if create_fe:
                                        )[0]
 
     ### City-product-regime
-    df_final["fe_ckr"] = pd.factorize(df["geocode4_corr"].astype('str') + 
+    df_final["fe_ckr"] = pd.factorize(df_final["geocode4_corr"].astype('str') + 
                                         df_final["hs6"].astype('str') +
                                         df_final["regime"].astype('str')
                                        )[0]
@@ -1435,6 +1750,10 @@ if add_to_dic:
         {
         'old':'c\_lag\_stock\_ntm\_w',
         'new':'\\text{Stock ntm destination country}_{jk, t-1}'
+        },
+        {
+        'old':'d\_credit\_needs',
+        'new':'\\text{Credit needs}_{k}'
         }
     ]
 
@@ -1479,7 +1798,7 @@ mutate(
     ln_rebate_1 = log((lag_vat_reb_m / lag_vat_m) +1),
     ln_rebate_2 = log(lag_vat_reb_m + 1),
     rebate = lag_vat_reb_m / lag_vat_m
-      )
+      ) 
 ```
 
 ```sos kernel="R"
@@ -1494,8 +1813,8 @@ df_final %>% select(lag_vat_reb_m, lag_vat_m, rebate) %>% head(2)
 dim(df_final)
 ```
 
-```sos kernel="R"
-
+```sos kernel="SoS"
+df_final.head()
 ```
 
 <!-- #region kernel="SoS" -->
@@ -1761,6 +2080,14 @@ mutate(
     size_v_md = replace_na(size_v_md, "SMALL"),
     size_v_d = replace_na(size_v_d, "SMALL")
 )
+```
+
+```sos kernel="R"
+dim(df_final 
+    %>% filter(is.na(homogeneous) | homogeneous == 'HOMOGENEOUS')%>% 
+     filter(kandhelwal_quality > -15)%>%
+     filter(kandhelwal_quality <15)
+   )
 ```
 
 ```sos kernel="R"
@@ -2445,9 +2772,7 @@ lb.beautify(table_number = table_nb,
 ```
 
 <!-- #region kernel="SoS" -->
-# Non Tariff Measure
-
-- Model is located here: [checkpoint-2562](https://drive.google.com/drive/folders/13rpnm5X5UG-MgLAFb8r1Pu2F-hvGA443?usp=sharing)
+# Credit Constraint
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -2455,14 +2780,142 @@ folder = 'Tables_0'
 table_nb = 5
 table = 'table_{}'.format(table_nb)
 path = os.path.join(folder, table + '.txt')
+```
+
+```sos kernel="SoS"
+#pd.read_csv(manova#, usecols = ['ISIC']                    ,
+#                    dtype={"ISIC": "str"},
+#                ).describe()
+```
+
+```sos kernel="SoS"
+#pd.read_csv(jarreau#, usecols = ['ISIC']                    ,
+#                    dtype={"ISIC": "str"},
+#                ).describe()
+```
+
+```sos kernel="SoS"
+#df_final[['ext_finance_m','ext_finance_j','rd_intensity_j', 'liquidity_needs_m', 'asset_tangibility_m', "trade_credit_intensity_m"]].describe()
+```
+
+```sos kernel="R"
+%get path table
+#### External finance J: OK
+t_0 <- felm(kandhelwal_quality ~
+     rebate* regime * d_credit_needs+ 
+     ln_lag_import_tax * regime+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 , df_final %>%
+     mutate(d_credit_needs = ifelse(ext_finance_j >0.220000, FALSE, TRUE)),
+            exactDOF = TRUE)
+
+### liquidity: OK
+t_1 <- felm(kandhelwal_quality ~
+     rebate* regime * d_credit_needs+ 
+     ln_lag_import_tax * regime+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 , df_final %>%
+     mutate(d_credit_needs = ifelse(liquidity_needs_j >0.200000, TRUE, FALSE)),
+            exactDOF = TRUE)
+
+### Trade credit 
+t_2 <- felm(kandhelwal_quality ~
+     rebate* regime * d_credit_needs+ 
+     ln_lag_import_tax * regime+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 , df_final %>%
+     mutate(d_credit_needs = ifelse(trade_credit_intensity_m >0.080000, FALSE, TRUE)),
+            exactDOF = TRUE)
+
+### Asset tangibility
+t_3 <- felm(kandhelwal_quality ~
+     rebate* regime * d_credit_needs+ 
+     ln_lag_import_tax * regime+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 , df_final %>%
+     mutate(d_credit_needs = ifelse(asset_tangibility_m >0.220000, FALSE, TRUE)),
+            exactDOF = TRUE)
+
+### RD intensity
+t_4 <- felm(kandhelwal_quality ~
+     rebate* regime * d_credit_needs+ 
+     ln_lag_import_tax * regime+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 , df_final %>%
+     mutate(d_credit_needs = ifelse(rd_intensity_j >0.010000, FALSE, TRUE)),
+            exactDOF = TRUE)
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    c("City-product-regime","Yes", "Yes", "Yes", "Yes","Yes","Yes","Yes","Yes"),
+    
+    c("Product-year","Yes", "Yes", "Yes", "Yes","Yes","Yes","Yes","Yes"),
+    
+    c("Destination-year", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes","Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2, t_3, t_4#, t_5#, t_6
+),
+    title="VAT export tax and firm’s quality upgrading NTM anaysis",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name=path
+) 
+```
+
+```sos kernel="SoS"
+tbe1  = """
+This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
+
+multicolumn ={
+    'Baseline': 1,
+    'Environnement': 1,
+    'classification': 3,
+    'Developped': 1,
+    #'Destination': 1
+}
+reorder = {
+    12:2,
+    #5:1
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+new_r = ['& Ext. Fin','Liquidity needs','Trade Credit', 'Asset Tang.', 'RD intensity']
+lb.beautify(table_number = table_nb,
+            #multi_lines_dep = None,
+            #reorder_var = reorder,
+            #multi_lines_dep = multi_lines_dep,
+            new_row= new_r,
+            #multicolumn = multicolumn,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 180,
+            folder = folder)
+```
+
+<!-- #region kernel="SoS" -->
+# Non Tariff Measure
+
+- Model is located here: [checkpoint-2562](https://drive.google.com/drive/folders/13rpnm5X5UG-MgLAFb8r1Pu2F-hvGA443?usp=sharing)
+<!-- #endregion -->
+
+```sos kernel="SoS"
+folder = 'Tables_0'
+table_nb = 6
+table = 'table_{}'.format(table_nb)
+path = os.path.join(folder, table + '.txt')
 
 #for ext in ['.txt', '.tex', '.pdf']:
 #    x = [a for a in os.listdir(folder) if a.endswith(ext)]
 #    [os.remove(os.path.join(folder, i)) for i in x]
-```
-
-```sos kernel="SoS"
-df_final.head()
 ```
 
 ```sos kernel="R"
