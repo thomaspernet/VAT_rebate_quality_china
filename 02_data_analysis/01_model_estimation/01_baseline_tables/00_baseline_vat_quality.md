@@ -279,77 +279,66 @@ df_ntm.dropna(subset = ['year']).shape
 
 ```sos kernel="SoS"
 df_ntm_world = (
-    df_ntm.reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
-    .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
-    .explode("hs6")
-    .groupby(["iso_alpha", "year", "hs6"])
-    .agg({"id": "nunique"})
-    .rename(columns={"id": "count"})
-    .sort_values(by=["iso_alpha", "year", "hs6"])
-    .assign(
-        stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["count"].transform(
-            "cumsum"
-        ),
-        lag_count=lambda x: x.groupby(["iso_alpha", "hs6"])["count"]
-        .transform("shift")
-        .fillna(0),
-        lag_stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["lag_count"]
-        .transform("cumsum")
-        .fillna(0),
-        ntm="TRUE",
-        lag_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["ntm"]
-        .transform("shift")
-        .fillna("FALSE"),
-    )
-    .reset_index()
-)
-```
-
-```sos kernel="SoS"
-df_ntm_world
-```
-
-```sos kernel="SoS"
-df_ntm_china = (
     df_ntm
-    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
+    .loc[lambda x: x['ntm'].isin([
+        'TBT',
+        #'SPS',
+        'ADP'
+    ])]
     .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
+    .dropna(subset = ['year'])
     .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
     .explode("hs6")
     .groupby(["iso_alpha", "year", "hs6"])
     .agg({"id": "nunique"})
     .rename(columns={"id": "count"})
     .sort_values(by=["iso_alpha", "year", "hs6"])
-    .assign(
-        stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["count"].transform(
-            "cumsum"
-        ),
-        lag_count=lambda x: x.groupby(["iso_alpha", "hs6"])["count"]
-        .transform("shift")
-        .fillna(0),
-        lag_stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["lag_count"]
-        .transform("cumsum")
-        .fillna(0),
-        ntm="TRUE",
-        lag_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["ntm"]
-        .transform("shift")
-        .fillna("FALSE"),
-    )
     .reset_index()
-    .rename(columns = 
-                   {
-                       'count':'count_china',
-                       'stock_ntm':'stock_ntm_china',
-                       'lag_count':'lag_count_china',
-                       'lag_stock_ntm':'lag_stock_ntm_china',
-                       'ntm':'ntm_china',
-                       'lag_ntm':'lag_ntm_china',
-                   })
+    
+    .pivot_table(
+        values="count",
+        index=["iso_alpha","hs6"],
+        columns="year",
+        aggfunc="sum",
+        fill_value=0,
+    )
+    .stack()
+    .reset_index()
+    .rename(columns={0: "count_ntm"})
+    .assign(
+        stock_ntm=lambda x: x.groupby(["iso_alpha","hs6"])[
+            "count_ntm"
+        ].transform("cumsum"),
+        new_ntm=lambda x: np.where(x["count_ntm"] > 0, 'TRUE', 'FALSE'),
+        active_ntm=lambda x: np.where(x["stock_ntm"] > 0, 'TRUE', 'FALSE'),
+    )
+    #.loc[lambda x: x['hs6'].isin(['400270'])]
+
 )
+df_ntm_world[["count_ntm",'stock_ntm','new_ntm','active_ntm']].describe()
 ```
 
 ```sos kernel="SoS"
-df_ntm_china
+df_ntm_world[['new_ntm']].value_counts()
+```
+
+```sos kernel="SoS"
+df_ntm_world[['active_ntm']].value_counts()
+```
+
+```sos kernel="SoS"
+df_ntm_china =(
+    df_ntm_world
+    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
+    .rename(
+    columns = {
+        'count_ntm':'count_ntm_china',
+        'stock_ntm':'stock_ntm_china',
+        'new_ntm':'new_ntm_china',
+        'active_ntm':'active_ntm_china',
+    })
+)
+df_ntm_china.head()
 ```
 
 <!-- #region kernel="SoS" -->
@@ -363,6 +352,13 @@ df_ntm_china
 - 8) STE - State trading enterprises
 - 9) TBT - Technical barriers to trade # CHINA
 - 10) TRQ - Tariff-rate quotas
+
+----- 
+
+- count_ntm_china:  Number of new policy per year
+- stock_ntm_china:  Number of active policy 
+- new_ntm_china: Equal to 1 if a new policy is added
+- active_ntm_china: Equal to 1 if the policy is active
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -379,50 +375,71 @@ df_ntm.loc[lambda x: x["iso_alpha"].isin(["CHN"])]['aff'].value_counts()
 
 ```sos kernel="SoS"
 list_ntm = []
-for i in ['TBT','SPS','ADP']:
+for i in [["TBT"], ["SPS"], ["TBT", "SPS"], ["ADP"]]:
     df_temp = (
-    df_ntm
-    .loc[lambda x: x["iso_alpha"].isin(["CHN"])]
-    .loc[lambda x: x['ntm'].isin([i])]
-    .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
-    .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
-    .explode("hs6")
-    .groupby(["iso_alpha", "year", "hs6"])
-    .agg({"id": "nunique"})
-    .rename(columns={"id": "count"})
-    .sort_values(by=["iso_alpha", "year", "hs6"])
-    .assign(
-        stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["count"].transform(
-            "cumsum"
-        ),
-        lag_count=lambda x: x.groupby(["iso_alpha", "hs6"])["count"]
-        .transform("shift")
-        .fillna(0),
-        lag_stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["lag_count"]
-        .transform("cumsum")
-        .fillna(0),
-        ntm="TRUE",
-        lag_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["ntm"]
-        .transform("shift")
-        .fillna("FALSE"),
+        df_ntm.loc[lambda x: x["iso_alpha"].isin(["CHN"])]
+        .loc[lambda x: x["ntm"].isin(i)]
+        .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
+        .dropna(subset=["year"])
+        .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
+        .explode("hs6")
+        .groupby(["iso_alpha", "year", "hs6"])
+        .agg({"id": "nunique"})
+        .rename(columns={"id": "count"})
+        .sort_values(by=["iso_alpha", "year", "hs6"])
+        .reset_index()
+        .pivot_table(
+            values="count",
+            index=["iso_alpha", "hs6"],
+            columns="year",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .stack()
+        .reset_index()
+        .rename(columns={0: "count_ntm_china"})
+        .assign(
+            stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["count_ntm_china"].transform(
+                "cumsum"
+            ),
+            new_ntm_china=lambda x: np.where(x["count_ntm_china"] > 0, "TRUE", "FALSE"),
+            active_ntm_china=lambda x: np.where(x["stock_ntm_china"] > 0, "TRUE", "FALSE"),
+        )
+        .assign(
+            lag_count_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["count_ntm_china"]
+            .transform("shift")
+            .fillna(0),
+            lag_stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["stock_ntm_china"]
+            .transform("shift")
+            .fillna(0),
+            lag_new_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["new_ntm_china"]
+            .transform("shift")
+            .fillna("FALSE"),
+            lag_active_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["active_ntm_china"]
+            .transform("shift")
+            .fillna("FALSE"),
+        )
+        .reset_index()
+        .rename(
+            columns={
+                "count_ntm_china": "c_count_ntm_{}_china".format("_".join(i)),
+                "lag_count_ntm_china": "c_lag_count_ntm_{}_china".format("_".join(i)),
+                "stock_ntm_china": "c_stock_ntm_{}_china".format("_".join(i)),
+                "lag_stock_ntm_china": "c_lag_stock_ntm_{}_china".format("_".join(i)),
+                "new_ntm_china": "new_ntm_{}_china".format("_".join(i)),
+                "lag_new_ntm_china": "lag_new_ntm_{}_china".format("_".join(i)),
+                "active_ntm_china": "active_ntm_{}_china".format("_".join(i)),
+                "lag_active_ntm_china": "lag_active_ntm_{}_china".format("_".join(i)),
+            }
+        )
+        .drop(columns = ['index'])
     )
-    .reset_index()
-    .rename(columns = 
-                   {
-                       'count':'count_{}'.format(i),
-                       'stock_ntm':'stock_ntm_{}'.format(i),
-                       'lag_count':'lag_count_{}'.format(i),
-                       'lag_stock_ntm':'lag_stock_ntm_{}'.format(i),
-                       'ntm':'ntm_{}'.format(i),
-                       'lag_ntm':'lag_ntm_{}'.format(i),
-                   })
-)
     list_ntm.append(df_temp)
 len(list_ntm)
 ```
 
 ```sos kernel="SoS"
-df_ntm.loc[lambda x: x["iso_alpha"].isin(["CHN"])]['aff'].value_counts()
+list_ntm[1]
 ```
 
 ```sos kernel="SoS"
@@ -454,38 +471,60 @@ df_country = (
     .loc[lambda x: x["iso_alpha"].isin(["CHN"])]
     .loc[lambda x: x['aff'].isin(dvl_econ)]
     .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
-    .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
-    .explode("hs6")
-    .groupby(["iso_alpha", "year", "hs6"])
-    .agg({"id": "nunique"})
-    .rename(columns={"id": "count"})
-    .sort_values(by=["iso_alpha", "year", "hs6"])
-    .assign(
-        stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["count"].transform(
-            "cumsum"
-        ),
-        lag_count=lambda x: x.groupby(["iso_alpha", "hs6"])["count"]
-        .transform("shift")
-        .fillna(0),
-        lag_stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["lag_count"]
-        .transform("cumsum")
-        .fillna(0),
-        ntm="TRUE",
-        lag_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["ntm"]
-        .transform("shift")
-        .fillna("FALSE"),
+        .dropna(subset=["year"])
+        .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
+        .explode("hs6")
+        .groupby(["iso_alpha", "year", "hs6"])
+        .agg({"id": "nunique"})
+        .rename(columns={"id": "count"})
+        .sort_values(by=["iso_alpha", "year", "hs6"])
+        .reset_index()
+        .pivot_table(
+            values="count",
+            index=["iso_alpha", "hs6"],
+            columns="year",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .stack()
+        .reset_index()
+        .rename(columns={0: "count_ntm_china"})
+        .assign(
+            stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["count_ntm_china"].transform(
+                "cumsum"
+            ),
+            new_ntm_china=lambda x: np.where(x["count_ntm_china"] > 0, "TRUE", "FALSE"),
+            active_ntm_china=lambda x: np.where(x["stock_ntm_china"] > 0, "TRUE", "FALSE"),
+        )
+        .assign(
+            lag_count_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["count_ntm_china"]
+            .transform("shift")
+            .fillna(0),
+            lag_stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["stock_ntm_china"]
+            .transform("shift")
+            .fillna(0),
+            lag_new_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["new_ntm_china"]
+            .transform("shift")
+            .fillna("FALSE"),
+            lag_active_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["active_ntm_china"]
+            .transform("shift")
+            .fillna("FALSE"),
+        )
+        .reset_index()
+        .rename(
+            columns={
+                "count_ntm_china": "c_count_ntm_dvp_china",
+                "lag_count_ntm_china": "c_lag_count_ntm_dvp_china",
+                "stock_ntm_china": "c_stock_ntm_dvp_china",
+                "lag_stock_ntm_china": "c_lag_stock_ntm_dvp_china",
+                "new_ntm_china": "new_ntm_dvp_china",
+                "lag_new_ntm_china": "lag_new_ntm_dvp_china",
+                "active_ntm_china": "active_ntm_dvp_china",
+                "lag_active_ntm_china": "lag_active_ntm_dvp_china"
+            }
+        )
+    .drop(columns = ['index'])
     )
-    .reset_index()
-    .rename(columns = 
-                   {
-                       'count':'count_dvp_c',
-                       'stock_ntm':'stock_ntm_dvp_c',
-                       'lag_count':'lag_count_dvp_c',
-                       'lag_stock_ntm':'lag_stock_ntm_dvp_c',
-                       'ntm':'ntm_dvp_c',
-                       'lag_ntm':'lag_ntm_dvp_c',
-                   })
-)
 df_country.head(1)
 ```
 
@@ -506,43 +545,61 @@ df_ntm_env = (
     .loc[lambda x: x["iso_alpha"].isin(["CHN"])]
     .loc[lambda x: x['keywords'].isin(list_env)]
     .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
-    .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
-    .explode("hs6")
-    .groupby(["iso_alpha", "year", "hs6"])
-    .agg({"id": "nunique"})
-    .rename(columns={"id": "count"})
-    .sort_values(by=["iso_alpha", "year", "hs6"])
-    .assign(
-        stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["count"].transform(
-            "cumsum"
-        ),
-        lag_count=lambda x: x.groupby(["iso_alpha", "hs6"])["count"]
-        .transform("shift")
-        .fillna(0),
-        lag_stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["lag_count"]
-        .transform("cumsum")
-        .fillna(0),
-        ntm="TRUE",
-        lag_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["ntm"]
-        .transform("shift")
-        .fillna("FALSE"),
+        .dropna(subset=["year"])
+        .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
+        .explode("hs6")
+        .groupby(["iso_alpha", "year", "hs6"])
+        .agg({"id": "nunique"})
+        .rename(columns={"id": "count"})
+        .sort_values(by=["iso_alpha", "year", "hs6"])
+        .reset_index()
+        .pivot_table(
+            values="count",
+            index=["iso_alpha", "hs6"],
+            columns="year",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .stack()
+        .reset_index()
+        .rename(columns={0: "count_ntm_china"})
+        .assign(
+            stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["count_ntm_china"].transform(
+                "cumsum"
+            ),
+            new_ntm_china=lambda x: np.where(x["count_ntm_china"] > 0, "TRUE", "FALSE"),
+            active_ntm_china=lambda x: np.where(x["stock_ntm_china"] > 0, "TRUE", "FALSE"),
+        )
+        .assign(
+            lag_count_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["count_ntm_china"]
+            .transform("shift")
+            .fillna(0),
+            lag_stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["stock_ntm_china"]
+            .transform("shift")
+            .fillna(0),
+            lag_new_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["new_ntm_china"]
+            .transform("shift")
+            .fillna("FALSE"),
+            lag_active_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["active_ntm_china"]
+            .transform("shift")
+            .fillna("FALSE"),
+        )
+        .reset_index()
+        .rename(
+            columns={
+                "count_ntm_china": "c_count_ntm_env_china",
+                "lag_count_ntm_china": "c_lag_count_ntm_env_china",
+                "stock_ntm_china": "c_stock_ntm_env_china",
+                "lag_stock_ntm_china": "c_lag_stock_ntm_env_china",
+                "new_ntm_china": "new_ntm_env_china",
+                "lag_new_ntm_china": "lag_new_ntm_env_china",
+                "active_ntm_china": "active_ntm_env_china",
+                "lag_active_ntm_china": "lag_active_ntm_env_china"
+            }
+        )
+    .drop(columns = ['index'])
     )
-    .reset_index()
-    .rename(columns = 
-                   {
-                       'count':'count_env',
-                       'stock_ntm':'stock_ntm_env',
-                       'lag_count':'lag_count_env',
-                       'lag_stock_ntm':'lag_stock_ntm_env',
-                       'ntm':'ntm_env',
-                       'lag_ntm':'lag_ntm_env',
-                   })
-)
-df_ntm_env['lag_ntm_env'].value_counts()
-```
-
-```sos kernel="SoS"
-df.head(2)
+df_ntm_env.head(1)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -555,36 +612,6 @@ Compute frequency, coverage and prevalence ratio:
 
 To make things simpler, we create different queries
 <!-- #endregion -->
-
-```sos kernel="SoS"
-query = """
-SELECT 
-    t as year, 
-    iso_3digit_alpha_d, 
-    COUNT(DISTINCT(hs6)) as M
-  FROM 
-    "trade"."baci_2002_2020" 
-  WHERE 
-    t IN (
-      '2002', '2003', '2004', '2005', '2006', 
-      '2007', '2008', '2009', '2010', '2011'
-    ) 
-  GROUP BY 
-    t, 
-    iso_3digit_alpha_d
-"""
-df_M = (s3.run_query(
-            query=query,
-            database="trade",
-            s3_output='SQL_OUTPUT_ATHENA',
-            filename=filename,  # Add filename to print dataframe
-            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
-            dtype = dtypes
-        )
-        .dropna(subset = ['year', 'iso_3digit_alpha_d'])
-       )
-            
-```
 
 ```sos kernel="SoS"
 query = """
@@ -610,14 +637,43 @@ df_hs_baci = (s3.run_query(
               hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
           )
        )
+
 ```
 
 ```sos kernel="SoS"
-df_hs_baci.groupby(['year'])['hs6'].nunique()
-```
-
-```sos kernel="SoS"
-df_hs_baci.shape
+query = """
+SELECT 
+    DISTINCT(hs6) as hs6,
+    t as year, 
+    iso_3digit_alpha_d
+    
+  FROM 
+    "trade"."baci_2002_2020" 
+  WHERE 
+    t IN (
+      '2002', '2003', '2004', '2005', '2006', 
+      '2007', '2008', '2009', '2010', '2011'
+    ) 
+  GROUP BY 
+    t, 
+    iso_3digit_alpha_d,hs6
+"""
+df_M = (s3.run_query(
+            query=query,
+            database="trade",
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename=filename,  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = dtypes
+        )
+        .dropna(subset = ['year', 'iso_3digit_alpha_d'])
+        .rename(columns={"iso_3digit_alpha_d": "iso_alpha"})
+        .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+       )
+df_M.head()
 ```
 
 ```sos kernel="SoS"
@@ -639,7 +695,7 @@ SELECT
     iso_3digit_alpha_d,
     hs6
 """
-df_hs_baci_v = (s3.run_query(
+df_V = (s3.run_query(
             query=query,
             database="trade",
             s3_output='SQL_OUTPUT_ATHENA',
@@ -651,414 +707,9 @@ df_hs_baci_v = (s3.run_query(
               year = lambda x: x['year'].astype('Int64'),
               hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
           )
+        .rename(columns={"iso_3digit_alpha_d": "iso_alpha"})
        )
-```
-
-```sos kernel="SoS"
-df_hs_baci_v.head()
-```
-
-```sos kernel="SoS"
-query = """
- WITH test as ( 
- SELECT 
-                year_initiation as year, 
-                imp_iso3 as iso_3digit_alpha_d, 
-                split(hs_combined, '|') as hs_combined 
-              FROM 
-                wto_wiiw_ntm
-            )
-           SELECT 
-              year, 
-              iso_3digit_alpha_d, 
-              hs6
-            FROM 
-              test CROSS 
-              JOIN UNNEST(hs_combined) AS t (hs6)           
-"""
-df_DM = (s3.run_query(
-            query=query,
-            database="trade",
-            s3_output='SQL_OUTPUT_ATHENA',
-            filename=filename,  # Add filename to print dataframe
-            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
-            dtype = dtypes
-        )
-          .dropna(subset = ['year', 'iso_3digit_alpha_d','hs6'])
-          .assign(
-              year = lambda x: x['year'].astype('Int64'),
-              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
-          )
-          #.groupby(['year', 'iso_3digit_alpha_d'])
-          #.agg({'hs6':'nunique'})
-          #.reset_index()
-          #.rename(columns = {'hs6':'DM'})
-       )
-```
-
-```sos kernel="SoS"
-query = """
-WITH test as ( 
- SELECT 
-                id,
-                year_initiation as year, 
-                imp_iso3 as iso_3digit_alpha_d, 
-                split(hs_combined, '|') as hs_combined 
-              FROM 
-                wto_wiiw_ntm
-            )
-           SELECT 
-              year, 
-              iso_3digit_alpha_d, 
-              hs6,
-              COUNT(id) as NM
-            FROM 
-              test CROSS 
-              JOIN UNNEST(hs_combined) AS t (hs6)  
-            GROUP BY 
-            year, 
-              iso_3digit_alpha_d, 
-              hs6
-"""
-df_DN = (s3.run_query(
-            query=query,
-            database="trade",
-            s3_output='SQL_OUTPUT_ATHENA',
-            filename=filename,  # Add filename to print dataframe
-            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
-            dtype = dtypes
-        )
-          .dropna(subset = ['year', 'iso_3digit_alpha_d','hs6'])
-          .assign(
-              year = lambda x: x['year'].astype('Int64'),
-              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
-          )
-          #.groupby(['year', 'iso_3digit_alpha_d'])
-          #.agg({'hs6':'nunique'})
-          #.reset_index()
-          #.rename(columns = {'hs6':'DM'})
-       )
-```
-
-```sos kernel="SoS"
-df_DN
-```
-
-```sos kernel="SoS"
-df_freq = (
-    df_M.merge(
-        (
-            df_DM.loc[
-                lambda x: x["year"].isin(
-                    [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011]
-                )
-            ]
-            .merge(df_hs_baci)
-            .groupby(["year", "iso_3digit_alpha_d"])
-            .agg({"hs6": "nunique"})
-            .rename(columns={"hs6": "DM"})
-            .reset_index()
-        ),
-        how="left",
-    ).fillna(0)
-    .assign(
-    frequency = lambda x: x['DM'] / x['M']
-    )
-    .set_index(['year', 'iso_3digit_alpha_d'])
-    .assign(
-    frequency = lambda x: x['frequency'].clip(upper=1)
-    )
-    .reset_index()
-    .rename(columns={"iso_3digit_alpha_d": "iso_alpha"})
-    .sort_values(by=["iso_alpha", "year"])
-            .assign(
-                lag_frequency=lambda x: x.groupby(["iso_alpha"])["frequency"].transform(
-                    "shift"
-                ),
-            )
-)
-```
-
-```sos kernel="SoS"
-df_prev = (
-    df_M.merge(
-        (
-            df_DN.loc[
-                lambda x: x["year"].isin(
-                    [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011]
-                )
-            ]
-            .merge(df_hs_baci)
-            .groupby(["year", "iso_3digit_alpha_d"])
-            .agg({"NM": "sum"})
-            #.rename(columns={"hs6": "DN"})
-            .reset_index()
-        ),
-        how="left",
-    ).fillna(0)
-    .assign(
-    prevalence = lambda x: x['NM'] / x['M']
-    )
-    .rename(columns={"iso_3digit_alpha_d": "iso_alpha"})
-    .sort_values(by=["iso_alpha", "year"])
-            .assign(
-                lag_prevalence=lambda x: x.groupby(["iso_alpha"])["prevalence"].transform(
-                    "shift"
-                ),
-            )
-)
-```
-
-```sos kernel="SoS"
-df_hs_baci_v.shape
-```
-
-```sos kernel="SoS"
-df_cov = (
-    df_hs_baci_v.merge(
-        (
-            df_DM.loc[
-                lambda x: x["year"].isin(
-                    [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011]
-                )
-            ]
-            .merge(df_hs_baci)
-            .drop_duplicates()
-        ),
-        how="left", indicator = True
-    )
-    .loc[lambda x: x['_merge'].isin(['left_only','both'])]
-    .groupby(["year","iso_3digit_alpha_d",'_merge'])
-    .agg({'v':'sum'})
-    .fillna(0)
-    .unstack(-1)
-    .collapse_levels(sep='_')
-    .assign(coverage = lambda x: x['v_both']/ (x['v_left_only'] + x['v_both']))
-    .drop(columns = ['v_right_only'])
-    .reset_index()
-    .rename(columns={"iso_3digit_alpha_d": "iso_alpha"})
-    .sort_values(by=["iso_alpha", "year"])
-            .assign(
-                lag_coverage=lambda x: x.groupby(["iso_alpha"])["coverage"].transform(
-                    "shift"
-                ),
-            )
-)
-```
-
-```sos kernel="SoS"
-df.dtypes
-```
-
-<!-- #region kernel="SoS" -->
-### NTM Chinese city
-<!-- #endregion -->
-
-```sos kernel="SoS"
-query = """
-SELECT 
-year,
-geocode4_corr,
---regime,
-hs6,
-SUM(value) as V
-FROM (
-SELECT 
-    date as year, 
-    geocode4_corr,
-    origin_and_destination, 
-    CASE WHEN trade_type = '进料加工贸易' 
-    OR trade_type = '一般贸易' THEN 'ELIGIBLE' ELSE 'NOT_ELIGIBLE' END as regime, 
-    hs as hs6,
-    value
-  FROM 
-    "chinese_trade"."china_import_export" 
-INNER JOIN (
-        SELECT 
-          DISTINCT(citycn) as citycn, 
-          geocode4_corr 
-        FROM 
-          chinese_lookup.china_city_code_normalised
-      ) AS city_cn_en ON city_cn_en.citycn = china_import_export.city_prod    
-  WHERE 
-    date in (
-      '2002', '2003', '2004', '2005', '2006', 
-      '2007', '2008', '2009', '2010'
-    ) 
-    AND imp_exp = '进口' 
-    AND (
-      trade_type = '进料加工贸易' 
-      OR trade_type = '一般贸易' 
-      OR trade_type = '来料加工装配贸易' 
-      OR trade_type = '加工贸易'
-    ) 
-    AND intermediate = 'No' 
-    AND (
-      business_type = '国有企业' 
-      OR business_type = '私营企业' 
-      OR business_type = '集体企业' 
-      OR business_type = '国有' 
-      OR business_type = '私营' 
-      OR business_type = '集体'
-    ) 
-    AND quantity > 0 
-    AND value > 0
-      )
-      GROUP BY year,
-geocode4_corr,
---regime,
-hs6
-"""
-df_VC = (s3.run_query(
-            query=query,
-            database="chinese_trade",
-            s3_output='SQL_OUTPUT_ATHENA',
-            filename=filename,  # Add filename to print dataframe
-            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
-            dtype = dtypes
-        )
-    .assign(
-              year = lambda x: x['year'].astype('Int64'),
-              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
-          )
-        )
-```
-
-<!-- #region kernel="SoS" -->
-- count_ntm_china:  Number of new policy per year
-- stock_ntm_china:  Number of active policy 
-- new_ntm_china: Equal to 1 if a new policy is added
-- active_ntm_china: Equal to 1 if the policy is active
-<!-- #endregion -->
-
-```sos kernel="SoS"
-from transformers import pipeline
-classifier = pipeline("zero-shot-classification",
-                      model="facebook/bart-large-mnli")
-```
-
-```sos kernel="SoS"
-def compute_score(source, candidate_labels):
-    return classifier(source, candidate_labels, multi_label=True)
-```
-
-```sos kernel="SoS"
-(
-    df_ntm
-    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
-    ['ntm'].value_counts()
-)
-```
-
-```sos kernel="SoS"
-(
-    df_ntm
-    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
-    .loc[lambda x: x['ntm'].isin([
-        #'TBT',
-        #'SPS',
-        'ADP'
-    ])]
-    #['keywords'].value_counts()
-    #.reset_index()
-    #.to_excel('test.xlsx')
-)
-```
-
-```sos kernel="SoS"
-(
-    df_ntm
-    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
-    .loc[lambda x: x['ntm'].isin([
-        'TBT',
-        'SPS',
-        #'ADP'
-    ])]
-    ['keywords'].value_counts()
-    .reset_index()
-)
-```
-
-```sos kernel="SoS"
-from tqdm.notebook import tqdm
-import json
-keywords = (
-    df_ntm
-    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
-    .loc[lambda x: x['ntm'].isin([
-        'TBT',
-        'SPS',
-        #'ADP'
-    ])]
-    ['keywords'].value_counts()
-    .reset_index()
-)
-list_keywords = []
-for i in tqdm(range(0,keywords.shape[0])):
-    score = compute_score(keywords.loc[i]['index'], ['animal','food', 'safety'])
-    list_keywords.append(score)
-    with open('TEMP/sentence_{}.json'.format(i), 'w') as outfile:
-        json.dump(score, outfile)
-```
-
-```sos kernel="SoS"
-to_exclude = list(
-    pd.DataFrame(list_keywords)
-    .assign(
-    max_proba = lambda x: x['scores'].apply(max),
-        to_remove = lambda x: x['max_proba'] >.5
-    )
-    .loc[lambda x: x['to_remove'].isin([True])]
-    ['sequence'].unique()
-)
-len(to_exclude)
-```
-
-```sos kernel="SoS"
-df_ntm_c = (
-    df_ntm
-    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
-    .loc[lambda x: x['ntm'].isin([
-        #'TBT',
-        #'SPS',
-        'ADP'
-    ])]
-    #.loc[lambda x: ~x['keywords'].isin(to_exclude)]
-    .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
-    .dropna(subset = ['year'])
-    .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
-    .explode("hs6")
-    .groupby(["iso_alpha", "year", "hs6"])
-    .agg({"id": "nunique"})
-    .rename(columns={"id": "count"})
-    .sort_values(by=["iso_alpha", "year", "hs6"])
-    .reset_index()
-    
-    .pivot_table(
-        values="count",
-        index=["hs6"],
-        columns="year",
-        aggfunc="sum",
-        fill_value=0,
-    )
-    .stack()
-    .reset_index()
-    .rename(columns={0: "count_ntm_china"})
-    .assign(
-        stock_ntm_china=lambda x: x.groupby(["hs6"])[
-            "count_ntm_china"
-        ].transform("cumsum"),
-        new_ntm_china=lambda x: np.where(x["count_ntm_china"] > 0, 1, 0),
-        active_ntm_china=lambda x: np.where(x["stock_ntm_china"] > 0, 1, 0),
-    )
-    #.loc[lambda x: x['hs6'].isin(['400270'])]
-
-)
-df_ntm_c[["count_ntm_china",'stock_ntm_china','new_ntm_china','active_ntm_china']].describe()
-```
-
-```sos kernel="SoS"
-df_ntm_c.loc[lambda x: x['hs6'].isin(['400270'])]
+df_V.head()
 ```
 
 <!-- #region kernel="SoS" -->
@@ -1066,164 +717,82 @@ Frequency
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-# 656185
-df_VC_NTM_C = (
-    df_VC
-    .merge(df_ntm_c, how = 'left', indicator = True)
-)
-df_VC_NTM_C['_merge'].value_counts()
-```
-
-```sos kernel="SoS"
-df_VC_NTM_C.head()
-```
-
-```sos kernel="SoS"
-df_freq_c = (
-    df_VC_NTM_C.set_index([
-        "year",
-        "geocode4_corr",
-        "hs6",
-        "_merge",
-        #"regime"
-    ])
-    .fillna(0)
-    .groupby([
-        "year",
-        "geocode4_corr",
-        #"regime"
-    ])
-    .agg({"active_ntm_china": "sum"})
-    .rename(columns = {'active_ntm_china':'DM_C'})
-    .merge(
-        (df_VC_NTM_C.groupby(["year", "geocode4_corr"]).agg({"hs6": "nunique"}).rename(columns = {'hs6':'M_C'})),
-        left_index=True,
-        right_index=True,
-        how="right",
-    )
-    .assign(
-    F_C = lambda x: x['DM_C']/x['M_C'],
-    )
+df_freq =(
+    df_ntm_world
+    .loc[lambda x: ~x["iso_alpha"].isin(["CHN"])]
+    .loc[lambda x: x["active_ntm"].isin(["TRUE"])]
+    .merge(df_M)
+    .groupby(['year', 'iso_alpha'])
+    .agg({'hs6':'nunique'})
+    .rename(columns = {'hs6':'DM'})
+    .merge((df_M.groupby(['year', 'iso_alpha'])).agg({'hs6':'count'}).rename(columns = {'hs6':'M'}),
+           left_index = True, right_index = True,how = 'right')
+    .assign(DM=lambda x: x["DM"].fillna(0), F=lambda x: x["DM"] / x["M"])
     .reset_index()
-    .sort_values(by = [
-        'geocode4_corr',
-        'year',
-        #"regime"
-    ])
+    .sort_values(by=["iso_alpha", "year"])
     .assign(
-        lag_DM_C=lambda x: x.groupby(["geocode4_corr", 
-                                      #"regime"
-                                     ])["DM_C"].transform(
-           "shift"
-        ),
-    lag_F_C=lambda x: x.groupby(["geocode4_corr", 
-                                      #"regime"
-                                     ])["F_C"].transform(
-           "shift"
-        )
+        lag_DM=lambda x: x.groupby(["iso_alpha",])["DM"].transform("shift"),
+        lag_F=lambda x: x.groupby(["iso_alpha",])["F"].transform("shift")
     )
 )
-#df_freq_c.head(6)
-df_freq_c[["DM_C","M_C","F_C",'lag_DM_C',"lag_F_C"]].describe(percentiles = np.arange(0,1, .05))
-
+df_freq[['DM','M','F','lag_DM','lag_F']].describe()
 ```
 
 <!-- #region kernel="SoS" -->
-coverage
+Coverage
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-df_cov_c = (
-    df_VC_NTM_C.set_index([
-        "year",
-        "geocode4_corr",
-        "hs6",
-        "_merge",
-        #"regime"
-    ])
-    .fillna(0)
-    .loc[lambda x: x['active_ntm_china'] > 0]
-    .groupby([
-        "year",
-        "geocode4_corr",
-        #"regime"
-    ])
-    .agg({"V": "sum"})
-    .rename(columns = {'V':'DV_C'})
-    .merge(
-    (df_VC_NTM_C.groupby(["year", "geocode4_corr"]).agg({"V": "sum"}).rename(columns = {'V':'V_C'})),
-    left_index= True,right_index = True, how = 'right')
-    .assign(
-    DV_C = lambda x: x['DV_C'].fillna(0),    
-    C_C = lambda x: x['DV_C']/x['V_C'],
-    )
+df_cov = (
+    df_ntm_world
+    .loc[lambda x: ~x["iso_alpha"].isin(["CHN"])]
+    .loc[lambda x: x["active_ntm"].isin(["TRUE"])]
+    .merge(df_V)
+    .groupby(['year', 'iso_alpha'])
+    .agg({'v':'sum'})
+    .rename(columns = {'v':'DV'})
+    .merge((df_V.groupby(['year', 'iso_alpha'])).agg({'v':'sum'}).rename(columns = {'v':'V'}),
+           left_index = True, right_index = True,how = 'right')
+    .assign(DV=lambda x: x["DV"].fillna(0), C=lambda x: x["DV"] / x["V"])
     .reset_index()
-    .sort_values(by = [
-        'geocode4_corr',
-        'year',
-        #"regime"
-    ])
+    .sort_values(by=["iso_alpha", "year"])
     .assign(
-        lag_DV_C=lambda x: x.groupby(["geocode4_corr", 
-                                     #"regime"
-                                     ])["DV_C"].transform(
-            "shift"
-        ),
-    lag_C_C=lambda x: x.groupby(["geocode4_corr", 
-                                      #"regime"
-                                     ])["C_C"].transform(
-            "shift"
-        )
+        lag_DV=lambda x: x.groupby(["iso_alpha",])["DV"].transform("shift"),
+        lag_C=lambda x: x.groupby(["iso_alpha",])["C"].transform("shift")
     )
 )
-df_cov_c[["DV_C","V_C","C_C","lag_DV_C","lag_C_C"]].describe(percentiles = np.arange(0,1, .05))
+df_cov[['DV','V','C','lag_DV','lag_C']].describe()
+```
+
+<!-- #region kernel="SoS" -->
+Prevalence
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df_prev = (
+    df_ntm_world
+    .loc[lambda x: ~x["iso_alpha"].isin(["CHN"])]
+    .loc[lambda x: x["active_ntm"].isin(["TRUE"])]
+    .merge(df_M)
+    .groupby(['year', 'iso_alpha'])
+    .agg({'stock_ntm':'sum'})
+    .rename(columns = {'stock_ntm':'NM'})
+    .merge((df_M.groupby(['year', 'iso_alpha'])).agg({'hs6':'count'}).rename(columns = {'hs6':'M'}),
+           left_index = True, right_index = True,how = 'right')
+    .assign(NM=lambda x: x["NM"].fillna(0), P=lambda x: x["NM"] / x["M"])
+    .reset_index()
+    .sort_values(by=["iso_alpha", "year"])
+    .assign(
+        lag_NM=lambda x: x.groupby(["iso_alpha",])["NM"].transform("shift"),
+        lag_P=lambda x: x.groupby(["iso_alpha",])["P"].transform("shift")
+    )
+    .drop(columns = ['M'])
+)
+df_prev[['NM','P','lag_NM','lag_P']].describe()
 ```
 
 ```sos kernel="SoS"
-df_prev_c = (
-    df_VC_NTM_C.set_index([
-        "year",
-        "geocode4_corr",
-        "hs6",
-        "_merge",
-    #"regime"
-    ])
-    .fillna(0)
-    .groupby([
-        "year",
-        "geocode4_corr",
-        #"regime"
-    ])
-    .agg({"stock_ntm_china": "sum"})
-    .rename(columns = {'stock_ntm_china':'NM_C'})
-    .merge(
-        (df_VC_NTM_C.groupby(["year", "geocode4_corr"]).agg({"hs6": "nunique"}).rename(columns = {'hs6':'M_C'})),
-        left_index=True,
-        right_index=True,
-        how="right",
-    )
-    .assign(
-    P_C = lambda x: x['NM_C']/x['M_C'],
-    )
-    .reset_index()
-    .sort_values(by = [
-        'geocode4_corr',
-        'year',
-        #"regime"
-    ])
-    .assign(
-    lag_P_C=lambda x: x.groupby(["geocode4_corr", 
-                                      #"regime"
-                                     ])["P_C"].transform(
-            "shift"
-        )
-    )
-)
-df_prev_c[["NM_C","M_C","P_C","lag_P_C"]].describe(percentiles = np.arange(0,1, .05))
-```
-
-```sos kernel="SoS"
-df_prev_c.loc[lambda x: x['geocode4_corr'].isin(['1307'])]
+df_prev
 ```
 
 <!-- #region kernel="SoS" -->
@@ -1231,7 +800,36 @@ df_prev_c.loc[lambda x: x['geocode4_corr'].isin(['1307'])]
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-#df_ntm_country.loc[lambda x: x["iso_3digit_alpha_d"].isin(["CHN"])].groupby(['year','iso_3digit_alpha_d'])['frequency'].describe()
+(
+            df_ntm_world.assign(
+                c_lag_count_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "count_ntm"
+                ]
+                .transform("shift")
+                .fillna(0),
+                c_lag_stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "stock_ntm"
+                ]
+                .transform("shift")
+                .fillna(0),
+                c_lag_new_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "new_ntm"
+                ]
+                .transform("shift")
+                .fillna("FALSE"),
+                c_lag_active_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "active_ntm"
+                ]
+                .transform("shift")
+                .fillna("FALSE"),
+            )
+            .rename(
+                columns={
+                    "count_ntm": "c_count_ntm",
+                    "stock_ntm": "c_stock_ntm",
+                }
+            )
+        )
 ```
 
 ```sos kernel="SoS"
@@ -1239,145 +837,109 @@ df_final = (
     df.drop(columns=["year.1", "hs6.1", "geocode4_corr.1", "country_en.1"])
     .assign(hs6=lambda x: x["hs6"].astype(str).str.zfill(6))
     .merge(df_ntm_world, on=["iso_alpha", "year", "hs6"], how="left")
-    .merge(df_ntm_china.drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
+    .merge(
+        (
+            df_ntm_china.assign(
+                c_lag_count_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "count_ntm_china"
+                ]
+                .transform("shift")
+                .fillna(0),
+                c_lag_stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "stock_ntm_china"
+                ]
+                .transform("shift")
+                .fillna(0),
+                lag_new_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "new_ntm_china"
+                ]
+                .transform("shift")
+                .fillna("FALSE"),
+                lag_active_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "active_ntm_china"
+                ]
+                .transform("shift")
+                .fillna("FALSE"),
+            )
+            .rename(
+                columns={
+                    "count_ntm_china": "c_count_ntm_china",
+                    "stock_ntm_china": "c_stock_ntm_china",
+                }
+            )
+            .drop(columns=["iso_alpha"])
+        ),
+        on=["year", "hs6"],
+        how="left",
+    )
     .merge(df_ntm_env.drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
     .merge(list_ntm[0].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
     .merge(list_ntm[1].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
     .merge(list_ntm[2].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
+    .merge(list_ntm[3].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
     .merge(df_country.drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
+    .merge(df_freq, on=["year", "iso_alpha"], how="left",)
+    .merge(df_prev, on=["year", "iso_alpha"], how="left",)
+    .merge(df_cov, on=["year", "iso_alpha"], how="left",)
     .merge(
-        df_freq,
-        on=["year", "iso_alpha"],
-        how="left",
-    )
-    .merge(
-        df_prev.drop(columns = ['M']),
-        on=["year", "iso_alpha"],
-        how="left",
-    )
-    .merge(
-        df_cov,
-        on=["year", "iso_alpha"],
-        how="left",
-    )
-    .merge(
-        df_freq_c.reindex(columns = [
-            "geocode4_corr",
-            "year",
-            #'regime',
-            "DM_C",
-            "F_C",
-            "lag_DM_C",
-            "lag_F_C"
-                                    ]),
-        on=["year", "geocode4_corr",
-            #'regime'
-           ],
-        how="left",
-    )
-    .merge(
-        df_cov_c.reindex(columns = [
-            "geocode4_corr",
-            "year",
-            #'regime',
-            "DV_C",
-            "V_C",
-            "C_C",
-            "lag_DV_C",
-            "lag_C_C"
-                                   ]),
-        on=["year", "geocode4_corr",
-            #'regime'
-           ],
-        how="left",
-    )
-    .merge(
-        df_prev_c.reindex(columns = [
-            "geocode4_corr",
-            "year",
-            #'regime',
-            "NM_C",
-            "P_C",
-            "lag_P_C"
-        ]),
-        on=["year", "geocode4_corr",
-            #'regime'
-           ],
-        how="left",
-    )
-    .assign(
-        frequency=lambda x: x["frequency"].fillna(0),
-        lag_frequency=lambda x: x["lag_frequency"].fillna(0),
-        coverage=lambda x: x["coverage"].fillna(0),
-        lag_coverage=lambda x: x["lag_coverage"].fillna(0),
-        prevalence=lambda x: x["prevalence"].fillna(0),
-        lag_prevalence=lambda x: x["lag_prevalence"].fillna(0),
+    (
+            df_ntm_world.assign(
+                c_lag_count_ntm_w=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "count_ntm"
+                ]
+                .transform("shift")
+                .fillna(0),
+                c_lag_stock_ntm_w=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "stock_ntm"
+                ]
+                .transform("shift")
+                .fillna(0),
+                lag_new_ntm_w=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "new_ntm"
+                ]
+                .transform("shift")
+                .fillna("FALSE"),
+                lag_active_ntm_w=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "active_ntm"
+                ]
+                .transform("shift")
+                .fillna("FALSE"),
+            )
+            .rename(
+                columns={
+                    "count_ntm": "c_count_ntm_w",
+                    "stock_ntm": "c_stock_ntm_w",
+                    "new_ntm": "new_ntm_w",
+                    "active_ntm": "active_ntm_w",
+                }
+            )
+        ), on=["year", "iso_alpha", "hs6"], how="left"
     )
 )
 df_final = df_final.assign(
     **{
         "{}".format(i): df_final[i].fillna(0)
-        for i in [
-            "count",
-            "stock_ntm",
-            "lag_count",
-            "lag_stock_ntm",
-            "count_china",
-            "stock_ntm_china",
-            "lag_count_china",
-            "lag_stock_ntm_china",
-            "count_env",
-            "stock_ntm_env",
-            "lag_count_env",
-            "lag_stock_ntm_env",
-            "count_TBT",
-            "stock_ntm_TBT",
-            "lag_count_TBT",
-            "lag_stock_ntm_TBT",
-            "count_SPS",
-            "stock_ntm_SPS",
-            "lag_count_SPS",
-            "lag_stock_ntm_SPS",
-            "count_ADP",
-            "stock_ntm_ADP",
-            "lag_count_ADP",
-            "lag_stock_ntm_ADP",
-            "count_dvp_c",
-            "stock_ntm_dvp_c",
-            "lag_count_dvp_c",
-            "lag_stock_ntm_dvp_c",
-            "DM_C",
-            "F_C",
-            "lag_DM_C",
-            "lag_F_C",
-            "DV_C",
-            "V_C",
-            "C_C",
-            "lag_DV_C",
-            "lag_C_C",
-            "NM_C",
-            "P_C",
-            "lag_P_C"
+        for i in list(df_final.filter(regex="^c_").columns)
+        + [
+            "DM",
+            "M",
+            "F",
+            "lag_DM",
+            "lag_F",
+            "NM",
+            "P",
+            "lag_NM",
+            "lag_P",
+            "DV",
+            "V",
+            "C",
+            "lag_DV",
+            "lag_C",
         ]
     },
     **{
         "{}".format(i): df_final[i].fillna("FALSE")
-        for i in [
-            "ntm",
-            "lag_ntm",
-            "ntm_china",
-            "lag_ntm_china",
-            "ntm_env",
-            "lag_ntm_env",
-            "ntm_TBT",
-            "lag_ntm_TBT",
-            "ntm_SPS",
-            "lag_ntm_SPS",
-            "ntm_ADP",
-            "lag_ntm_ADP",
-            "ntm_dvp_c",
-            "lag_ntm_dvp_c",
-        ]
+        for i in list(df_final.filter(regex="new|active").columns)
     },
 )
 df_final.head(1)
@@ -1493,6 +1055,169 @@ df_final.head()
 
 ```sos kernel="SoS"
 df_final.shape
+```
+
+<!-- #region kernel="SoS" -->
+### Summary statistics Quality
+
+-
+<!-- #endregion -->
+
+```sos kernel="SoS"
+query = """
+SELECT *, CASE WHEN income_group = 'Low income' 
+      OR income_group = 'Low Lower middle income' 
+      OR (
+        income_group IS NULL 
+        AND ISO_alpha != 'HKG'
+      ) then 'LDC' ELSE 'DC' END AS income_group_ldc_dc
+FROM (
+SELECT * FROM "chinese_trade"."china_product_quality"
+LEFT JOIN (
+SELECT iso_alpha03 , year, income_group
+FROM world_bank.world_bank_gdp_per_capita ) as world_bank_gdp_per_capita
+ON china_product_quality.iso_alpha = world_bank_gdp_per_capita.iso_alpha03
+    AND china_product_quality.year = world_bank_gdp_per_capita.year 
+    LEFT JOIN industry.hs6_homogeneous
+    ON china_product_quality.hs6 = hs6_homogeneous.hs6
+    )
+"""
+df_quality_stat = (
+    s3.run_query(
+    query=query,
+    database="chinese_trade",
+    s3_output="SQL_OUTPUT_ATHENA",
+    filename="trade_vat",  # Add filename to print dataframe
+    destination_key=None,  # Add destination key if need to copy output
+)
+    .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+)
+```
+
+```sos kernel="SoS"
+df_quality_stat.shape
+```
+
+```sos kernel="SoS"
+(
+    df_quality_stat
+    .groupby(['year', 'regime','income_group_ldc_dc'])
+    .agg(
+    {
+        'kandhelwal_quality':'median'
+    })
+    .unstack(-1)
+)
+```
+
+```sos kernel="SoS"
+(
+    df_quality_stat
+    .groupby(['year', 'regime','homogeneous'])
+    .agg(
+    {
+        'kandhelwal_quality':'median'
+    })
+    .unstack(-1)
+)
+```
+
+```sos kernel="SoS"
+(
+    df_quality_stat
+    .groupby(['year', 'regime'])
+    .agg(
+    {
+        'kandhelwal_quality':'median'
+    })
+    .unstack(-1)
+)
+```
+
+```sos kernel="SoS"
+import seaborn as sns
+import matplotlib.pyplot as plt
+```
+
+```sos kernel="SoS"
+sns.set(style="whitegrid")
+```
+
+```sos kernel="SoS"
+plt.figure(figsize = (15,8))
+temp = (
+    df_quality_stat
+    .loc[lambda x: x['year'].isin(['2003','2010'])]
+    .groupby(['year'])
+    .sample(frac = .5)
+    .reindex(columns = ['year','kandhelwal_quality'])
+    .loc[lambda x: x['kandhelwal_quality'] < 3.066821e+00]
+    .loc[lambda x: x['kandhelwal_quality'] > -3.215393e+00]
+    .assign(year = lambda x: x['year'].astype(str))
+)
+
+# Without transparency
+sns.kdeplot(data=temp, x="kandhelwal_quality", hue="year", cut=0, fill=False, common_norm=False, alpha=.5)
+plt.show()
+```
+
+```sos kernel="SoS"
+
+temp = (
+    df_quality_stat
+    .groupby(['regime'])
+    .sample(frac = .5)
+    .reindex(columns = ['regime','kandhelwal_quality'])
+    .loc[lambda x: x['kandhelwal_quality'] < 3.066821e+00]
+    .loc[lambda x: x['kandhelwal_quality'] > -3.215393e+00]
+    
+)
+sns.set(style="whitegrid")
+
+# Without transparency
+sns.kdeplot(data=temp, x="kandhelwal_quality", hue="regime", cut=0, fill=False, common_norm=False, alpha=.5)
+plt.show()
+```
+
+```sos kernel="SoS"
+pd.DataFrame({
+    'hs6':df_final['hs6'].unique()
+}).to_csv('hs6.csv', index = False)
+```
+
+```sos kernel="SoS"
+(
+    pd.read_csv('concordance_sic_hs.csv', dtype = {'hs6':'str', 'concordance_hs':'str'})
+    .merge(
+        pd.read_csv(
+            "credit_constraint_cic - Poncet_ISIC_industry.csv", dtype={"ISIC": "str"}
+        ).rename(columns={"ISIC": "concordance_hs"}), how ='inner'
+    )
+    .drop(columns = ['Unnamed: 0'])
+)
+```
+
+```sos kernel="SoS"
+df_final = (
+    df_final.merge(
+        (
+            pd.read_csv(
+                "concordance_sic_hs.csv", dtype={"hs6": "str", "concordance_hs": "str"}
+            )
+            .merge(
+                pd.read_csv(
+                    "credit_constraint_cic - Poncet_ISIC_industry.csv",
+                    dtype={"ISIC": "str"},
+                ).rename(columns={"ISIC": "concordance_hs"}),
+                how="inner",
+            )
+            .drop(columns=["Unnamed: 0"])
+        ), how = 'left'
+    )
+)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -1620,18 +1345,6 @@ if create_fe:
     df_final.to_csv(os.path.join(path_local, filename + '.csv'), index = False)
 ```
 
-```sos kernel="SoS"
-df_final.groupby(['regime'])['lag_F_C'].describe()
-```
-
-```sos kernel="SoS"
-df_final.groupby(['regime'])['lag_C_C'].describe()
-```
-
-```sos kernel="SoS"
-df_final.groupby(['regime'])['lag_P_C'].describe()
-```
-
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
 ## Schema Latex table
 
@@ -1693,16 +1406,16 @@ if add_to_dic:
         },
         {
         'old':'lag\_foreign\_export\_share\_ckr',
-        'new':'\\text{lag foreign export share}_{ck, t-1}^R'
+        'new':'\\text{Foreign export share}_{ck, t-1}^R'
         },
         {
         'old':'lag\_soe\_export\_share\_ckr',
-        'new':'\\text{lag SOE export share}_{ck, t-1}^R'
+        'new':'\\text{SOE export share}_{ck, t-1}^R'
         },
         
          {
         'old':'lag\_stock\_ntm',
-        'new':'\\text{lag stock ntm}_{ck, t-1}'
+        'new':'\\text{Stock ntm Chinese import}_{k, t-1}'
         },
         
         {
@@ -1711,13 +1424,17 @@ if add_to_dic:
         },
         
         {
-        'old':'lag\_prevalence',
-        'new':'\\text{lag prevalence}_{ck, t-1}'
+        'old':'lag\_P',
+        'new':'\\text{Prevalence}_{j, t-1}'
         },
         
         {
         'old':'lag\_coverage',
         'new':'\\text{lag coverage}_{ck, t-1}'
+        },
+        {
+        'old':'c\_lag\_stock\_ntm\_w',
+        'new':'\\text{Stock ntm destination country}_{jk, t-1}'
         }
     ]
 
@@ -1770,11 +1487,15 @@ df_final %>% select(lag_vat_reb_m, lag_vat_m, rebate) %>% head(2)
 ```
 
 ```sos kernel="R"
-df_final %>% group_by(regime) %>%summarize(mean(lag_F_C))
+#df_final %>% group_by(regime) %>%summarize(mean(lag_F_C))
 ```
 
 ```sos kernel="R"
 dim(df_final)
+```
+
+```sos kernel="R"
+
 ```
 
 <!-- #region kernel="SoS" -->
@@ -2740,95 +2461,47 @@ path = os.path.join(folder, table + '.txt')
 #    [os.remove(os.path.join(folder, i)) for i in x]
 ```
 
+```sos kernel="SoS"
+df_final.head()
+```
+
 ```sos kernel="R"
 %get path table
 t_0 <- felm(
     kandhelwal_quality ~
     rebate * regime * lag_stock_ntm + 
-    rebate * regime * lag_frequency + 
-    rebate * regime * lag_prevalence + 
-    rebate * regime * lag_coverage + 
+    rebate * regime * c_lag_stock_ntm_w + 
+    rebate * regime * lag_P + 
     ln_lag_import_tax * regime +
-        ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final %>%select(-lag_stock_ntm) %>% 
-    rename(lag_stock_ntm = lag_stock_ntm_china),
+    lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr |0 , df_final %>% 
+    rename(lag_stock_ntm = c_lag_stock_ntm_china),
             exactDOF = TRUE)
    
 #### ENV
 t_1 <- felm(
     kandhelwal_quality ~
     rebate * regime * lag_stock_ntm + 
-    rebate * regime * lag_frequency + 
-    rebate * regime * lag_prevalence + 
-    rebate * regime * lag_coverage + 
-    ln_lag_import_tax * regime +
-        ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final %>%select(-lag_stock_ntm) %>% 
-    rename(lag_stock_ntm = lag_stock_ntm_env),
+    rebate * regime * c_lag_stock_ntm_w + 
+    rebate * regime * lag_P + 
+    ln_lag_import_tax * regime  +
+    lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr |0 , df_final %>%
+    rename(lag_stock_ntm = c_lag_stock_ntm_env_china),
             exactDOF = TRUE)
 
 ### TBT
 t_2 <- felm(
     kandhelwal_quality ~
     rebate * regime * lag_stock_ntm + 
-    rebate * regime * lag_frequency + 
-    rebate * regime * lag_prevalence + 
-    rebate * regime * lag_coverage + 
-    ln_lag_import_tax * regime +
-        ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final %>%select(-lag_stock_ntm) %>% 
-    rename(lag_stock_ntm = lag_stock_ntm_TBT),
+    rebate * regime * c_lag_stock_ntm_w + 
+    rebate * regime * lag_P + 
+    ln_lag_import_tax * regime  +
+    lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr |0 , df_final %>%
+    rename(lag_stock_ntm = c_lag_stock_ntm_TBT_SPS_china),
             exactDOF = TRUE)
 
-### SPS
-t_3 <- felm(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm + 
-    rebate * regime * lag_frequency + 
-    rebate * regime * lag_prevalence + 
-    rebate * regime * lag_coverage + 
-    ln_lag_import_tax * regime +
-        ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final %>%select(-lag_stock_ntm) %>% 
-    rename(lag_stock_ntm = lag_stock_ntm_SPS),
-            exactDOF = TRUE)
-### ADP
-t_4 <- felm(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm + 
-    rebate * regime * lag_frequency + 
-    rebate * regime * lag_prevalence + 
-    rebate * regime * lag_coverage + 
-    ln_lag_import_tax * regime +
-        ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final %>%select(-lag_stock_ntm) %>% 
-    rename(lag_stock_ntm = lag_stock_ntm_ADP),
-            exactDOF = TRUE)
-### DVP vs L DVP
-t_5 <- felm(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm + 
-    rebate * regime * lag_frequency + 
-    rebate * regime * lag_prevalence + 
-    rebate * regime * lag_coverage + 
-    ln_lag_import_tax * regime +
-        ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final %>%select(-lag_stock_ntm) %>% 
-    rename(lag_stock_ntm = lag_stock_ntm_dvp_c),
-            exactDOF = TRUE)
-
-### prevalence
-t_6 <- felm(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm + 
-    rebate * regime * lag_frequency + 
-    rebate * regime * lag_prevalence + 
-    rebate * regime * lag_coverage + 
-    ln_lag_import_tax * regime +
-        ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr |0 | hs6,  df_final %>%select(-lag_stock_ntm) %>% 
-    rename(lag_stock_ntm = lag_stock_ntm_china),
-            exactDOF = TRUE)
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
     c("City-product-regime","Yes", "Yes", "Yes", "Yes","Yes","Yes","Yes","Yes"),
@@ -2839,7 +2512,7 @@ fe1 <- list(
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4, t_5#, t_6
+    t_0,t_1, t_2#, t_3, t_4, t_5#, t_6
 ),
     title="VAT export tax and firm’s quality upgrading NTM anaysis",
     dep_var = dep,
@@ -2873,63 +2546,17 @@ reorder = {
     #5:1
 }
 multi_lines_dep = '(city/product/trade regime/year)'
-new_r = ['& ', '', 'TBT', 'SPS', 'ADP', '','','']
+new_r = ['& baseline', 'environment', 'TBT/SPS']
 lb.beautify(table_number = table_nb,
             #multi_lines_dep = None,
             #reorder_var = reorder,
-            multi_lines_dep = multi_lines_dep,
+            #multi_lines_dep = multi_lines_dep,
             new_row= new_r,
-            multicolumn = multicolumn,
+            #multicolumn = multicolumn,
             table_nte = tbe1,
             jupyter_preview = True,
             resolution = 180,
             folder = folder)
-```
-
-```sos kernel="R"
-summary(
-felm(
-    kandhelwal_quality ~
-    rebate * regime * lag_DV_C +
-    ln_lag_import_tax * regime 
-            | group_id+fe_ckr +fe_kt + fe_jtr|0, df_final
-    %>% group_by(geocode4_corr,year, regime
-) %>% mutate(group_id = group_indices())
-    ,
-            exactDOF = TRUE)
-)
-```
-
-```sos kernel="R"
-summary(
-felm(
-    kandhelwal_quality ~
-    rebate * regime * DV_C +
-    ln_lag_import_tax * regime 
-            | group_id+group_id1+fe_ckr +fe_kt + fe_jtr|0, df_final
-    %>% group_by(geocode4_corr,year, regime
-) %>% mutate(group_id = group_indices())
-    ,
-            exactDOF = TRUE)
-)
-```
-
-```sos kernel="R"
-summary(
-felm(
-    kandhelwal_quality ~
-    rebate * regime * lag_DV_C +
-    ln_lag_import_tax * regime 
-            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final,
-            exactDOF = TRUE)
-)
-```
-
-```sos kernel="SoS"
- "DM_C",
-            "lag_DM_C",
-            "DV_C",
-            "lag_DV_C"
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
