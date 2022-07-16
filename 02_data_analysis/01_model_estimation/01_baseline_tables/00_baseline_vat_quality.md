@@ -1399,6 +1399,12 @@ t_regime_country = pd.concat(
 ```
 
 ```sos kernel="SoS"
+l = np.repeat("-", 15)
+l[0::3] = "1"
+l
+```
+
+```sos kernel="SoS"
 t_final = (
     pd.concat(
         [
@@ -2854,7 +2860,9 @@ fe1 <- list(
              )
 
 table_1 <- go_latex(list(
-    t_0,t_1, t_2, t_3, t_4#, t_5#, t_6
+    t_0,t_1, 
+    #t_2,
+    t_3, t_4#, t_5#, t_6
 ),
     title="VAT export tax and firm’s quality upgrading NTM anaysis",
     dep_var = dep,
@@ -2888,7 +2896,9 @@ reorder = {
     #5:1
 }
 multi_lines_dep = '(city/product/trade regime/year)'
-new_r = ['& Ext. Fin','Liquidity needs','Trade Credit', 'Asset Tang.', 'RD intensity']
+new_r = ['& Ext. Fin','Liquidity needs',
+         #'Trade Credit', 
+         'Asset Tang.', 'RD intensity']
 lb.beautify(table_number = table_nb,
             #multi_lines_dep = None,
             #reorder_var = reorder,
