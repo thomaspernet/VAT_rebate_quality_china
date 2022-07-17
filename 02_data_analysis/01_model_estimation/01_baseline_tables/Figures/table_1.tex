@@ -1,0 +1,40 @@
+\documentclass[preview]{standalone} 
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
+
+\begin{document}
+\begin{table}[!htbp] \centering
+\caption{Distribution of unique rebate share at the HS6 product level}
+
+\begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
+\begin{tabular}{llrlll}
+\toprule
+            &          &  Estimated quality & rebate & nb\_product\_country & nb\_of\_obs \\
+\midrule
+Full & all &              0.057 &   0.73 &               2742 &    615085 \\
+DC & all &              0.062 &  0.731 &                144 &    580457 \\
+            & Not eligible &             -0.108 &      - &                  - &         - \\
+            & Eligible &              0.231 &      - &                  - &         - \\
+LDC & all &             -0.028 &  0.717 &                 61 &     34628 \\
+            & Not eligible &             -0.170 &      - &                  - &         - \\
+            & Eligible &              0.120 &      - &                  - &         - \\
+Heterogenous & all &              0.056 &  0.733 &               2549 &    589578 \\
+            & Not eligible &             -0.119 &      - &                  - &         - \\
+            & Eligible &              0.231 &      - &                  - &         - \\
+Homogeneous & all &              0.079 &  0.661 &                193 &     25507 \\
+            & Not eligible &              0.059 &      - &                  - &         - \\
+            & Eligible &              0.100 &      - &                  - &         - \\
+\bottomrule
+\end{tabular}
+
+\end{adjustbox}
+
+\begin{tablenotes}
+\small
+\item
+
+
+\end{tablenotes}
+\end{table}
+
+\end{document}

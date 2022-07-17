@@ -1247,6 +1247,28 @@ t_all_product = pd.concat(
                 keys=["all"],
             ).swaplevel(axis=1)
         ),
+         (
+            pd.concat(
+                [
+                    (
+                        df_final
+                        .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+                        .assign(
+                            rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"]
+                        )
+                        .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+                        .groupby(["homogeneous"])
+                        .agg({"hs6": "nunique"})
+                        .rename(columns={"rebate": "nb of obs"})
+                        .rename_axis(index={"homogeneous": ""})
+                        .rename(columns = {'hs6':'nb_product_country'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        )
     ]
 )
 
@@ -1357,6 +1379,21 @@ t_all_country = pd.concat(
                 keys=["all"],
             ).swaplevel(axis=1)
         ),
+        (
+            pd.concat(
+                [
+                    (
+                        df_final.groupby(["income_group_ldc_dc"])
+                        .agg({"country_en": "nunique"})
+                        .rename_axis(index={"income_group_ldc_dc": ""})
+                        .rename(columns = {'country_en':'nb_product_country'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        )
     ]
 )
 t_regime_country = pd.concat(
@@ -1393,13 +1430,17 @@ t_regime_country = pd.concat(
             .rename_axis(index={"income_group_ldc_dc": ""})
             .rename(columns = {'kandhelwal_quality':'Estimated quality'})
             .T
-        ),
+        )
     ]
 )
 ```
 
 ```sos kernel="SoS"
-l = np.repeat("-", 15)
+t_all_country
+```
+
+```sos kernel="SoS"
+l = np.repeat("-", 1)
 l[0::3] = "1"
 l
 ```
@@ -1446,6 +1487,15 @@ t_final = (
                                         keys=["all"],
                                         axis=1,
                                     ),
+                                    pd.concat(
+                                        [
+                                            df_final[["hs6"]]
+                                            .nunique()
+                                            .rename({"hs6": "nb_product_country"})
+                                        ],
+                                        keys=["all"],
+                                        axis=1,
+                                    )
                                 ],
                             )
                         ],
@@ -1485,18 +1535,66 @@ t_final = (
         ],
         axis=1,
     )
+    #.fillna('-')
     .assign(
-        nb_of_obs=lambda x: np.where(x["condition"].isin(["-"]), "-", x["nb of obs"]),
-        rebate_=lambda x: np.where(x["condition"].isin(["-"]), "-", np.round(x["rebate"],3))
+        nb_of_obs=lambda x: np.where(x["condition"].isin(["-"]), "-", x["nb of obs"].astype(int)),
+        rebate=lambda x: np.where(x["condition"].isin(["-"]), "-", np.round(x["rebate"],3)),
+        nb_product_country = lambda x: np.where(
+            x['nb_product_country'].isin([np.nan]), 
+             '-',
+            x['nb_product_country'].astype("Int64").astype(str)
+           
+        )
     )
     .drop(columns=["nb of obs", "condition"])
-    .rename(columns={"nb_of_obs": "nb of obs"})
+    #.rename(columns={"nb_of_obs": "nb of obs", 'nb_product_country':'nb product/country'})
+    
 )
 t_final
 ```
 
 ```sos kernel="SoS"
-print(t_final.to_latex(index=True,float_format="{:0.3f}".format))
+folder = 'Figures'
+table_number = 1
+title = 'Distribution of unique rebate share at the HS6 product level'
+tb_note = """
+
+"""
+with open('{}/table_{}.tex'.format(folder,table_number), 'w') as fout:
+    for i in range(len( t_final.to_latex(index=True,float_format="{:0.3f}".format))):
+        if i ==0:
+            header= "\documentclass[preview]{standalone} \n\\usepackage[utf8]{inputenc}\n" \
+            "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
+            "\\begin{document}"
+            top =  '\n\\begin{adjustbox}{width=\\textwidth, totalheight=\\textheight-2\\baselineskip,keepaspectratio}\n'
+            table_top = "\n\\begin{table}[!htbp] \centering"
+            table_title = "\n\caption{%s}\n" % title
+            
+            fout.write(header)
+            fout.write(table_top)
+            fout.write(table_title)
+            fout.write(top)
+           
+        fout.write( t_final.to_latex(index=True,float_format="{:0.3f}".format)[i])
+    
+    bottom =  '\n\\end{adjustbox}\n'
+    tb_note_top = "\n\\begin{tablenotes}\n\small\n\item"
+    table_bottom = "\n\end{table}"
+    footer = "\n\n\\end{document}"
+    tb_note_bottom = "\n\end{tablenotes}"
+    fout.write(bottom)
+    fout.write(tb_note_top)
+    fout.write(tb_note)
+    fout.write(tb_note_bottom)
+    fout.write(table_bottom)
+    fout.write(footer)
+ 
+f = open('{}/table_{}.tex'.format(folder,table_number))
+r = tex2pix.Renderer(f, runbibtex=False)
+r.mkpdf('{}/table_{}.pdf'.format(folder,table_number))
+img = WImage(filename='{}/table_{}.pdf'.format(folder,table_number),
+resolution = 200)
+display(img)
 ```
 
 ```sos kernel="SoS"
@@ -1530,6 +1628,111 @@ plt.savefig("Figures/fig_2.png",
             bbox_inches='tight',
             dpi=600)
 #plt.show()
+```
+
+<!-- #region kernel="SoS" -->
+Replicate previous table
+<!-- #endregion -->
+
+```sos kernel="SoS"
+query = """
+WITH temp AS (
+SELECT distinct(hs6), year, lag_vat_reb_m/lag_vat_m as rebate
+FROM {}.{}  
+)
+SELECT year, hs6, rebate
+FROM temp
+ORDER BY hs6
+""".format(db, table)
+
+df = (s3.run_query(
+            query=query,
+            database=db,
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename='fig1',  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = {'hs6':'string'}
+)
+      .loc[lambda x: x['hs6'].isin(df_final['hs6'].unique())]
+     )
+df.head()
+```
+
+```sos kernel="SoS"
+df_latex = (
+    pd.concat(
+    [
+        (
+            df
+            .groupby("year")["rebate"]
+            .describe()
+            .assign(
+                count=lambda x: x["count"].astype("int"),
+                max=lambda x: x["max"].astype("int"),
+            )
+            .apply(lambda x: round(x, 2))
+        ),
+        (df
+         .groupby("year").agg({"rebate": "nunique"})),
+    ],
+    axis=1,
+    # 
+)
+    .rename(columns = {'rebate':'unique rebate'})
+    .reindex(columns = ['count','unique rebate', 'mean', 'std', 'min', '25%', '50%', '75%', 'max',
+       ])
+    .to_latex()
+)
+```
+
+```sos kernel="SoS"
+import tex2pix
+from PyPDF2 import PdfFileMerger
+from wand.image import Image as WImage
+```
+
+```sos kernel="SoS"
+folder = 'Figures'
+table_number = 2
+title = 'Distribution of unique rebate share at the HS6 product level'
+tb_note = """
+
+"""
+with open('{}/table_{}.tex'.format(folder,table_number), 'w') as fout:
+    for i in range(len( df_latex)):
+        if i ==0:
+            header= "\documentclass[preview]{standalone} \n\\usepackage[utf8]{inputenc}\n" \
+            "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
+            "\\begin{document}"
+            top =  '\n\\begin{adjustbox}{width=\\textwidth, totalheight=\\textheight-2\\baselineskip,keepaspectratio}\n'
+            table_top = "\n\\begin{table}[!htbp] \centering"
+            table_title = "\n\caption{%s}\n" % title
+            
+            fout.write(header)
+            fout.write(table_top)
+            fout.write(table_title)
+            fout.write(top)
+           
+        fout.write( df_latex[i])
+    
+    bottom =  '\n\\end{adjustbox}\n'
+    tb_note_top = "\n\\begin{tablenotes}\n\small\n\item"
+    table_bottom = "\n\end{table}"
+    footer = "\n\n\\end{document}"
+    tb_note_bottom = "\n\end{tablenotes}"
+    fout.write(bottom)
+    fout.write(tb_note_top)
+    fout.write(tb_note)
+    fout.write(tb_note_bottom)
+    fout.write(table_bottom)
+    fout.write(footer)
+ 
+f = open('{}/table_{}.tex'.format(folder,table_number))
+r = tex2pix.Renderer(f, runbibtex=False)
+r.mkpdf('{}/table_{}.pdf'.format(folder,table_number))
+img = WImage(filename='{}/table_{}.pdf'.format(folder,table_number),
+resolution = 200)
+display(img)
 ```
 
 ```sos kernel="SoS"
@@ -1575,9 +1778,6 @@ Create the following fixed effect for the baseline regression:
 * Product-year: `FE_kt`
 * Product-destination: `FE_pj`
 * Destination-year: `FE_jt`
-<!-- #endregion -->
-<!-- #region kernel="SoS" -->
-
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
 <!-- #endregion -->
