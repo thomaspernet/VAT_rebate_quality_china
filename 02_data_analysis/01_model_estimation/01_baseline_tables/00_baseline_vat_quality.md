@@ -1436,11 +1436,7 @@ t_regime_country = pd.concat(
 ```
 
 ```sos kernel="SoS"
-t_all_country
-```
-
-```sos kernel="SoS"
-l = np.repeat("-", 1)
+l = np.repeat("-", 15)
 l[0::3] = "1"
 l
 ```
@@ -1547,10 +1543,16 @@ t_final = (
         )
     )
     .drop(columns=["nb of obs", "condition"])
-    #.rename(columns={"nb_of_obs": "nb of obs", 'nb_product_country':'nb product/country'})
+    .rename(columns={"nb_of_obs": "nb of obs", 'nb_product_country':'nb product/country'})
     
 )
 t_final
+```
+
+```sos kernel="SoS"
+import tex2pix
+from PyPDF2 import PdfFileMerger
+from wand.image import Image as WImage
 ```
 
 ```sos kernel="SoS"
@@ -1686,12 +1688,6 @@ df_latex = (
 ```
 
 ```sos kernel="SoS"
-import tex2pix
-from PyPDF2 import PdfFileMerger
-from wand.image import Image as WImage
-```
-
-```sos kernel="SoS"
 folder = 'Figures'
 table_number = 2
 title = 'Distribution of unique rebate share at the HS6 product level'
@@ -1778,6 +1774,9 @@ Create the following fixed effect for the baseline regression:
 * Product-year: `FE_kt`
 * Product-destination: `FE_pj`
 * Destination-year: `FE_jt`
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
+
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
 <!-- #endregion -->
