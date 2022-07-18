@@ -1097,6 +1097,33 @@ df_final = df_final.loc[lambda x:
 ```
 
 <!-- #region kernel="SoS" -->
+Make the dataset squared
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df_final = (
+    df_final
+    .assign(
+        count = lambda x: x.groupby(['year', 'geocode4_corr', 'hs6', 'iso_alpha'])['hs6'].transform('count')
+    )
+    .loc[lambda x: x['count'] ==2]
+    
+)
+df_final = (
+    df_final
+    .loc[lambda x: x['regime'].isin(['NOT_ELIGIBLE'])]
+    .reindex(columns = ['year', 'geocode4_corr', 'hs6', 'iso_alpha'])
+    .drop_duplicates()
+    .merge(df_final)
+    
+)
+```
+
+```sos kernel="SoS"
+df_final.shape
+```
+
+<!-- #region kernel="SoS" -->
 ### Summary statistics Quality
 
 <!-- #endregion -->
@@ -1786,15 +1813,6 @@ Create the following fixed effect for the baseline regression:
 * Destination-year: `FE_jt`
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
-
-<!-- #endregion -->
-<!-- #region kernel="SoS" -->
-
-<!-- #endregion -->
-<!-- #region kernel="SoS" -->
-
-<!-- #endregion -->
-<!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
 
@@ -2072,6 +2090,14 @@ for ext in ['.txt', '.tex', '.pdf']:
 
 ```sos kernel="SoS"
 #pd.read_csv('NTM_HS1996.csv')
+```
+
+```sos kernel="R"
+dim(df_final %>% filter(regime != 'ELIGIBLE'))
+```
+
+```sos kernel="R"
+dim(df_final %>% filter(regime == 'ELIGIBLE'))
 ```
 
 ```sos kernel="R"
