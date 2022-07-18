@@ -116,26 +116,22 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 ```
 
 ```sos kernel="R"
-%get path table
-table_1 <- go_latex(list(
-    change_target(t_0),
-    change_target(t_1), #t_2,
-    change_target(t_3),
-    change_target(t_4),
-    change_target(t_5),
-    change_target(t_6),
-    change_target(t_7),
-    change_target(t_8),
-    change_target(t_9),
-    change_target(t_10)
-),
-    title="VAT export rebate and product's quality upgrading, baseline regression",
-    dep_var = dep,
-    addFE=fe1,
-    save=TRUE,
-    note = FALSE,
-    name=path
-)
+change_target <- function(table){
+    ## Regime
+    check_target <- grep("regimeELIGIBLE:ln_lag_import_tax", rownames(table$coef))
+    check_target_ntm <- grep("regimeELIGIBLE:c_lag_stock_ntm_w", rownames(table$coef))
+    if (length(check_target) !=0) {
+    ## SOE
+    rownames(table$coefficients)[check_target] <- 'ln_lag_import_tax:regimeELIGIBLE'
+    rownames(table$beta)[check_target] <- 'ln_lag_import_tax:regimeELIGIBLE'
+    } 
+    if (length(check_target_ntm) !=0) {
+    ## SOE
+    rownames(table$coefficients)[check_target_ntm] <- 'c_lag_stock_ntm_w:regimeELIGIBLE'
+    rownames(table$beta)[check_target_ntm] <- 'c_lag_stock_ntm_w:regimeELIGIBLE'
+    } 
+    return (table)
+}
 ```
 
 <!-- #region kernel="SoS" -->
@@ -292,7 +288,7 @@ df_ntm_world = (
     .loc[lambda x: x['ntm'].isin([
         'TBT',
         #'SPS',
-        'ADP'
+        'ADP' ### 
     ])]
     .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
     .dropna(subset = ['year'])
@@ -369,10 +365,6 @@ df_ntm_china.head()
 - new_ntm_china: Equal to 1 if a new policy is added
 - active_ntm_china: Equal to 1 if the policy is active
 <!-- #endregion -->
-
-```sos kernel="SoS"
-df_ntm.loc[lambda x: x["iso_alpha"].isin(["CHN"])]['aff'].value_counts()
-```
 
 ```sos kernel="SoS"
 #(
@@ -809,39 +801,6 @@ df_prev
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-(
-            df_ntm_world.assign(
-                c_lag_count_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])[
-                    "count_ntm"
-                ]
-                .transform("shift")
-                .fillna(0),
-                c_lag_stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])[
-                    "stock_ntm"
-                ]
-                .transform("shift")
-                .fillna(0),
-                c_lag_new_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])[
-                    "new_ntm"
-                ]
-                .transform("shift")
-                .fillna("FALSE"),
-                c_lag_active_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])[
-                    "active_ntm"
-                ]
-                .transform("shift")
-                .fillna("FALSE"),
-            )
-            .rename(
-                columns={
-                    "count_ntm": "c_count_ntm",
-                    "stock_ntm": "c_stock_ntm",
-                }
-            )
-        )
-```
-
-```sos kernel="SoS"
 df_final = (
     df.drop(columns=["year.1", "hs6.1", "geocode4_corr.1", "country_en.1"])
     .assign(hs6=lambda x: x["hs6"].astype(str).str.zfill(6))
@@ -952,6 +911,10 @@ df_final = df_final.assign(
     },
 )
 df_final.head(1)
+```
+
+```sos kernel="SoS"
+#df_ntm.loc[lambda x: x["iso_alpha"].isin(["CHN"])]['aff'].value_counts()
 ```
 
 <!-- #region kernel="SoS" -->
@@ -1747,6 +1710,44 @@ pd.DataFrame({
 ```
 
 <!-- #region kernel="SoS" -->
+### Statistic about NTM
+<!-- #endregion -->
+
+```sos kernel="SoS"
+(
+    df_ntm
+    .loc[lambda x: ~x["aff"].isin(["China"])]
+    .loc[lambda x: ~x["year"].isin(["2010"])]
+    #.merge(df_final[['iso_alpha', "hs6"]].drop_duplicates())
+    .groupby(['aff'])
+    .agg({'id':'nunique'})
+    .sort_values(by = ['id'], ascending = False)
+    .head(10)
+)
+```
+
+```sos kernel="SoS"
+fig_ntm = (
+    df_ntm
+    .loc[lambda x: x['ntm'].isin([
+        'TBT',
+        'SPS'
+    ])]
+    .groupby(['year','ntm'])
+    .agg({"id": "nunique"})
+    .unstack(-1)
+    .collapse_levels(sep='_')
+)
+fig, ax1 = plt.subplots(figsize=(15,10))
+lns1 = ax1.plot(fig_ntm.index, fig_ntm['id_SPS'], 'g-', label = "SPS") 
+lns1 = ax1.plot(fig_ntm.index, fig_ntm['id_TBT'], 'b-', label = "TBT") 
+ax1.legend(bbox_to_anchor=(1.08, 1), loc=2, borderaxespad=0.)
+plt.savefig("Figures/fig_3.png",
+            bbox_inches='tight',
+            dpi=600)
+```
+
+<!-- #region kernel="SoS" -->
 # compute fixed effect
 
 | Benchmark | Origin            | Name                     | Description                                                                                                                                                                                                                                                                                                                                    | Math_notebook     |
@@ -1783,6 +1784,9 @@ Create the following fixed effect for the baseline regression:
 * Product-year: `FE_kt`
 * Product-destination: `FE_pj`
 * Destination-year: `FE_jt`
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
+
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
 
@@ -2075,7 +2079,7 @@ for ext in ['.txt', '.tex', '.pdf']:
 ### Quality
 t_0 <- felm(kandhelwal_quality ~
             rebate + 
-            ln_lag_import_tax +
+            ln_lag_import_tax 
             #c_lag_stock_ntm_w #+ 
             #lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ck  + hs6 + fe_jt|0|hs6, df_final %>% filter(regime != 'ELIGIBLE'),
@@ -2083,7 +2087,7 @@ t_0 <- felm(kandhelwal_quality ~
 
 t_1 <- felm(kandhelwal_quality ~
             rebate + 
-            ln_lag_import_tax +
+            ln_lag_import_tax 
             #c_lag_stock_ntm_w #+ 
             #lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ck  + hs6 + fe_jt|0, df_final %>% filter(regime == 'ELIGIBLE'),
@@ -3100,13 +3104,6 @@ pd.read_csv(jarreau,
 
 ```sos kernel="SoS"
 #df_final[['ext_finance_m','ext_finance_j','rd_intensity_j', 'liquidity_needs_m', 'asset_tangibility_m', "trade_credit_intensity_m"]].describe()
-```
-
-```sos kernel="SoS"
-rebate* regime + 
-             regime * c_lag_stock_ntm_w + 
-             ln_lag_import_tax * regime+
-             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
 ```
 
 ```sos kernel="R"
