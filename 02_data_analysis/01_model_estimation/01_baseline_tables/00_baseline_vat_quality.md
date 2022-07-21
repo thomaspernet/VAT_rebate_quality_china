@@ -81,6 +81,7 @@ import numpy as np
 #import seaborn as sns
 import os, shutil, json
 import sys
+import janitor
 
 path = os.getcwd()
 parent_path = str(Path(path).parent.parent.parent)
@@ -118,11 +119,16 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 change_target <- function(table){
     ## Regime
     check_target <- grep("regimeELIGIBLE:ln_lag_import_tax", rownames(table$coef))
-    
+    check_target_ntm <- grep("regimeELIGIBLE:c_lag_stock_ntm_w", rownames(table$coef))
     if (length(check_target) !=0) {
     ## SOE
     rownames(table$coefficients)[check_target] <- 'ln_lag_import_tax:regimeELIGIBLE'
     rownames(table$beta)[check_target] <- 'ln_lag_import_tax:regimeELIGIBLE'
+    } 
+    if (length(check_target_ntm) !=0) {
+    ## SOE
+    rownames(table$coefficients)[check_target_ntm] <- 'c_lag_stock_ntm_w:regimeELIGIBLE'
+    rownames(table$beta)[check_target_ntm] <- 'c_lag_stock_ntm_w:regimeELIGIBLE'
     } 
     return (table)
 }
@@ -258,6 +264,1517 @@ df_ntm.to_csv('ntm.csv')
 ```
 
 <!-- #region kernel="SoS" -->
+# Compute NTM and quality variables
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
+## NTM 
+<!-- #endregion -->
+
+<!-- #region kernel="SoS" -->
+### China import and world
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df.shape
+```
+
+```sos kernel="SoS"
+df_ntm.dropna(subset = ['year']).shape
+```
+
+```sos kernel="SoS"
+df_ntm_world = (
+    df_ntm
+    .loc[lambda x: x['ntm'].isin([
+        'TBT',
+        #'SPS',
+        'ADP' ### 
+    ])]
+    .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
+    .dropna(subset = ['year'])
+    .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
+    .explode("hs6")
+    .groupby(["iso_alpha", "year", "hs6"])
+    .agg({"id": "nunique"})
+    .rename(columns={"id": "count"})
+    .sort_values(by=["iso_alpha", "year", "hs6"])
+    .reset_index()
+    
+    .pivot_table(
+        values="count",
+        index=["iso_alpha","hs6"],
+        columns="year",
+        aggfunc="sum",
+        fill_value=0,
+    )
+    .stack()
+    .reset_index()
+    .rename(columns={0: "count_ntm"})
+    .assign(
+        stock_ntm=lambda x: x.groupby(["iso_alpha","hs6"])[
+            "count_ntm"
+        ].transform("cumsum"),
+        new_ntm=lambda x: np.where(x["count_ntm"] > 0, 'TRUE', 'FALSE'),
+        active_ntm=lambda x: np.where(x["stock_ntm"] > 0, 'TRUE', 'FALSE'),
+    )
+    #.loc[lambda x: x['hs6'].isin(['400270'])]
+
+)
+df_ntm_world[["count_ntm",'stock_ntm','new_ntm','active_ntm']].describe()
+```
+
+```sos kernel="SoS"
+df_ntm_world[['new_ntm']].value_counts()
+```
+
+```sos kernel="SoS"
+df_ntm_world[['active_ntm']].value_counts()
+```
+
+```sos kernel="SoS"
+df_ntm_china =(
+    df_ntm_world
+    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
+    .rename(
+    columns = {
+        'count_ntm':'count_ntm_china',
+        'stock_ntm':'stock_ntm_china',
+        'new_ntm':'new_ntm_china',
+        'active_ntm':'active_ntm_china',
+    })
+)
+df_ntm_china.head()
+```
+
+<!-- #region kernel="SoS" -->
+- 1) ADP - Antidumping # CHINA
+- 2) CVD - Countervailing duties
+- 3) EXS - Export subsidies
+- 4) QRS - Quantitative Restrictions
+- 5) SFG - Safeguards
+- 6) SPS - Sanitary and Phytosanitary Measures # CHINA
+- 7) SSG - Special Safeguards (agriculture)
+- 8) STE - State trading enterprises
+- 9) TBT - Technical barriers to trade # CHINA
+- 10) TRQ - Tariff-rate quotas
+
+----- 
+
+- count_ntm_china:  Number of new policy per year
+- stock_ntm_china:  Number of active policy 
+- new_ntm_china: Equal to 1 if a new policy is added
+- active_ntm_china: Equal to 1 if the policy is active
+<!-- #endregion -->
+
+```sos kernel="SoS"
+#(
+#    df_ntm
+#    .loc[lambda x: x["iso_alpha"].isin(["CHN"])]
+#    .loc[lambda x: x['ntm'].isin(['TBT'])]
+#)
+```
+
+```sos kernel="SoS"
+list_ntm = []
+for i in [["TBT"], ["SPS"], ["TBT", "SPS"], ["ADP"]]:
+    df_temp = (
+        df_ntm.loc[lambda x: x["iso_alpha"].isin(["CHN"])]
+        .loc[lambda x: x["ntm"].isin(i)]
+        .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
+        .dropna(subset=["year"])
+        .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
+        .explode("hs6")
+        .groupby(["iso_alpha", "year", "hs6"])
+        .agg({"id": "nunique"})
+        .rename(columns={"id": "count"})
+        .sort_values(by=["iso_alpha", "year", "hs6"])
+        .reset_index()
+        .pivot_table(
+            values="count",
+            index=["iso_alpha", "hs6"],
+            columns="year",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .stack()
+        .reset_index()
+        .rename(columns={0: "count_ntm_china"})
+        .assign(
+            stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["count_ntm_china"].transform(
+                "cumsum"
+            ),
+            new_ntm_china=lambda x: np.where(x["count_ntm_china"] > 0, "TRUE", "FALSE"),
+            active_ntm_china=lambda x: np.where(x["stock_ntm_china"] > 0, "TRUE", "FALSE"),
+        )
+        .assign(
+            lag_count_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["count_ntm_china"]
+            .transform("shift")
+            .fillna(0),
+            lag_stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["stock_ntm_china"]
+            .transform("shift")
+            .fillna(0),
+            lag_new_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["new_ntm_china"]
+            .transform("shift")
+            .fillna("FALSE"),
+            lag_active_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["active_ntm_china"]
+            .transform("shift")
+            .fillna("FALSE"),
+        )
+        .reset_index()
+        .rename(
+            columns={
+                "count_ntm_china": "c_count_ntm_{}_china".format("_".join(i)),
+                "lag_count_ntm_china": "c_lag_count_ntm_{}_china".format("_".join(i)),
+                "stock_ntm_china": "c_stock_ntm_{}_china".format("_".join(i)),
+                "lag_stock_ntm_china": "c_lag_stock_ntm_{}_china".format("_".join(i)),
+                "new_ntm_china": "new_ntm_{}_china".format("_".join(i)),
+                "lag_new_ntm_china": "lag_new_ntm_{}_china".format("_".join(i)),
+                "active_ntm_china": "active_ntm_{}_china".format("_".join(i)),
+                "lag_active_ntm_china": "lag_active_ntm_{}_china".format("_".join(i)),
+            }
+        )
+        .drop(columns = ['index'])
+    )
+    list_ntm.append(df_temp)
+len(list_ntm)
+```
+
+```sos kernel="SoS"
+list_ntm[1]
+```
+
+```sos kernel="SoS"
+dvl_econ = [
+    'United States',
+    'European Union',
+    'Japan',
+    'South Korea',
+    'Canada',
+    'Australia',
+    'Switzerland',
+    'Germany',
+    'New Zealand',
+    'Netherlands',
+    'United Kingdom',
+    'Norway',
+    'Finland',
+    'France',
+    'Italy',
+    'Belgium',
+    'Israel',
+    'Sweden',
+    'Denmark',
+    'Austria'
+]
+
+df_country = (
+    df_ntm
+    .loc[lambda x: x["iso_alpha"].isin(["CHN"])]
+    .loc[lambda x: x['aff'].isin(dvl_econ)]
+    .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
+        .dropna(subset=["year"])
+        .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
+        .explode("hs6")
+        .groupby(["iso_alpha", "year", "hs6"])
+        .agg({"id": "nunique"})
+        .rename(columns={"id": "count"})
+        .sort_values(by=["iso_alpha", "year", "hs6"])
+        .reset_index()
+        .pivot_table(
+            values="count",
+            index=["iso_alpha", "hs6"],
+            columns="year",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .stack()
+        .reset_index()
+        .rename(columns={0: "count_ntm_china"})
+        .assign(
+            stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["count_ntm_china"].transform(
+                "cumsum"
+            ),
+            new_ntm_china=lambda x: np.where(x["count_ntm_china"] > 0, "TRUE", "FALSE"),
+            active_ntm_china=lambda x: np.where(x["stock_ntm_china"] > 0, "TRUE", "FALSE"),
+        )
+        .assign(
+            lag_count_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["count_ntm_china"]
+            .transform("shift")
+            .fillna(0),
+            lag_stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["stock_ntm_china"]
+            .transform("shift")
+            .fillna(0),
+            lag_new_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["new_ntm_china"]
+            .transform("shift")
+            .fillna("FALSE"),
+            lag_active_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["active_ntm_china"]
+            .transform("shift")
+            .fillna("FALSE"),
+        )
+        .reset_index()
+        .rename(
+            columns={
+                "count_ntm_china": "c_count_ntm_dvp_china",
+                "lag_count_ntm_china": "c_lag_count_ntm_dvp_china",
+                "stock_ntm_china": "c_stock_ntm_dvp_china",
+                "lag_stock_ntm_china": "c_lag_stock_ntm_dvp_china",
+                "new_ntm_china": "new_ntm_dvp_china",
+                "lag_new_ntm_china": "lag_new_ntm_dvp_china",
+                "active_ntm_china": "active_ntm_dvp_china",
+                "lag_active_ntm_china": "lag_active_ntm_dvp_china"
+            }
+        )
+    .drop(columns = ['index'])
+    )
+df_country.head(1)
+```
+
+```sos kernel="SoS"
+#list_ntm_c[1]
+```
+
+```sos kernel="SoS"
+list_env = [
+    "Protection of the environment",
+#"Protection of the environment Quality requirements",
+#"Protection of the environment Safety",
+#"Protection of the environment Trade facilitation"
+]
+
+df_ntm_env = (
+    df_ntm
+    .loc[lambda x: x["iso_alpha"].isin(["CHN"])]
+    .loc[lambda x: x['keywords'].isin(list_env)]
+    .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
+        .dropna(subset=["year"])
+        .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
+        .explode("hs6")
+        .groupby(["iso_alpha", "year", "hs6"])
+        .agg({"id": "nunique"})
+        .rename(columns={"id": "count"})
+        .sort_values(by=["iso_alpha", "year", "hs6"])
+        .reset_index()
+        .pivot_table(
+            values="count",
+            index=["iso_alpha", "hs6"],
+            columns="year",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .stack()
+        .reset_index()
+        .rename(columns={0: "count_ntm_china"})
+        .assign(
+            stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["count_ntm_china"].transform(
+                "cumsum"
+            ),
+            new_ntm_china=lambda x: np.where(x["count_ntm_china"] > 0, "TRUE", "FALSE"),
+            active_ntm_china=lambda x: np.where(x["stock_ntm_china"] > 0, "TRUE", "FALSE"),
+        )
+        .assign(
+            lag_count_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["count_ntm_china"]
+            .transform("shift")
+            .fillna(0),
+            lag_stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["stock_ntm_china"]
+            .transform("shift")
+            .fillna(0),
+            lag_new_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["new_ntm_china"]
+            .transform("shift")
+            .fillna("FALSE"),
+            lag_active_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])["active_ntm_china"]
+            .transform("shift")
+            .fillna("FALSE"),
+        )
+        .reset_index()
+        .rename(
+            columns={
+                "count_ntm_china": "c_count_ntm_env_china",
+                "lag_count_ntm_china": "c_lag_count_ntm_env_china",
+                "stock_ntm_china": "c_stock_ntm_env_china",
+                "lag_stock_ntm_china": "c_lag_stock_ntm_env_china",
+                "new_ntm_china": "new_ntm_env_china",
+                "lag_new_ntm_china": "lag_new_ntm_env_china",
+                "active_ntm_china": "active_ntm_env_china",
+                "lag_active_ntm_china": "lag_active_ntm_env_china"
+            }
+        )
+    .drop(columns = ['index'])
+    )
+df_ntm_env.head(1)
+```
+
+<!-- #region kernel="SoS" -->
+Compute frequency, coverage and prevalence ratio:
+
+- D is a dummy variable reflecting the presence of one or more NTMs
+- M indicates whether there are imports of good i (also a dummy variable)
+- V is the value of imports in product i.
+- N is the number of NTMs on product i
+
+To make things simpler, we create different queries
+<!-- #endregion -->
+
+```sos kernel="SoS"
+query = """
+SELECT DISTINCT(hs6), t as year
+FROM baci_2002_2020
+WHERE 
+    t IN (
+      '2002', '2003', '2004', '2005', '2006', 
+      '2007', '2008', '2009', '2010', '2011'
+    ) 
+GROUP BY t, hs6
+"""
+df_hs_baci = (s3.run_query(
+            query=query,
+            database="trade",
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename=filename,  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = dtypes
+)
+              .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+       )
+
+```
+
+```sos kernel="SoS"
+query = """
+SELECT 
+    DISTINCT(hs6) as hs6,
+    t as year, 
+    iso_3digit_alpha_d
+    
+  FROM 
+    "trade"."baci_2002_2020" 
+  WHERE 
+    t IN (
+      '2002', '2003', '2004', '2005', '2006', 
+      '2007', '2008', '2009', '2010', '2011'
+    ) 
+  GROUP BY 
+    t, 
+    iso_3digit_alpha_d,hs6
+"""
+df_M = (s3.run_query(
+            query=query,
+            database="trade",
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename=filename,  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = dtypes
+        )
+        .dropna(subset = ['year', 'iso_3digit_alpha_d'])
+        .rename(columns={"iso_3digit_alpha_d": "iso_alpha"})
+        .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+       )
+df_M.head()
+```
+
+```sos kernel="SoS"
+query = """
+SELECT 
+    t as year, 
+    iso_3digit_alpha_d, 
+    hs6,
+    SUM(v) as v
+  FROM 
+    "trade"."baci_2002_2020" 
+  WHERE 
+    t IN (
+      '2002', '2003', '2004', '2005', '2006', 
+      '2007', '2008', '2009', '2010', '2011'
+    ) 
+  GROUP BY 
+    t, 
+    iso_3digit_alpha_d,
+    hs6
+"""
+df_V = (s3.run_query(
+            query=query,
+            database="trade",
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename=filename,  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = dtypes
+)
+              .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+        .rename(columns={"iso_3digit_alpha_d": "iso_alpha"})
+       )
+df_V.head()
+```
+
+<!-- #region kernel="SoS" -->
+Frequency
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df_freq =(
+    df_ntm_world
+    .loc[lambda x: ~x["iso_alpha"].isin(["CHN"])]
+    .loc[lambda x: x["active_ntm"].isin(["TRUE"])]
+    .merge(df_M)
+    .groupby(['year', 'iso_alpha'])
+    .agg({'hs6':'nunique'})
+    .rename(columns = {'hs6':'DM'})
+    .merge((df_M.groupby(['year', 'iso_alpha'])).agg({'hs6':'count'}).rename(columns = {'hs6':'M'}),
+           left_index = True, right_index = True,how = 'right')
+    .assign(DM=lambda x: x["DM"].fillna(0), F=lambda x: x["DM"] / x["M"])
+    .reset_index()
+    .sort_values(by=["iso_alpha", "year"])
+    .assign(
+        lag_DM=lambda x: x.groupby(["iso_alpha",])["DM"].transform("shift"),
+        lag_F=lambda x: x.groupby(["iso_alpha",])["F"].transform("shift")
+    )
+)
+df_freq[['DM','M','F','lag_DM','lag_F']].describe()
+```
+
+<!-- #region kernel="SoS" -->
+Coverage
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df_cov = (
+    df_ntm_world
+    .loc[lambda x: ~x["iso_alpha"].isin(["CHN"])]
+    .loc[lambda x: x["active_ntm"].isin(["TRUE"])]
+    .merge(df_V)
+    .groupby(['year', 'iso_alpha'])
+    .agg({'v':'sum'})
+    .rename(columns = {'v':'DV'})
+    .merge((df_V.groupby(['year', 'iso_alpha'])).agg({'v':'sum'}).rename(columns = {'v':'V'}),
+           left_index = True, right_index = True,how = 'right')
+    .assign(DV=lambda x: x["DV"].fillna(0), C=lambda x: x["DV"] / x["V"])
+    .reset_index()
+    .sort_values(by=["iso_alpha", "year"])
+    .assign(
+        lag_DV=lambda x: x.groupby(["iso_alpha",])["DV"].transform("shift"),
+        lag_C=lambda x: x.groupby(["iso_alpha",])["C"].transform("shift")
+    )
+)
+df_cov[['DV','V','C','lag_DV','lag_C']].describe()
+```
+
+<!-- #region kernel="SoS" -->
+Prevalence
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df_prev = (
+    df_ntm_world
+    .loc[lambda x: ~x["iso_alpha"].isin(["CHN"])]
+    .loc[lambda x: x["active_ntm"].isin(["TRUE"])]
+    .merge(df_M)
+    .groupby(['year', 'iso_alpha'])
+    .agg({'stock_ntm':'sum'})
+    .rename(columns = {'stock_ntm':'NM'})
+    .merge((df_M.groupby(['year', 'iso_alpha'])).agg({'hs6':'count'}).rename(columns = {'hs6':'M'}),
+           left_index = True, right_index = True,how = 'right')
+    .assign(NM=lambda x: x["NM"].fillna(0), P=lambda x: x["NM"] / x["M"])
+    .reset_index()
+    .sort_values(by=["iso_alpha", "year"])
+    .assign(
+        lag_NM=lambda x: x.groupby(["iso_alpha",])["NM"].transform("shift"),
+        lag_P=lambda x: x.groupby(["iso_alpha",])["P"].transform("shift")
+    )
+    .drop(columns = ['M'])
+)
+df_prev[['NM','P','lag_NM','lag_P']].describe()
+```
+
+```sos kernel="SoS"
+df_prev
+```
+
+<!-- #region kernel="SoS" -->
+### Merge all NTM
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df_final = (
+    df.drop(columns=["year.1", "hs6.1", "geocode4_corr.1", "country_en.1"])
+    .assign(hs6=lambda x: x["hs6"].astype(str).str.zfill(6))
+    .merge(df_ntm_world, on=["iso_alpha", "year", "hs6"], how="left")
+    .merge(
+        (
+            df_ntm_china.assign(
+                c_lag_count_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "count_ntm_china"
+                ]
+                .transform("shift")
+                .fillna(0),
+                c_lag_stock_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "stock_ntm_china"
+                ]
+                .transform("shift")
+                .fillna(0),
+                lag_new_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "new_ntm_china"
+                ]
+                .transform("shift")
+                .fillna("FALSE"),
+                lag_active_ntm_china=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "active_ntm_china"
+                ]
+                .transform("shift")
+                .fillna("FALSE"),
+            )
+            .rename(
+                columns={
+                    "count_ntm_china": "c_count_ntm_china",
+                    "stock_ntm_china": "c_stock_ntm_china",
+                }
+            )
+            .drop(columns=["iso_alpha"])
+        ),
+        on=["year", "hs6"],
+        how="left",
+    )
+    .merge(df_ntm_env.drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
+    .merge(list_ntm[0].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
+    .merge(list_ntm[1].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
+    .merge(list_ntm[2].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
+    .merge(list_ntm[3].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
+    .merge(df_country.drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
+    .merge(df_freq, on=["year", "iso_alpha"], how="left",)
+    .merge(df_prev, on=["year", "iso_alpha"], how="left",)
+    .merge(df_cov, on=["year", "iso_alpha"], how="left",)
+    .merge(
+    (
+            df_ntm_world.assign(
+                c_lag_count_ntm_w=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "count_ntm"
+                ]
+                .transform("shift")
+                .fillna(0),
+                c_lag_stock_ntm_w=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "stock_ntm"
+                ]
+                .transform("shift")
+                .fillna(0),
+                lag_new_ntm_w=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "new_ntm"
+                ]
+                .transform("shift")
+                .fillna("FALSE"),
+                lag_active_ntm_w=lambda x: x.groupby(["iso_alpha", "hs6"])[
+                    "active_ntm"
+                ]
+                .transform("shift")
+                .fillna("FALSE"),
+            )
+            .rename(
+                columns={
+                    "count_ntm": "c_count_ntm_w",
+                    "stock_ntm": "c_stock_ntm_w",
+                    "new_ntm": "new_ntm_w",
+                    "active_ntm": "active_ntm_w",
+                }
+            )
+        ), on=["year", "iso_alpha", "hs6"], how="left"
+    )
+)
+df_final = df_final.assign(
+    **{
+        "{}".format(i): df_final[i].fillna(0)
+        for i in list(df_final.filter(regex="^c_").columns)
+        + [
+            "DM",
+            "M",
+            "F",
+            "lag_DM",
+            "lag_F",
+            "NM",
+            "P",
+            "lag_NM",
+            "lag_P",
+            "DV",
+            "V",
+            "C",
+            "lag_DV",
+            "lag_C",
+        ]
+    },
+    **{
+        "{}".format(i): df_final[i].fillna("FALSE")
+        for i in list(df_final.filter(regex="new|active").columns)
+    },
+)
+df_final.head(1)
+```
+
+```sos kernel="SoS"
+#df_ntm.loc[lambda x: x["iso_alpha"].isin(["CHN"])]['aff'].value_counts()
+```
+
+<!-- #region kernel="SoS" -->
+## Quality variable: different sigma
+
+- Use different values of sigma:
+    -  Set sigma to the elasticity as 5 and 10
+        - [Credit Constraints, Quality, and Export Prices: Theory and Evidence from China](https://drive.google.com/file/d/1FnIIq2kwWdcIgg6jm-ydIvzj9f-UApYR/view?usp=sharing)
+        - [Credit constraints, quality, and export prices: Theory and evidence from China](https://drive.google.com/file/d/1FnIIq2kwWdcIgg6jm-ydIvzj9f-UApYR/view?usp=sharing)
+        
+-> code from [01_preparation_quality](https://github.com/thomaspernet/VAT_rebate_quality_china/blob/master/01_data_preprocessing/02_transform_tables/01_preparation_quality.md#steps)
+<!-- #endregion -->
+```sos kernel="SoS"
+query = """
+SELECT geocode4_corr,country_en,year,regime,hs6,iso_alpha,unit_price,quantity
+FROM chinese_trade.china_export_tariff_tax
+""".format(db, table)
+df_vat = (
+    s3.run_query(
+    query=query,
+    database="chinese_trade",
+    s3_output="SQL_OUTPUT_ATHENA",
+    filename="trade_vat",  # Add filename to print dataframe
+    destination_key=None,  # Add destination key if need to copy output
+)
+    .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+)
+df_quality = (
+    df_vat.assign(
+    hs2 = lambda x: x['hs6'].str[:2],
+    hs3 = lambda x: x['hs6'].str[:3],
+    hs4 = lambda x: x['hs6'].str[:4],
+    sigma_3 = 3,
+    sigma_5 = 5,
+    sigma_10 = 10
+
+)
+    .assign(
+        sigma_price3 = lambda x: x['sigma_3'].astype('float') * np.log(x['unit_price']),
+        sigma_price5 = lambda x: x['sigma_5'].astype('float') * np.log(x['unit_price']),
+        sigma_price10 = lambda x: x['sigma_10'].astype('float') * np.log(x['unit_price']),
+        y3 = lambda x : np.log(x['quantity']) + x['sigma_price3'],
+        y5 = lambda x : np.log(x['quantity']) + x['sigma_price5'],
+        y10 = lambda x : np.log(x['quantity']) + x['sigma_price10']
+    )
+)
+df_quality["FE_ct"] = pd.factorize(df_quality["year"].astype('string') + 
+                                       df_quality["country_en"])[0]
+compute_quality = False
+if compute_quality:
+    from sklearn.pipeline import make_pipeline
+    from sklearn.linear_model import LinearRegression
+    from sklearn.preprocessing import OneHotEncoder
+    from sklearn.compose import make_column_transformer
+    
+    cat_proc = make_pipeline(
+        OneHotEncoder()
+    )
+    preprocessor = make_column_transformer(
+        (cat_proc, tuple(['hs6', 'FE_ct']))
+    )
+    clf = make_pipeline(preprocessor,
+                        LinearRegression(fit_intercept=True, normalize=False))
+    #%%time
+    print('begin model 3')
+    MODEL3 = clf.fit(df_quality[['hs6', 'FE_ct']], df_quality['y3']) 
+    print('begin model 5')
+    MODEL5 = clf.fit(df_quality[['hs6', 'FE_ct']], df_quality['y5']) 
+    print('begin model 10')
+    MODEL10 = clf.fit(df_quality[['hs6', 'FE_ct']], df_quality['y10']) 
+    from joblib import dump, load
+    dump(MODEL3, 'filename3.joblib') 
+    dump(MODEL5, 'filename5.joblib') 
+    dump(MODEL10, 'filename10.joblib') 
+```
+
+```sos kernel="SoS"
+from joblib import dump, load
+df_quality = df_quality.assign(
+    prediction3 = lambda x: load('filename3.joblib') .predict(x[['hs6', 'FE_ct']]),
+    residual3 = lambda x: x['y3'] - x['prediction3'],
+    kandhelwal_quality3 = lambda x: x['residual3'] / (x['sigma_3'].astype('float') -1),
+    
+    prediction5 = lambda x: load('filename5.joblib') .predict(x[['hs6', 'FE_ct']]),
+    residual5 = lambda x: x['y5'] - x['prediction5'],
+    kandhelwal_quality5 = lambda x: x['residual5'] / (x['sigma_5'].astype('float') -1),
+    
+    prediction10 = lambda x: load('filename10.joblib') .predict(x[['hs6', 'FE_ct']]),
+    residual10 = lambda x: x['y10'] - x['prediction10'],
+    kandhelwal_quality10 = lambda x: x['residual10'] / (x['sigma_10'].astype('float') -1),
+)  
+```
+
+```sos kernel="SoS"
+df_final = (
+    df_final
+    .merge(
+    df_quality.reindex(
+    columns = ['geocode4_corr','year','regime','hs6','iso_alpha',
+              'kandhelwal_quality3','kandhelwal_quality5','kandhelwal_quality10']
+    )
+    )
+    #.to_csv(os.path.join(path_local, 'df_final_robusntess' + '.csv'), index = False)
+)
+df_final.head()
+```
+
+```sos kernel="SoS"
+df_final.shape
+```
+
+```sos kernel="SoS"
+manova = "credit_constraint_cic - tabula-Manova et al. 2015 - Firm Exports and Multinational Activity Under Credit Constraints.csv"
+jarreau = "credit_constraint_cic - Poncet_ISIC_industry.csv"
+df_final = df_final.merge(
+    (
+        pd.read_csv(
+            "concordance_sic_hs.csv", dtype={"hs6": "str", "concordance_hs": "str"}
+        )
+        .merge(
+            pd.read_csv(manova, dtype={"ISIC": "str"},).rename(
+                columns={"ISIC": "concordance_hs"}
+            ),
+            how="inner",
+        )
+        .rename(
+            columns={
+                "ext_finance": "ext_finance_m",
+                "inventory_ratio": "inventory_ratio_m",
+                "asset_tangibility": "asset_tangibility_m",
+                "trade_credit_intensity": "trade_credit_intensity_m",
+                "liquidity_needs": "liquidity_needs_m",
+            }
+        )
+        .drop(columns=["Unnamed: 0"])
+    ),
+    how="inner",
+).merge(
+    (
+        pd.read_csv(
+            "concordance_sic_hs.csv", dtype={"hs6": "str", "concordance_hs": "str"}
+        )
+        .merge(
+            pd.read_csv(jarreau, dtype={"ISIC": "str"},).rename(
+                columns={"ISIC": "concordance_hs"}
+            ),
+            how="inner",
+        )
+        .rename(
+            columns={
+                "External dependence": "ext_finance_j",
+                "R&D intensity": "rd_intensity_j",
+                "Liquidity needs": "liquidity_needs_j",
+            }
+        )
+        .drop(
+            columns=[
+                "Unnamed: 0",
+                "Name of sector",
+                "CIC",
+                "Hum. cap. intensity",
+                "Phys. cap. intensity",
+                "Foreign share",
+                "rank",
+                "concordance_hs",
+            ]
+        )
+    ),
+    how="inner",
+)
+
+df_final = df_final.loc[lambda x: 
+                        (x['kandhelwal_quality'] > -15)
+                        &
+                        (x['kandhelwal_quality'] < 15)
+                       ]
+```
+
+<!-- #region kernel="SoS" -->
+Make the dataset squared
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df_final = (
+    df_final
+    .assign(
+        count = lambda x: x.groupby(['year', 'geocode4_corr', 'hs6', 'iso_alpha'])['hs6'].transform('count')
+    )
+    .loc[lambda x: x['count'] ==2]
+    
+)
+df_final = (
+    df_final
+    .loc[lambda x: x['regime'].isin(['NOT_ELIGIBLE'])]
+    .reindex(columns = ['year', 'geocode4_corr', 'hs6', 'iso_alpha'])
+    .drop_duplicates()
+    .merge(df_final)
+    
+)
+```
+
+```sos kernel="SoS"
+df_final.shape
+```
+
+<!-- #region kernel="SoS" -->
+### Summary statistics Quality
+
+<!-- #endregion -->
+
+```sos kernel="SoS"
+query = """
+SELECT *, CASE WHEN income_group = 'Low income' 
+      OR income_group = 'Low Lower middle income' 
+      OR (
+        income_group IS NULL 
+        AND ISO_alpha != 'HKG'
+      ) then 'LDC' ELSE 'DC' END AS income_group_ldc_dc
+FROM (
+SELECT * FROM "chinese_trade"."china_product_quality"
+LEFT JOIN (
+SELECT iso_alpha03 , year, income_group
+FROM world_bank.world_bank_gdp_per_capita ) as world_bank_gdp_per_capita
+ON china_product_quality.iso_alpha = world_bank_gdp_per_capita.iso_alpha03
+    AND china_product_quality.year = world_bank_gdp_per_capita.year 
+    LEFT JOIN industry.hs6_homogeneous
+    ON china_product_quality.hs6 = hs6_homogeneous.hs6
+    )
+"""
+df_quality_stat = (
+    s3.run_query(
+    query=query,
+    database="chinese_trade",
+    s3_output="SQL_OUTPUT_ATHENA",
+    filename="trade_vat",  # Add filename to print dataframe
+    destination_key=None,  # Add destination key if need to copy output
+)
+    .assign(
+              year = lambda x: x['year'].astype('Int64'),
+              hs6 = lambda x: x['hs6'].astype('Int64').astype(str).str.zfill(6),
+          )
+)
+```
+
+```sos kernel="SoS"
+(
+    df_final
+    ['kandhelwal_quality'].describe()
+)
+```
+
+<!-- #region kernel="SoS" -->
+- Average quality
+- Average quality per dvp/dvpg
+- Average quality per product type
+<!-- #endregion -->
+
+<!-- #region kernel="SoS" -->
+Construct table for the product: Homogenous vs heterogeneous
+<!-- #endregion -->
+
+```sos kernel="SoS"
+t_all_product = pd.concat(
+    [
+        #### ALL QUALITY
+        (
+            pd.concat(
+                [
+                    (
+                        df_final
+                        .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+                        .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+                        .groupby(["homogeneous"])
+                        .agg({"kandhelwal_quality": "mean"})
+                        .rename_axis(index={"homogeneous": ""})
+                        .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        ),
+        #### ALL REBATE
+        (
+            pd.concat(
+                [
+                    (
+                        df_final
+                        .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+                        .assign(
+                            rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"]
+                        )
+                        .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+                        .groupby(["homogeneous"])
+                        .agg({"rebate": "mean"})
+                        .rename_axis(index={"homogeneous": ""})
+                        .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        ),
+        #### NB OF OBS
+        (
+            pd.concat(
+                [
+                    (
+                        df_final
+                        .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+                        .assign(
+                            rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"]
+                        )
+                        .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+                        .groupby(["homogeneous"])
+                        .agg({"rebate": "count"})
+                        .rename(columns={"rebate": "nb of obs"})
+                        .rename_axis(index={"homogeneous": ""})
+                        .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        ),
+         (
+            pd.concat(
+                [
+                    (
+                        df_final
+                        .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+                        .assign(
+                            rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"]
+                        )
+                        .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+                        .groupby(["homogeneous"])
+                        .agg({"hs6": "nunique"})
+                        .rename(columns={"rebate": "nb of obs"})
+                        .rename_axis(index={"homogeneous": ""})
+                        .rename(columns = {'hs6':'nb_product_country'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        )
+    ]
+)
+
+t_regime_product = pd.concat(
+    [
+        #### QUALITY REGIME
+        (
+            df_final
+            .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+            .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+            .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+            .groupby(["homogeneous", "regime"])
+            .agg({"kandhelwal_quality": "mean"})
+            .rename_axis(index={"homogeneous": ""})
+            .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+            .T
+        ),
+        #### REBATE REGIME
+        (
+            df_final
+            .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+            .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+            .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+            .assign(rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"])
+            .groupby(["homogeneous", "regime"])
+            .agg({"rebate": "mean"})
+            .rename_axis(index={"homogeneous": ""})
+            .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+            .T
+        ),
+        #### NB OBS REGIME
+        (
+            df_final
+            .replace({'homogeneous':{'HETEREGENEOUS':'Heterogenous','HOMOGENEOUS':'Homogeneous'}})
+            .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+            .assign(homogeneous = lambda x: x['homogeneous'].fillna('Homogeneous'))
+            .assign(rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"])
+            .groupby(["homogeneous", "regime"])
+            .agg({"rebate": "count"})
+            .rename(columns={"rebate": "nb of obs"})
+            .rename_axis(index={"homogeneous": ""})
+            .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+            .T
+        ),
+    ]
+)
+```
+
+<!-- #region kernel="SoS" -->
+Construct table for the countryes: LDC vs DC
+<!-- #endregion -->
+
+```sos kernel="SoS"
+t_all_country = pd.concat(
+    [
+        #### ALL QUALITY
+        (
+            pd.concat(
+                [
+                    (
+                        df_final.groupby(["income_group_ldc_dc"])
+                        .agg({"kandhelwal_quality": "mean"})
+                        .rename_axis(index={"income_group_ldc_dc": ""})
+                        .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        ),
+        #### ALL REBATE
+        (
+            pd.concat(
+                [
+                    (
+                        df_final.assign(
+                            rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"]
+                        )
+                        .groupby(["income_group_ldc_dc"])
+                        .agg({"rebate": "mean"})
+                        .rename_axis(index={"income_group_ldc_dc": ""})
+                        .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        ),
+        #### NB OF OBS
+        (
+            pd.concat(
+                [
+                    (
+                        df_final.assign(
+                            rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"]
+                        )
+                        .groupby(["income_group_ldc_dc"])
+                        .agg({"rebate": "count"})
+                        .rename(columns={"rebate": "nb of obs"})
+                        .rename_axis(index={"income_group_ldc_dc": ""})
+                        .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        ),
+        (
+            pd.concat(
+                [
+                    (
+                        df_final.groupby(["income_group_ldc_dc"])
+                        .agg({"country_en": "nunique"})
+                        .rename_axis(index={"income_group_ldc_dc": ""})
+                        .rename(columns = {'country_en':'nb_product_country'})
+                        .T
+                    )
+                ],
+                axis=1,
+                keys=["all"],
+            ).swaplevel(axis=1)
+        )
+    ]
+)
+t_regime_country = pd.concat(
+    [
+        #### QUALITY REGIME
+        (
+            df_final
+            .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+            .groupby(["income_group_ldc_dc", "regime"])
+            .agg({"kandhelwal_quality": "mean"})
+            .rename_axis(index={"income_group_ldc_dc": ""})
+            .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+            .T
+        ),
+        #### REBATE REGIME
+        (
+            df_final
+            .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+            .assign(rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"])
+            .groupby(["income_group_ldc_dc", "regime"])
+            .agg({"rebate": "mean"})
+            .rename_axis(index={"income_group_ldc_dc": ""})
+            .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+            .T
+        ),
+        #### NB OBS REGIME
+        (
+            df_final
+            .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+            .assign(rebate=lambda x: x["lag_vat_reb_m"] / x["lag_vat_m"])
+            .groupby(["income_group_ldc_dc", "regime"])
+            .agg({"rebate": "count"})
+            .rename(columns={"rebate": "nb of obs"})
+            .rename_axis(index={"income_group_ldc_dc": ""})
+            .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+            .T
+        )
+    ]
+)
+```
+
+```sos kernel="SoS"
+l = np.repeat("-", 15)
+l[0::3] = "1"
+l
+```
+
+```sos kernel="SoS"
+t_final = (
+    pd.concat(
+        [
+            pd.concat(
+                [
+                    pd.concat(
+                        [
+                            pd.concat(
+                                [
+                                    pd.concat(
+                                        [
+                                            df_final[["kandhelwal_quality"]]
+                                            .rename(
+                                                columns={
+                                                    "kandhelwal_quality": "Estimated quality"
+                                                }
+                                            )
+                                            .mean()
+                                        ],
+                                        keys=["all"],
+                                        axis=1,
+                                    ),
+                                    pd.concat(
+                                        [
+                                            df_final.assign(
+                                                rebate=lambda x: x["lag_vat_reb_m"]
+                                                / x["lag_vat_m"]
+                                            )[["rebate"]].mean()
+                                        ],
+                                        keys=["all"],
+                                        axis=1,
+                                    ),
+                                    pd.concat(
+                                        [
+                                            df_final[["kandhelwal_quality"]]
+                                            .count()
+                                            .rename({"kandhelwal_quality": "nb of obs"})
+                                        ],
+                                        keys=["all"],
+                                        axis=1,
+                                    ),
+                                    pd.concat(
+                                        [
+                                            df_final[["hs6"]]
+                                            .nunique()
+                                            .rename({"hs6": "nb_product_country"})
+                                        ],
+                                        keys=["all"],
+                                        axis=1,
+                                    )
+                                ],
+                            )
+                        ],
+                        keys=["Full"],
+                        axis=1,
+                    ),
+                    (
+                        pd.concat([t_all_country, t_regime_country], axis=1).sort_index(
+                            axis=1, level=[0, 1], ascending=[True, False]
+                        )
+                    ),
+                    (
+                        pd.concat([t_all_product, t_regime_product], axis=1).sort_index(
+                            axis=1, level=[0, 1], ascending=[True, False]
+                        )
+                    ),
+                ],
+                axis=1,
+            ).T,
+            (
+                pd.DataFrame(
+                    l,
+                    pd.MultiIndex.from_product(
+                        [
+                            ["Full", "DC", "LDC", "Heterogenous", "Homogeneous"],
+                            ["all", "Not eligible", "Eligible"],
+                        ],
+                        names=["", ""],
+                    ),
+                    ["condition"],
+                ).loc[
+                    lambda x: ~x.index.isin(
+                        [("Full", "Not eligible"), ("Full", "Eligible")]
+                    )
+                ]
+            ),
+        ],
+        axis=1,
+    )
+    #.fillna('-')
+    .assign(
+        nb_of_obs=lambda x: np.where(x["condition"].isin(["-"]), "-", x["nb of obs"].astype(int)),
+        rebate=lambda x: np.where(x["condition"].isin(["-"]), "-", np.round(x["rebate"],3)),
+        nb_product_country = lambda x: np.where(
+            x['nb_product_country'].isin([np.nan]), 
+             '-',
+            x['nb_product_country'].astype("Int64").astype(str)
+           
+        )
+    )
+    .drop(columns=["nb of obs", "condition"])
+    .rename(columns={"nb_of_obs": "nb of obs", 'nb_product_country':'nb product/country'})
+    
+)
+t_final
+```
+
+```sos kernel="SoS"
+import tex2pix
+from PyPDF2 import PdfFileMerger
+from wand.image import Image as WImage
+```
+
+```sos kernel="SoS"
+folder = 'Figures'
+table_number = 1
+title = 'Distribution of unique rebate share at the HS6 product level'
+tb_note = """
+
+"""
+with open('{}/table_{}.tex'.format(folder,table_number), 'w') as fout:
+    for i in range(len( t_final.to_latex(index=True,float_format="{:0.3f}".format))):
+        if i ==0:
+            header= "\documentclass[preview]{standalone} \n\\usepackage[utf8]{inputenc}\n" \
+            "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
+            "\\begin{document}"
+            top =  '\n\\begin{adjustbox}{width=\\textwidth, totalheight=\\textheight-2\\baselineskip,keepaspectratio}\n'
+            table_top = "\n\\begin{table}[!htbp] \centering"
+            table_title = "\n\caption{%s}\n" % title
+            
+            fout.write(header)
+            fout.write(table_top)
+            fout.write(table_title)
+            fout.write(top)
+           
+        fout.write( t_final.to_latex(index=True,float_format="{:0.3f}".format)[i])
+    
+    bottom =  '\n\\end{adjustbox}\n'
+    tb_note_top = "\n\\begin{tablenotes}\n\small\n\item"
+    table_bottom = "\n\end{table}"
+    footer = "\n\n\\end{document}"
+    tb_note_bottom = "\n\end{tablenotes}"
+    fout.write(bottom)
+    fout.write(tb_note_top)
+    fout.write(tb_note)
+    fout.write(tb_note_bottom)
+    fout.write(table_bottom)
+    fout.write(footer)
+ 
+f = open('{}/table_{}.tex'.format(folder,table_number))
+r = tex2pix.Renderer(f, runbibtex=False)
+r.mkpdf('{}/table_{}.pdf'.format(folder,table_number))
+img = WImage(filename='{}/table_{}.pdf'.format(folder,table_number),
+resolution = 200)
+display(img)
+```
+
+```sos kernel="SoS"
+import seaborn as sns
+import matplotlib.pyplot as plt
+```
+
+```sos kernel="SoS"
+sns.set(style="whitegrid")
+```
+
+```sos kernel="SoS"
+plt.figure(figsize = (15,10))
+var = 'kandhelwal_quality'
+temp = (
+    df_quality_stat
+    .replace({'regime':{'ELIGIBLE':'Eligible','NOT_ELIGIBLE':'Not eligible'}})
+    .groupby(['regime'])
+    .sample(frac = .5)
+    .reindex(columns = ['regime',var])
+    .loc[lambda x: x[var] < 15]#df_quality_stat[var].describe(percentiles = [.95])['95%']]
+    .loc[lambda x: x[var] > -15]#df_quality_stat[var].describe(percentiles = [.05])['5%']]
+    .rename(columns = {'kandhelwal_quality':'Estimated quality'})
+    
+)
+sns.set(style="white")
+
+# Without transparency
+sns.kdeplot(data=temp, x='Estimated quality', hue="regime", cut=0, fill=False, common_norm=False, alpha=.5)
+plt.savefig("Figures/fig_2.png",
+            bbox_inches='tight',
+            dpi=600)
+#plt.show()
+```
+
+<!-- #region kernel="SoS" -->
+Replicate previous table
+<!-- #endregion -->
+
+```sos kernel="SoS"
+query = """
+WITH temp AS (
+SELECT distinct(hs6), year, lag_vat_reb_m/lag_vat_m as rebate
+FROM {}.{}  
+)
+SELECT year, hs6, rebate
+FROM temp
+ORDER BY hs6
+""".format(db, table)
+
+df = (s3.run_query(
+            query=query,
+            database=db,
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename='fig1',  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+            dtype = {'hs6':'string'}
+)
+      .loc[lambda x: x['hs6'].isin(df_final['hs6'].unique())]
+     )
+df.head()
+```
+
+```sos kernel="SoS"
+df_latex = (
+    pd.concat(
+    [
+        (
+            df
+            .groupby("year")["rebate"]
+            .describe()
+            .assign(
+                count=lambda x: x["count"].astype("int"),
+                max=lambda x: x["max"].astype("int"),
+            )
+            .apply(lambda x: round(x, 2))
+        ),
+        (df
+         .groupby("year").agg({"rebate": "nunique"})),
+    ],
+    axis=1,
+    # 
+)
+    .rename(columns = {'rebate':'unique rebate'})
+    .reindex(columns = ['count','unique rebate', 'mean', 'std', 'min', '25%', '50%', '75%', 'max',
+       ])
+    .to_latex()
+)
+```
+
+```sos kernel="SoS"
+folder = 'Figures'
+table_number = 2
+title = 'Distribution of unique rebate share at the HS6 product level'
+tb_note = """
+
+"""
+with open('{}/table_{}.tex'.format(folder,table_number), 'w') as fout:
+    for i in range(len( df_latex)):
+        if i ==0:
+            header= "\documentclass[preview]{standalone} \n\\usepackage[utf8]{inputenc}\n" \
+            "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
+            "\\begin{document}"
+            top =  '\n\\begin{adjustbox}{width=\\textwidth, totalheight=\\textheight-2\\baselineskip,keepaspectratio}\n'
+            table_top = "\n\\begin{table}[!htbp] \centering"
+            table_title = "\n\caption{%s}\n" % title
+            
+            fout.write(header)
+            fout.write(table_top)
+            fout.write(table_title)
+            fout.write(top)
+           
+        fout.write( df_latex[i])
+    
+    bottom =  '\n\\end{adjustbox}\n'
+    tb_note_top = "\n\\begin{tablenotes}\n\small\n\item"
+    table_bottom = "\n\end{table}"
+    footer = "\n\n\\end{document}"
+    tb_note_bottom = "\n\end{tablenotes}"
+    fout.write(bottom)
+    fout.write(tb_note_top)
+    fout.write(tb_note)
+    fout.write(tb_note_bottom)
+    fout.write(table_bottom)
+    fout.write(footer)
+ 
+f = open('{}/table_{}.tex'.format(folder,table_number))
+r = tex2pix.Renderer(f, runbibtex=False)
+r.mkpdf('{}/table_{}.pdf'.format(folder,table_number))
+img = WImage(filename='{}/table_{}.pdf'.format(folder,table_number),
+resolution = 200)
+display(img)
+```
+
+```sos kernel="SoS"
+pd.DataFrame({
+    'hs6':df_final['hs6'].unique()
+}).to_csv('hs6.csv', index = False)
+```
+
+<!-- #region kernel="SoS" -->
+### Statistic about NTM
+<!-- #endregion -->
+
+```sos kernel="SoS"
+(
+    df_ntm
+    .loc[lambda x: ~x["aff"].isin(["China"])]
+    .loc[lambda x: ~x["year"].isin(["2010"])]
+    #.merge(df_final[['iso_alpha', "hs6"]].drop_duplicates())
+    .groupby(['aff'])
+    .agg({'id':'nunique'})
+    .sort_values(by = ['id'], ascending = False)
+    .head(10)
+)
+```
+
+```sos kernel="SoS"
+fig_ntm = (
+    df_ntm
+    .loc[lambda x: x['ntm'].isin([
+        'TBT',
+        'SPS'
+    ])]
+    .groupby(['year','ntm'])
+    .agg({"id": "nunique"})
+    .unstack(-1)
+    .collapse_levels(sep='_')
+)
+fig, ax1 = plt.subplots(figsize=(15,10))
+lns1 = ax1.plot(fig_ntm.index, fig_ntm['id_SPS'], 'g-', label = "SPS") 
+lns1 = ax1.plot(fig_ntm.index, fig_ntm['id_TBT'], 'b-', label = "TBT") 
+ax1.legend(bbox_to_anchor=(1.08, 1), loc=2, borderaxespad=0.)
+plt.savefig("Figures/fig_3.png",
+            bbox_inches='tight',
+            dpi=600)
+```
+
+<!-- #region kernel="SoS" -->
 # compute fixed effect
 
 | Benchmark | Origin            | Name                     | Description                                                                                                                                                                                                                                                                                                                                    | Math_notebook     |
@@ -295,349 +1812,6 @@ Create the following fixed effect for the baseline regression:
 * Product-destination: `FE_pj`
 * Destination-year: `FE_jt`
 <!-- #endregion -->
-```sos kernel="SoS"
-df.shape
-```
-
-```sos kernel="SoS"
-df_ntm.dropna(subset = ['year']).shape
-```
-
-```sos kernel="SoS"
-df_ntm_world = (
-    df_ntm.reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
-    .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
-    .explode("hs6")
-    .groupby(["iso_alpha", "year", "hs6"])
-    .agg({"id": "nunique"})
-    .rename(columns={"id": "count"})
-    .sort_values(by=["iso_alpha", "year", "hs6"])
-    .assign(
-        stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["count"].transform(
-            "cumsum"
-        ),
-        lag_count=lambda x: x.groupby(["iso_alpha", "hs6"])["count"]
-        .transform("shift")
-        .fillna(0),
-        lag_stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["lag_count"]
-        .transform("cumsum")
-        .fillna(0),
-        ntm="TRUE",
-        lag_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["ntm"]
-        .transform("shift")
-        .fillna("FALSE"),
-    )
-    .reset_index()
-)
-```
-
-```sos kernel="SoS"
-df_ntm_china = (
-    df_ntm
-    .loc[lambda x: x['iso_alpha'].isin(['CHN'])]
-    .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
-    .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
-    .explode("hs6")
-    .groupby(["iso_alpha", "year", "hs6"])
-    .agg({"id": "nunique"})
-    .rename(columns={"id": "count"})
-    .sort_values(by=["iso_alpha", "year", "hs6"])
-    .assign(
-        stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["count"].transform(
-            "cumsum"
-        ),
-        lag_count=lambda x: x.groupby(["iso_alpha", "hs6"])["count"]
-        .transform("shift")
-        .fillna(0),
-        lag_stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["lag_count"]
-        .transform("cumsum")
-        .fillna(0),
-        ntm="TRUE",
-        lag_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["ntm"]
-        .transform("shift")
-        .fillna("FALSE"),
-    )
-    .reset_index()
-    .rename(columns = 
-                   {
-                       'count':'count_china',
-                       'stock_ntm':'stock_ntm_china',
-                       'lag_count':'lag_count_china',
-                       'lag_stock_ntm':'lag_stock_ntm_china',
-                       'ntm':'ntm_china',
-                       'lag_ntm':'lag_ntm_china',
-                   })
-)
-```
-
-<!-- #region kernel="SoS" -->
-- 1) ADP - Antidumping # CHINA
-- 2) CVD - Countervailing duties
-- 3) EXS - Export subsidies
-- 4) QRS - Quantitative Restrictions
-- 5) SFG - Safeguards
-- 6) SPS - Sanitary and Phytosanitary Measures # CHINA
-- 7) SSG - Special Safeguards (agriculture)
-- 8) STE - State trading enterprises
-- 9) TBT - Technical barriers to trade # CHINA
-- 10) TRQ - Tariff-rate quotas
-<!-- #endregion -->
-
-```sos kernel="SoS"
-df_ntm.loc[lambda x: x["iso_alpha"].isin(["CHN"])]['aff'].value_counts()
-```
-
-```sos kernel="SoS"
-#(
-#    df_ntm
-#    .loc[lambda x: x["iso_alpha"].isin(["CHN"])]
-#    .loc[lambda x: x['ntm'].isin(['TBT'])]
-#)
-```
-
-```sos kernel="SoS"
-list_ntm = []
-for i in ['TBT','SPS','ADP']:
-    df_temp = (
-    df_ntm
-    .loc[lambda x: x["iso_alpha"].isin(["CHN"])]
-    .loc[lambda x: x['ntm'].isin([i])]
-    .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
-    .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
-    .explode("hs6")
-    .groupby(["iso_alpha", "year", "hs6"])
-    .agg({"id": "nunique"})
-    .rename(columns={"id": "count"})
-    .sort_values(by=["iso_alpha", "year", "hs6"])
-    .assign(
-        stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["count"].transform(
-            "cumsum"
-        ),
-        lag_count=lambda x: x.groupby(["iso_alpha", "hs6"])["count"]
-        .transform("shift")
-        .fillna(0),
-        lag_stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["lag_count"]
-        .transform("cumsum")
-        .fillna(0),
-        ntm="TRUE",
-        lag_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["ntm"]
-        .transform("shift")
-        .fillna("FALSE"),
-    )
-    .reset_index()
-    .rename(columns = 
-                   {
-                       'count':'count_{}'.format(i),
-                       'stock_ntm':'stock_ntm_{}'.format(i),
-                       'lag_count':'lag_count_{}'.format(i),
-                       'lag_stock_ntm':'lag_stock_ntm_{}'.format(i),
-                       'ntm':'ntm_{}'.format(i),
-                       'lag_ntm':'lag_ntm_{}'.format(i),
-                   })
-)
-    list_ntm.append(df_temp)
-len(list_ntm)
-```
-
-```sos kernel="SoS"
-df_ntm.loc[lambda x: x["iso_alpha"].isin(["CHN"])]['aff'].value_counts()
-```
-
-```sos kernel="SoS"
-dvl_econ = [
-    'United States',
-    'European Union',
-    'Japan',
-    'South Korea',
-    'Canada',
-    'Australia',
-    'Switzerland',
-    'Germany',
-    'New Zealand',
-    'Netherlands',
-    'United Kingdom',
-    'Norway',
-    'Finland',
-    'France',
-    'Italy',
-    'Belgium',
-    'Israel',
-    'Sweden',
-    'Denmark',
-    'Austria'
-]
-
-df_country = (
-    df_ntm
-    .loc[lambda x: x["iso_alpha"].isin(["CHN"])]
-    .loc[lambda x: x['aff'].isin(dvl_econ)]
-    .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
-    .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
-    .explode("hs6")
-    .groupby(["iso_alpha", "year", "hs6"])
-    .agg({"id": "nunique"})
-    .rename(columns={"id": "count"})
-    .sort_values(by=["iso_alpha", "year", "hs6"])
-    .assign(
-        stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["count"].transform(
-            "cumsum"
-        ),
-        lag_count=lambda x: x.groupby(["iso_alpha", "hs6"])["count"]
-        .transform("shift")
-        .fillna(0),
-        lag_stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["lag_count"]
-        .transform("cumsum")
-        .fillna(0),
-        ntm="TRUE",
-        lag_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["ntm"]
-        .transform("shift")
-        .fillna("FALSE"),
-    )
-    .reset_index()
-    .rename(columns = 
-                   {
-                       'count':'count_dvp_c',
-                       'stock_ntm':'stock_ntm_dvp_c',
-                       'lag_count':'lag_count_dvp_c',
-                       'lag_stock_ntm':'lag_stock_ntm_dvp_c',
-                       'ntm':'ntm_dvp_c',
-                       'lag_ntm':'lag_ntm_dvp_c',
-                   })
-)
-df_country.head(1)
-```
-
-```sos kernel="SoS"
-#list_ntm_c[1]
-```
-
-```sos kernel="SoS"
-list_env = [
-    "Protection of the environment",
-#"Protection of the environment Quality requirements",
-#"Protection of the environment Safety",
-#"Protection of the environment Trade facilitation"
-]
-
-df_ntm_env = (
-    df_ntm
-    .loc[lambda x: x["iso_alpha"].isin(["CHN"])]
-    .loc[lambda x: x['keywords'].isin(list_env)]
-    .reindex(columns=["iso_alpha", "id", "year", "hs_combined"])
-    .assign(hs6=lambda x: x["hs_combined"].str.split("|"))
-    .explode("hs6")
-    .groupby(["iso_alpha", "year", "hs6"])
-    .agg({"id": "nunique"})
-    .rename(columns={"id": "count"})
-    .sort_values(by=["iso_alpha", "year", "hs6"])
-    .assign(
-        stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["count"].transform(
-            "cumsum"
-        ),
-        lag_count=lambda x: x.groupby(["iso_alpha", "hs6"])["count"]
-        .transform("shift")
-        .fillna(0),
-        lag_stock_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["lag_count"]
-        .transform("cumsum")
-        .fillna(0),
-        ntm="TRUE",
-        lag_ntm=lambda x: x.groupby(["iso_alpha", "hs6"])["ntm"]
-        .transform("shift")
-        .fillna("FALSE"),
-    )
-    .reset_index()
-    .rename(columns = 
-                   {
-                       'count':'count_env',
-                       'stock_ntm':'stock_ntm_env',
-                       'lag_count':'lag_count_env',
-                       'lag_stock_ntm':'lag_stock_ntm_env',
-                       'ntm':'ntm_env',
-                       'lag_ntm':'lag_ntm_env',
-                   })
-)
-df_ntm_env['lag_ntm_env'].value_counts()
-```
-
-```sos kernel="SoS"
-df_final = (
-    df.drop(columns=["year.1", "hs6.1", "geocode4_corr.1", "country_en.1"])
-    .assign(hs6=lambda x: x["hs6"].astype(str).str.zfill(6))
-    .merge(df_ntm_world, on=["iso_alpha", "year", "hs6"], how="left")
-    .merge(df_ntm_china.drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
-    .merge(df_ntm_env.drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
-    .merge(list_ntm[0].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
-    .merge(list_ntm[1].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
-    .merge(list_ntm[2].drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
-    .merge(df_country.drop(columns=["iso_alpha"]), on=["year", "hs6"], how="left")
-    # .assign(ntm = lambda x: x['ntm'].fillna('FALSE'), ntm_china = lambda x: x['ntm_china'].fillna('FALSE'))
-)
-df_final = df_final.assign(
-    **{
-        "{}".format(i): df_final[i].fillna(0)
-        for i in [
-            "count",
-            "stock_ntm",
-            "lag_count",
-            "lag_stock_ntm",
-            
-            "count_china",
-            "stock_ntm_china",
-            "lag_count_china",
-            "lag_stock_ntm_china",
-            
-            "count_env",
-            "stock_ntm_env",
-            "lag_count_env",
-            "lag_stock_ntm_env",  
-            
-            "count_TBT",
-            "stock_ntm_TBT",
-            "lag_count_TBT",
-            "lag_stock_ntm_TBT",
-            
-            "count_SPS",
-            "stock_ntm_SPS",
-            "lag_count_SPS",
-            "lag_stock_ntm_SPS",
-            
-            "count_ADP",
-            "stock_ntm_ADP",
-            "lag_count_ADP",
-            "lag_stock_ntm_ADP",
-            
-             "count_dvp_c",
-            "stock_ntm_dvp_c",
-            "lag_count_dvp_c",
-            "lag_stock_ntm_dvp_c",
-        ]
-    },
-    **{
-        "{}".format(i): df_final[i].fillna("FALSE")
-        for i in [
-            "ntm",
-            "lag_ntm",
-            "ntm_china",
-            "lag_ntm_china",
-            "ntm_env",
-            "lag_ntm_env",
-            "ntm_TBT",
-            "lag_ntm_TBT",
-            "ntm_SPS",
-            "lag_ntm_SPS",
-            "ntm_ADP",
-            "lag_ntm_ADP",
-            "ntm_dvp_c",
-            "lag_ntm_dvp_c",
-        ]
-    },
-)
-```
-
-```sos kernel="SoS"
-df_final.head(1)
-```
-
 <!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
@@ -671,7 +1845,7 @@ if create_fe:
                                        )[0]
 
     ### City-product-regime
-    df_final["fe_ckr"] = pd.factorize(df["geocode4_corr"].astype('str') + 
+    df_final["fe_ckr"] = pd.factorize(df_final["geocode4_corr"].astype('str') + 
                                         df_final["hs6"].astype('str') +
                                         df_final["regime"].astype('str')
                                        )[0]
@@ -786,11 +1960,39 @@ if add_to_dic:
         },
         {
         'old':'lag\_foreign\_export\_share\_ckr',
-        'new':'\\text{lag foreign export share}_{ck, t-1}^R'
+        'new':'\\text{Foreign export share}_{ck, t-1}^R'
         },
         {
         'old':'lag\_soe\_export\_share\_ckr',
-        'new':'\\text{lag SOE export share}_{ck, t-1}^R'
+        'new':'\\text{SOE export share}_{ck, t-1}^R'
+        },
+        
+         {
+        'old':'lag\_stock\_ntm',
+        'new':'\\text{Stock ntm Chinese import}_{k, t-1}'
+        },
+        
+        {
+        'old':'lag\_frequency',
+        'new':'\\text{lag frequency}_{ck, t-1}'
+        },
+        
+        {
+        'old':'lag\_P',
+        'new':'\\text{Prevalence}_{j, t-1}'
+        },
+        
+        {
+        'old':'lag\_coverage',
+        'new':'\\text{lag coverage}_{ck, t-1}'
+        },
+        {
+        'old':'c\_lag\_stock\_ntm\_w',
+        'new':'\\text{Stock ntm destination country}_{jk, t-1}'
+        },
+        {
+        'old':'d\_credit\_needs',
+        'new':'\\text{Credit needs}_{k}'
         }
     ]
 
@@ -822,7 +2024,6 @@ library(lfe)
 
 ```sos kernel="R"
 library(tidyverse)
-library(fixest)
 ```
 
 ```sos kernel="R"
@@ -836,7 +2037,7 @@ mutate(
     ln_rebate_1 = log((lag_vat_reb_m / lag_vat_m) +1),
     ln_rebate_2 = log(lag_vat_reb_m + 1),
     rebate = lag_vat_reb_m / lag_vat_m
-      )
+      ) 
 ```
 
 ```sos kernel="R"
@@ -844,7 +2045,15 @@ df_final %>% select(lag_vat_reb_m, lag_vat_m, rebate) %>% head(2)
 ```
 
 ```sos kernel="R"
+#df_final %>% group_by(regime) %>%summarize(mean(lag_F_C))
+```
+
+```sos kernel="R"
 dim(df_final)
+```
+
+```sos kernel="SoS"
+df_final.head()
 ```
 
 <!-- #region kernel="SoS" -->
@@ -862,126 +2071,6 @@ Use ln_rebate_1 = log((lag_vat_reb_m / lag_vat_m) +1)  → share of rebate and F
 * Keep rebates 17%
 * Exclude rebates 0% 
 <!-- #endregion -->
-
-```sos kernel="SoS" nteract={"transient": {"deleting": false}}
-#folder = 'Tables_0'
-#table_nb = 1
-#table = 'table_{}'.format(table_nb)
-#path = os.path.join(folder, table + '.txt')
-#if os.path.exists(folder) == False:
-#        os.mkdir(folder)
-#for ext in ['.txt', '.tex', '.pdf']:
-#    x = [a for a in os.listdir(folder) if a.endswith(ext)]
-#    [os.remove(os.path.join(folder, i)) for i in x]
-```
-
-```sos kernel="R"
-#%get path table
-### unit price
-#t_0 <- felm(log(unit_price) ~ln_rebate+ ln_lag_import_tax  
-#            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
-#            exactDOF = TRUE)
-
-#print('table 0 done')
-#t_1 <- felm(log(unit_price) ~ln_rebate + ln_lag_import_tax 
-#            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
-#            exactDOF = TRUE)
-
-#print('table 1 done')
-#t_2 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-#            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_2 <- change_target(t_2)
-
-#print('table 2 done')
-#t_3 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_3 <- change_target(t_3)
-
-#print('table 3 done')
-#t_4 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_4 <- change_target(t_4)
-#print('table 4 done')
-#t_5 <- felm(log(unit_price) ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_5 <- change_target(t_5)
-#print('table 5 done')
-
-#dep <- "Dependent variable: unit price"
-#fe1 <- list(
-#    c("City-product fixed effects", "Yes", "Yes", "No", "No", "No", "No"
-#     ),
-#    
-#    c("City-sector-year fixed effects", "Yes", "Yes", "No", "No", "No", "No"
-#     ),
-#    
-#    c("Product-destination fixed effect","Yes", "Yes", "Yes", "No", "Yes", "No"
-#     ),
-#   
-#    c("City-product-regime fixed effects","No", "No", "Yes", "Yes", "Yes", "Yes"
-#     ),
-#    
-#    c("City-sector-regime-year fixed effects","No", "No", "Yes", "Yes", "Yes", "Yes"
-#     ),
-#    
-#    c("Product-year fixed effects", "No", "No", "No", "Yes", "No", "Yes"
-#     ),
-#    
-#    c("City-product-destination fixed effects", "No", "No", "No", "No","Yes", "Yes"
-#     )
-#    
-#            )
-
-#table_1 <- go_latex(list(
-#    t_0,t_1, t_2, t_3, t_4, t_5
-#),
-#    title="VAT export tax and product's unit price, baseline regression",
-#    dep_var = dep,
-#    addFE=fe1,
-#    save=TRUE,
-#    note = FALSE,
-#    name=path
-#) 
-```
-
-```sos kernel="SoS"
-#tbe1  = "This table estimates eq(3). " \
-#"A positive value of Ln VAT rebate means the product has lower tax" \
-#"Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group." \
-#"Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund." \
-#"Sectors are defined following the Chinese 4-digit GB/T industry" \
-#"classification and regroup several products." \
-#"Heteroskedasticity-robust standard errors" \
-#"clustered at the product level appear inparentheses."\
-#"\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."
-
-#multicolumn ={
-#    'Eligible': 1,
-#   'Non-Eligible': 1,
-#    'All': 1,
-#    'All benchmark': 1,
-#    'All': 1,
-#    'All benchmark': 1,
-#}
-
-#multi_lines_dep = '(city/product/trade regime/year)'
-#new_r = ['& test1', 'test2']
-#lb.beautify(table_number = table_nb,
-            #reorder_var = reorder,
-#            multi_lines_dep = multi_lines_dep,
-            #new_row= new_r,
-#            multicolumn = multicolumn,
-#            table_nte = tbe1,
-#            jupyter_preview = True,
-#            resolution = 150,
-#            folder = folder)
-```
 
 <!-- #region kernel="SoS" -->
 ### Quality
@@ -1004,31 +2093,29 @@ for ext in ['.txt', '.tex', '.pdf']:
 ```
 
 ```sos kernel="R"
+dim(df_final %>% filter(regime != 'ELIGIBLE'))
+```
+
+```sos kernel="R"
+dim(df_final %>% filter(regime == 'ELIGIBLE'))
+```
+
+```sos kernel="R"
 %get path table
 ### Quality
-#t_0 <- felm(kandhelwal_quality ~ln_rebate_1+ ln_lag_import_tax  
-#            | fe_ck  + fe_kt + fe_jt|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
-#            exactDOF = TRUE)
-
-#print('table 0 done')
-#t_1 <- felm(kandhelwal_quality ~ln_rebate_1 + ln_lag_import_tax 
-#            | fe_ck  + fe_kt + fe_jt|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
-#            exactDOF = TRUE)
-### all coefs
-#print('table 1 done')
-#t_2 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-#            | fe_ck  + fe_kt + fe_jt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_2 <- change_target(t_2)
-#print('table 2 done')
-
-t_0 <- felm(kandhelwal_quality ~rebate + ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_0 <- felm(kandhelwal_quality ~
+            rebate + 
+            ln_lag_import_tax 
+            #c_lag_stock_ntm_w #+ 
+            #lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ck  + hs6 + fe_jt|0|hs6, df_final %>% filter(regime != 'ELIGIBLE'),
             exactDOF = TRUE)
 
-t_1 <- felm(kandhelwal_quality ~rebate + ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_1 <- felm(kandhelwal_quality ~
+            rebate + 
+            ln_lag_import_tax 
+            #c_lag_stock_ntm_w #+ 
+            #lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ck  + hs6 + fe_jt|0, df_final %>% filter(regime == 'ELIGIBLE'),
             exactDOF = TRUE)
 
@@ -1039,116 +2126,114 @@ t_1 <- felm(kandhelwal_quality ~rebate + ln_lag_import_tax +
 #t_2 <- change_target(t_2)
 print('table 0 done')
 
-t_3 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+t_3 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+            regime * c_lag_stock_ntm_w + 
+            ln_lag_import_tax * regime +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final,
             exactDOF = TRUE)
-t_3 <- change_target(t_3)
+#t_3 <- change_target(t_3)
 print('table 1 done')
 
-t_4 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_4 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+            regime * c_lag_stock_ntm_w + 
+            ln_lag_import_tax * regime+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr + fe_group_shock|0 | hs6, df_final,
             exactDOF = TRUE)
-t_4 <- change_target(t_4)
+#t_4 <- change_target(t_4)
 print('table 2 done')
 
-t_5 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
+t_5 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+            regime * c_lag_stock_ntm_w + 
+            ln_lag_import_tax * regime +
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% group_by(geocode4_corr) %>%
   mutate(length = length(unique(year))) %>%
   filter(length ==8),
             exactDOF = TRUE)
-t_5 <- change_target(t_5)
+#t_5 <- change_target(t_5)
 print('table 3 done')
 
-t_6 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_6 <- felm(kandhelwal_quality ~
+            rebate* regime +
+            regime * c_lag_stock_ntm_w + 
+            ln_lag_import_tax * regime+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(lag_vat_m==17),
             exactDOF = TRUE)
-t_6 <- change_target(t_6)
+#t_6 <- change_target(t_6)
 print('table 4 done')
 
-t_7 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
+t_7 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+            regime * c_lag_stock_ntm_w + 
+            ln_lag_import_tax * regime+
             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(lag_vat_reb_m != 0),
             exactDOF = TRUE)
-t_7 <- change_target(t_7)
+#t_7 <- change_target(t_7)
 print('table 5 done')
-### all coefs + covariates
-#t_4 <- felm(kandhelwal_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-#            +  lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ck  + fe_kt + fe_jt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_4 <- change_target(t_4)
-#print('table 4 done')
-
-### focus coef + covariates
-
-#t_6 <- felm(kandhelwal_quality ~ln_rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ckr + fe_csrt+fe_ckj + fe_kt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_6 <- change_target(t_6)
-#print('table 6 done')
-
-### quality-adjusted price is net-quality price
-#t_6 <- felm(price_adjusted_quality ~ln_rebate_1+ ln_lag_import_tax  
-#            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime == 'ELIGIBLE'),
-#            exactDOF = TRUE)
-
-
-#print('table 6 done')
-#t_7 <- felm(price_adjusted_quality ~ln_rebate_1 + ln_lag_import_tax 
-#            | fe_ck + fe_cst+fe_kj|0 | hs6, df_final %>% filter(regime != 'ELIGIBLE'),
-#            exactDOF = TRUE)
-
-#print('table 7 done')
-#t_8 <- felm(price_adjusted_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax
-#            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
-#            exactDOF = TRUE)
+t_8 <- felm(kandhelwal_quality3 ~
+            rebate* regime + 
+            regime * c_lag_stock_ntm_w + 
+            ln_lag_import_tax * regime+ 
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final,
+            exactDOF = TRUE)
 #t_8 <- change_target(t_8)
+print('table 6 done')
 
-#print('table 8 done')
-#t_9 <- felm(price_adjusted_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax 
-#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
-#            exactDOF = TRUE)
+t_9 <- felm(kandhelwal_quality5 ~
+            rebate* regime + 
+            regime * c_lag_stock_ntm_w + 
+            ln_lag_import_tax * regime +
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final,
+            exactDOF = TRUE)
 #t_9 <- change_target(t_9)
+print('table 6 done')
 
-#print('table 9 done')
-#t_10 <- felm(price_adjusted_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ckr + fe_csrt + fe_kj|0 | hs6, df_final,
-#            exactDOF = TRUE)
+t_10 <- felm(kandhelwal_quality10 ~
+             rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr + fe_group_shock|0 , df_final,
+            exactDOF = TRUE)
 #t_10 <- change_target(t_10)
-#print('table 10 done')
-#t_11 <- felm(price_adjusted_quality ~ln_rebate_1* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-#            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-#            | fe_ckr + fe_csrt+fe_kt|0 | hs6, df_final,
-#            exactDOF = TRUE)
-#t_11 <- change_target(t_11)
-#print('table 11 done')
 
 
 dep <- "Dependent variable: Product quality"
 fe1 <- list(
     c("product",
-      "Yes", "Yes", "No", "No", "No","No", "No","No"
+      "Yes", "Yes", "No", "No", "No","No", "No","No", "No","No"
      ),
     c("City-product-regime",
-      "Yes", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes"
+      "Yes", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes","Yes"
      ),
     c("Product-year",
-      "No", "No", "Yes", "Yes", "Yes","Yes", "Yes","Yes"
+      "No", "No", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes","Yes"
      ),
     c("Destination-year",
-      "Yes", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes"
+      "Yes", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes", "Yes","Yes"
      )
 )
 
 table_1 <- go_latex(list(
-    t_0,t_1, #t_2,
-    t_3, t_4,t_5,t_6, t_7
+    change_target(t_0),
+    change_target(t_1), #t_2,
+    change_target(t_3),
+    change_target(t_4),
+    change_target(t_5),
+    change_target(t_6),
+    change_target(t_7),
+    change_target(t_8),
+    change_target(t_9),
+    change_target(t_10)
     #, t_8, t_9, t_10, t_11
 ),
     title="VAT export rebate and product's quality upgrading, baseline regression",
@@ -1182,7 +2267,10 @@ multicolumn ={
     'Shocks': 1,
     'Balance': 1,
     'Only 17\%': 1,
-    'No zero rebate': 1
+    'No zero rebate': 1,
+    'Sigma 3': 1,
+    'Sigma 5': 1,
+    'Sigma 10': 1
 }
 multi_lines_dep = '(city/product/trade regime/year)'
 new_r = [
@@ -1192,8 +2280,10 @@ new_r = [
 ]
 
 reorder = {
-    4:0,
-    5:1
+    2:1,
+    5:2,
+    7:3,
+    6:5
 }
 
 lb.beautify(table_number = table_nb,
@@ -1203,7 +2293,7 @@ lb.beautify(table_number = table_nb,
             multicolumn = multicolumn,
             table_nte = tbe1,
             jupyter_preview = True,
-            resolution = 180,
+            resolution = 200,
             folder = folder)
 ```
 
@@ -1280,46 +2370,72 @@ mutate(
 ```
 
 ```sos kernel="R"
+dim(df_final 
+    %>% filter(is.na(homogeneous) | homogeneous == 'HOMOGENEOUS')%>% 
+     filter(kandhelwal_quality > -15)%>%
+     filter(kandhelwal_quality <15)
+   )
+```
+
+```sos kernel="R"
 %get path table
 #### COUNTRIES
-t_0 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_0 <- felm(kandhelwal_quality ~
+             rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(income_group_ldc_dc == 'LDC'),
             exactDOF = TRUE)
 t_0 <- change_target(t_0)
 print('table 0 done')
 
-t_1 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_1 <- felm(kandhelwal_quality ~
+             rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(income_group_ldc_dc != 'LDC'),
             exactDOF = TRUE)
 t_1 <- change_target(t_1)
 print('table 1 done')
 #### GOODS
-t_2 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_2 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(is.na(homogeneous) | homogeneous == 'HOMOGENEOUS'),
             exactDOF = TRUE)
 t_2 <- change_target(t_2)
 print('table 2 done')
 
-t_3 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_3 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final %>% filter(homogeneous == 'HETEREGENEOUS'),
             exactDOF = TRUE)
 t_3 <- change_target(t_3)
 print('table 3 done')
 #### CITIES
 ##### city-industry
-t_4 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_4 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, temp %>% filter(size_q_d == 'SMALL'),
             exactDOF = TRUE)
 t_4 <- change_target(t_4)
 print('table 4 done')
 
-t_5 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_5 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, temp %>% filter(size_q_d == 'LARGE'),
             exactDOF = TRUE)
 t_5 <- change_target(t_5)
@@ -1384,8 +2500,9 @@ multicolumn ={
 }
 multi_lines_dep = '(city/product/trade regime/year)'
 reorder = {
-    2:0,
-    3:1
+    3:0,
+    5:1,
+    4:3
 }
 #new_r = ['& Eligible', 'Non-Eligible', 'All', 'All benchmark']
 lb.beautify(table_number = table_nb,
@@ -1740,22 +2857,31 @@ table(df_final_rd$rd_asset)
 
 ```sos kernel="R"
 %get path table
-t_1 <- felm(kandhelwal_quality ~rebate* regime* polluted + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_1 <- felm(kandhelwal_quality ~
+            rebate* regime* polluted +
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_polluted,
             exactDOF = TRUE)
 t_1 <- change_target(t_1)
 
 print('table 1 done')
-t_2 <- felm(kandhelwal_quality ~rebate* regime * dummy_tech_2 + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_2 <- felm(kandhelwal_quality ~
+            rebate* regime * dummy_tech_2+
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_1,
             exactDOF = TRUE)
 t_2 <- change_target(t_2)
 print('table 2 done')
 
-t_3 <- felm(kandhelwal_quality ~rebate* regime * rd_output + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_3 <- felm(kandhelwal_quality ~
+            rebate* regime * rd_output +
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd,
             exactDOF = TRUE)
 t_3 <- change_target(t_3)
@@ -1846,30 +2972,42 @@ path = os.path.join(folder, table + '.txt')
 #print('table 0 done')
 
 #### NO LARGE POLLUTED INDUSTRY
-t_1 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_1 <- felm(kandhelwal_quality ~
+             rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_polluted %>% filter(polluted == TRUE),
             exactDOF = TRUE)
 t_1 <- change_target(t_1)
 print('table 1 done')
 
-t_2 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax +
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_2 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_polluted %>% filter(polluted == FALSE),
             exactDOF = TRUE)
 t_2 <- change_target(t_2)
 print('table 1 done')
 
 #### LARGEST COMPLEXITY ->ONE WITH BEST POTENTIAL
-t_3 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_3 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_1 %>% filter(dummy_tech_2 == TRUE),
             exactDOF = TRUE)
 t_3 <- change_target(t_3)
 print('table 2 done')
 
-t_4 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_4 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_1 %>% filter(dummy_tech_2 == FALSE),
             exactDOF = TRUE)
 t_4 <- change_target(t_4)
@@ -1889,15 +3027,21 @@ print('table 2 done')
 #t_7 <- change_target(t_7)
 #print('table 3 done')
 ##### RD
-t_5 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_5 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd %>% filter(rd_output == TRUE),
             exactDOF = TRUE)
 t_5 <- change_target(t_5)
 print('table 3 done')
 
-t_6 <- felm(kandhelwal_quality ~rebate* regime + ln_lag_import_tax * regime+ ln_lag_import_tax+
-            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+t_6 <- felm(kandhelwal_quality ~
+            rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
             | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd %>% filter(rd_output == FALSE),
             exactDOF = TRUE)
 t_6 <- change_target(t_6)
@@ -1943,17 +3087,157 @@ multicolumn ={
     #1'High skilled oriented': 2
 }
 reorder = {
-    2:0,
-    3:1
+    3:2,
+    #5:1,
+    #4:3
 }
 multi_lines_dep = '(city/product/trade regime/year)'
 new_r = ['& Yes', 'No', 'Yes', 'No', 'Yes', 'No']
 lb.beautify(table_number = table_nb,
             #multi_lines_dep = None,
-            #reorder_var = reorder,
+            reorder_var = reorder,
             multi_lines_dep = multi_lines_dep,
             new_row= new_r,
             multicolumn = multicolumn,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 180,
+            folder = folder)
+```
+
+<!-- #region kernel="SoS" -->
+# Credit Constraint
+<!-- #endregion -->
+
+```sos kernel="SoS"
+folder = 'Tables_0'
+table_nb = 5
+table = 'table_{}'.format(table_nb)
+path = os.path.join(folder, table + '.txt')
+```
+
+```sos kernel="SoS"
+pd.read_csv(manova,
+                    dtype={"ISIC": "str"},
+                ).describe()
+```
+
+```sos kernel="SoS"
+pd.read_csv(jarreau,
+                    dtype={"ISIC": "str"},
+                ).describe()
+```
+
+```sos kernel="SoS"
+#df_final[['ext_finance_m','ext_finance_j','rd_intensity_j', 'liquidity_needs_m', 'asset_tangibility_m', "trade_credit_intensity_m"]].describe()
+```
+
+```sos kernel="R"
+%get path table
+#### External finance J: OK
+t_0 <- felm(kandhelwal_quality ~
+     rebate* regime * d_credit_needs+ 
+    regime * c_lag_stock_ntm_w + 
+     ln_lag_import_tax * regime+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 , df_final %>%
+     mutate(d_credit_needs = ifelse(ext_finance_j >0.220000, FALSE, TRUE)),
+            exactDOF = TRUE)
+
+### liquidity: OK
+t_1 <- felm(kandhelwal_quality ~
+     rebate* regime * d_credit_needs+ 
+    regime * c_lag_stock_ntm_w + 
+     ln_lag_import_tax * regime+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 , df_final %>%
+     mutate(d_credit_needs = ifelse(liquidity_needs_j >0.200000, TRUE, FALSE)),
+            exactDOF = TRUE)
+
+### Trade credit 
+t_2 <- felm(kandhelwal_quality ~
+     rebate* regime * d_credit_needs+ 
+    regime * c_lag_stock_ntm_w + 
+     ln_lag_import_tax * regime+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 , df_final %>%
+     mutate(d_credit_needs = ifelse(trade_credit_intensity_m >0.080000, FALSE, TRUE)),
+            exactDOF = TRUE)
+
+### Asset tangibility
+t_3 <- felm(kandhelwal_quality ~
+     rebate* regime * d_credit_needs+ 
+    regime * c_lag_stock_ntm_w + 
+     ln_lag_import_tax * regime+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 , df_final %>%
+     mutate(d_credit_needs = ifelse(asset_tangibility_m >0.220000, FALSE, TRUE)),
+            exactDOF = TRUE)
+
+### RD intensity
+t_4 <- felm(kandhelwal_quality ~
+     rebate* regime * d_credit_needs+ 
+     regime * c_lag_stock_ntm_w + 
+     ln_lag_import_tax * regime+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 , df_final %>%
+     mutate(d_credit_needs = ifelse(rd_intensity_j >0.010000, FALSE, TRUE)),
+            exactDOF = TRUE)
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    c("City-product-regime","Yes", "Yes", "Yes", "Yes","Yes","Yes","Yes","Yes"),
+    
+    c("Product-year","Yes", "Yes", "Yes", "Yes","Yes","Yes","Yes","Yes"),
+    
+    c("Destination-year", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes","Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, 
+    #t_2,
+    t_3, t_4#, t_5#, t_6
+),
+    title="VAT export tax and firm’s quality upgrading NTM anaysis",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name=path
+) 
+```
+
+```sos kernel="SoS"
+tbe1  = """
+This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
+
+multicolumn ={
+    'Baseline': 1,
+    'Environnement': 1,
+    'classification': 3,
+    'Developped': 1,
+    #'Destination': 1
+}
+reorder = {
+    3:1,
+    #5:1
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+new_r = ['& Ext. Fin','Liquidity needs',
+         #'Trade Credit', 
+         'Asset Tang.', 'RD intensity']
+lb.beautify(table_number = table_nb,
+            #multi_lines_dep = None,
+            #reorder_var = reorder,
+            #multi_lines_dep = multi_lines_dep,
+            new_row= new_r,
+            #multicolumn = multicolumn,
             table_nte = tbe1,
             jupyter_preview = True,
             resolution = 180,
@@ -1966,123 +3250,109 @@ lb.beautify(table_number = table_nb,
 - Model is located here: [checkpoint-2562](https://drive.google.com/drive/folders/13rpnm5X5UG-MgLAFb8r1Pu2F-hvGA443?usp=sharing)
 <!-- #endregion -->
 
+```sos kernel="SoS"
+folder = 'Tables_0'
+table_nb = 6
+table = 'table_{}'.format(table_nb)
+path = os.path.join(folder, table + '.txt')
+
+#for ext in ['.txt', '.tex', '.pdf']:
+#    x = [a for a in os.listdir(folder) if a.endswith(ext)]
+#    [os.remove(os.path.join(folder, i)) for i in x]
+```
+
 ```sos kernel="R"
-summary(
-    felm(
+%get path table
+t_0 <- felm(
     kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_china + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr |0 | hs6, df_final,
+    rebate * regime * lag_stock_ntm + 
+    rebate * regime * c_lag_stock_ntm_w + 
+    rebate * regime * lag_P + 
+    ln_lag_import_tax * regime +
+    lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr |0 , df_final %>% 
+    rename(lag_stock_ntm = c_lag_stock_ntm_china),
             exactDOF = TRUE)
-       )
+   
+#### ENV
+t_1 <- felm(
+    kandhelwal_quality ~
+    rebate * regime * lag_stock_ntm + 
+    rebate * regime * c_lag_stock_ntm_w + 
+    rebate * regime * lag_P + 
+    ln_lag_import_tax * regime  +
+    lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr |0 , df_final %>%
+    rename(lag_stock_ntm = c_lag_stock_ntm_env_china),
+            exactDOF = TRUE)
+
+### TBT
+t_2 <- felm(
+    kandhelwal_quality ~
+    rebate * regime * lag_stock_ntm + 
+    rebate * regime * c_lag_stock_ntm_w + 
+    rebate * regime * lag_P + 
+    ln_lag_import_tax * regime  +
+    lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr |0 , df_final %>%
+    rename(lag_stock_ntm = c_lag_stock_ntm_TBT_SPS_china),
+            exactDOF = TRUE)
+
+dep <- "Dependent variable: Product quality"
+fe1 <- list(
+    c("City-product-regime","Yes", "Yes", "Yes", "Yes","Yes","Yes","Yes","Yes"),
+    
+    c("Product-year","Yes", "Yes", "Yes", "Yes","Yes","Yes","Yes","Yes"),
+    
+    c("Destination-year", "Yes", "Yes", "Yes", "Yes","Yes", "Yes","Yes","Yes")
+             )
+
+table_1 <- go_latex(list(
+    t_0,t_1, t_2#, t_3, t_4, t_5#, t_6
+),
+    title="VAT export tax and firm’s quality upgrading NTM anaysis",
+    dep_var = dep,
+    addFE=fe1,
+    save=TRUE,
+    note = FALSE,
+    name=path
+) 
 ```
 
 ```sos kernel="SoS"
-df_final['year'].value_counts()
-```
+tbe1  = """
+This table estimates eq(3). 
+Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
+Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
+Sectors are defined following the Chinese 4-digit GB/T industry
+classification and regroup several products.
+Heteroskedasticity-robust standard errors
+clustered at the product level appear inparentheses.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
 
-```sos kernel="SoS"
-df_ntm_env['lag_stock_ntm_env'].describe()
-```
-
-```sos kernel="SoS"
-list_ntm[0]['lag_stock_ntm_TBT'].describe()
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_env + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final,
-    cluster ='hs6'
-    )
-       )
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_env + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final %>% filter(!year %in% c('2003', '2004','2005')),
-    cluster ='hs6'
-    )
-       )
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_TBT + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final,
-    cluster ='hs6'
-    )
-       )
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_SPS + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final,
-    cluster ='hs6'
-    )
-       )
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_ADP + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final,
-    cluster ='hs6'
-    )
-       )
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_env + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final,
-    cluster ='hs6'
-    )
-       )
-```
-
-```sos kernel="SoS"
-df_country['lag_stock_ntm_dvp_c'].describe()
-```
-
-```sos kernel="R"
-summary(
-    feols(
-    kandhelwal_quality ~
-    rebate * regime * lag_stock_ntm_dvp_c + 
-    #rebate * regime * lag_stock_ntm + 
-    ln_lag_import_tax * regime + ln_lag_import_tax  
-            | fe_ckr  + fe_kt + fe_jtr ,df_final,
-    cluster ='hs6'
-    )
-       )
+multicolumn ={
+    'Baseline': 1,
+    'Environnement': 1,
+    'classification': 3,
+    'Developped': 1,
+    #'Destination': 1
+}
+reorder = {
+    12:2,
+    #5:1
+}
+multi_lines_dep = '(city/product/trade regime/year)'
+new_r = ['& baseline', 'environment', 'TBT/SPS']
+lb.beautify(table_number = table_nb,
+            #multi_lines_dep = None,
+            #reorder_var = reorder,
+            #multi_lines_dep = multi_lines_dep,
+            new_row= new_r,
+            #multicolumn = multicolumn,
+            table_nte = tbe1,
+            jupyter_preview = True,
+            resolution = 180,
+            folder = folder)
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->

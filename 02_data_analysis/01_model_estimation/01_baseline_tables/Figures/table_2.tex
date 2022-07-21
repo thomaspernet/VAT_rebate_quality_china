@@ -1,0 +1,36 @@
+\documentclass[preview]{standalone} 
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}
+
+\begin{document}
+\begin{table}[!htbp] \centering
+\caption{Distribution of unique rebate share at the HS6 product level}
+
+\begin{adjustbox}{width=\textwidth, totalheight=\textheight-2\baselineskip,keepaspectratio}
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+{} &  count &  unique rebate &  mean &   std &   min &   25\% &   50\% &   75\% &  max \\
+year &        &                &       &       &       &       &       &       &      \\
+\midrule
+2003 &   2705 &             43 &  0.90 &  0.10 &  0.38 &  0.76 &  0.88 &  1.00 &    1 \\
+2004 &   2722 &             45 &  0.90 &  0.10 &  0.38 &  0.76 &  0.88 &  1.00 &    1 \\
+2005 &   2730 &             43 &  0.76 &  0.14 &  0.00 &  0.76 &  0.76 &  0.76 &    1 \\
+2006 &   2726 &             45 &  0.75 &  0.15 &  0.00 &  0.76 &  0.76 &  0.76 &    1 \\
+2007 &   2578 &             61 &  0.72 &  0.17 &  0.00 &  0.71 &  0.76 &  0.76 &    1 \\
+2008 &   2577 &            109 &  0.63 &  0.22 &  0.00 &  0.53 &  0.65 &  0.76 &    1 \\
+2009 &   2579 &            100 &  0.60 &  0.28 &  0.00 &  0.33 &  0.75 &  0.79 &    1 \\
+2010 &   2578 &            117 &  0.70 &  0.29 &  0.00 &  0.53 &  0.85 &  0.88 &    1 \\
+\bottomrule
+\end{tabular}
+
+\end{adjustbox}
+
+\begin{tablenotes}
+\small
+\item
+
+
+\end{tablenotes}
+\end{table}
+
+\end{document}
