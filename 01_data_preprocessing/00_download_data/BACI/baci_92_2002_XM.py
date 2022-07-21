@@ -54,11 +54,24 @@ df_products = (df_products
                ).replace('NAN', np.nan)
                )
 
-df_products.head()
 df_country = pd.read_csv('BACI_HS02_V202201/country_codes_V202201.csv',
                          encoding='latin-1', dtype={'country_code': 'str'})
+df_country = (df_country
+               .assign(**{
+                   "{}".format(col): df_country[col]
+                   .astype(str)
+                   .str.replace('\,', '|', regex=True)
+                   .str.replace(r'\/|\(|\)|\?|\.|\:|\-', '', regex=True)
+                   .str.replace('__', '_')
+                   .str.replace('\\n', '', regex=True)
+                   .str.replace('\"', '', regex=True)
+                   # .str.upper()
+                   for col in df_country.select_dtypes(include="object").columns
+               }
+               ).replace('NAN', np.nan)
+               )
 
-for i in tqdm(glob.glob(os.path.join('BACI_HS02_V202201', "*.csv"))):
+for i in tqdm(glob.glob(os.path.join('BACI_HS02_V202201', "*.csv"))[1:]):
     if i not in ['BACI_HS02_V202201/country_codes_V202201.csv',
     'BACI_HS02_V202201/product_codes_HS02_V202201.csv']:
         (
@@ -84,8 +97,9 @@ for i in tqdm(glob.glob(os.path.join('BACI_HS02_V202201', "*.csv"))):
         .merge(df_products.rename(columns={'code': 'hs6'}))
         .to_csv("cleaned_{}.gz".format(i.split('/')[1]), index =False, compression="gzip")
     )
-        s3.upload_file("cleaned_{}".format(i.split('/')[1]), PATH_S3)
-        os.remove("cleaned_{}".format(i.split('/')[1]))
+        s3.upload_file("cleaned_{}.gz".format(i.split('/')[1]), PATH_S3)
+        os.remove("cleaned_{}.gz".format(i.split('/')[1]))
+
 
 # SAVE S3
 #for i in pd.io.json.build_table_schema(test)['fields']:
@@ -101,7 +115,7 @@ schema = [
 {'Name': 'destination', 'Type': 'string', 'Comment': 'Destination'},
 {'Name': 'hs6', 'Type': 'string', 'Comment': 'HS6 product'},
 {'Name': 'v', 'Type': 'int', 'Comment': 'Value of the trade flow (in thousands current USD)'},
-{'Name': 'q', 'Type': 'int', 'Comment': 'Quantity (in metric tons)'},
+{'Name': 'q', 'Type': 'float', 'Comment': 'Quantity (in metric tons)'},
 {'Name': 'country_name_abbreviation_o', 'Type': 'string', 'Comment': ''},
 {'Name': 'country_name_full_o', 'Type': 'string', 'Comment': ''},
 {'Name': 'iso_2digit_alpha_o', 'Type': 'string', 'Comment': ''},
