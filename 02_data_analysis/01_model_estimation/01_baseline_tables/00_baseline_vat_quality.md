@@ -1813,6 +1813,12 @@ Create the following fixed effect for the baseline regression:
 * Destination-year: `FE_jt`
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
+
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
+
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
 
@@ -2802,25 +2808,14 @@ LEFT JOIN (
     ) as ind_name
     ON test.hs2 = ind_name.ind2
 """
-list_rd = s3.run_query(
+list_rd = (s3.run_query(
             query=query,
             database=db,
             s3_output='SQL_OUTPUT_ATHENA',
             filename='rd',  # Add filename to print dataframe
             destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
         )
-list_rd
-```
-
-```sos kernel="SoS"
-(
-    list_rd
-    .assign(
-        #hs4=lambda x: np.where(
-        #    x["cic"].astype("str").str.len() == 3,
-        #    "0" + x["cic"].astype("str"),
-        #   x["cic"].astype("str"),
-        #),
+           .assign(
         rd_asset = lambda x: x['rd_total_asset'] >=np.quantile(x['rd_total_asset'], 0.75),
         rd_output = lambda x: x['rd_output'] >=np.quantile(x['rd_output'], 0.75)
     )
@@ -2828,119 +2823,130 @@ list_rd
         #'hs4',
         'hs2', 'rd_asset', 'rd_output', 'short'
     ])
+           .rename(columns = {'hs2':'cic2'})
+          )
+(
+    list_rd
     .to_csv('rd_vs_no_rd.csv', index = False)
+)
+list_rd
+```
+
+```sos kernel="SoS"
+db = 'industry'
+query = """
+SELECT * FROM "industry"."industry_hs_gbt"
+"""
+df_condordance = (s3.run_query(
+            query=query,
+            database=db,
+            s3_output='SQL_OUTPUT_ATHENA',
+            filename='polluted',  # Add filename to print dataframe
+            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
+        )
+                  .assign(
+        hs96=lambda x: np.where(x['hs96'].isin([np.nan]),
+                                np.nan,
+                                x['hs96'].astype('Int64').astype(
+                                    'str').str.zfill(6)
+                                ),
+        hs2002=lambda x: np.where(x['hs2002'].isin([np.nan]),
+                                  np.nan,
+                                  x['hs2002'].astype('Int64').astype(
+                                      'str').str.zfill(6)
+                                  ),
+        cic_adj=lambda x: np.where(x['cic_adj'].isin([np.nan]),
+                                   np.nan,
+                                   x['cic_adj'].astype('Int64').astype(
+                                       'str').str.zfill(4)
+                                   ),
+        cic03=lambda x: np.where(x['cic03'].isin([np.nan]),
+                                 np.nan,
+                                 x['cic03'].astype('Int64').astype(
+                                     'str').str.zfill(4)
+                                 ),
+        cic02=lambda x: np.where(x['cic02'].isin([np.nan]),
+                                 np.nan,
+                                 x['cic02'].astype('Int64').astype(
+                                     'str').str.zfill(4)
+                                 )
+    )
+                  .drop(columns = ['hs96'])
+                  .dropna()
+                  .drop_duplicates(subset = ['hs2002'])
+                  .assign(cic2 = lambda x: x['cic_adj'].str.slice(stop =2))
+                  .rename(columns = {'hs2002':'hs6'})
+                 )
+(
+    df_condordance.to_csv('concordance.csv', index = False)
+)
+df_condordance
+```
+
+```sos kernel="R"
+list_polluting = list(
+    6,8,10, 
+    #14
+    15, 17, 19,
+    #22,
+    25,26,
+    #27,
+    31
+    #,32, 33, 44
 )
 ```
 
 ```sos kernel="R"
-df_final_rd <-  df_final %>% left_join(
+df_final_rd_pol <- df_final %>% left_join(
+    read.csv(
+        'concordance.csv',
+        colClasses=c(
+            "hs6"="character",
+            "cic_adj"="character",
+            "cic03"="character",
+            "cic02"="character",
+            "cic2"="character"
+        )
+    ) %>% 
+    mutate(hs6 = as.numeric(hs6))) %>%
+    left_join(
+    read_csv('polluted_vs_no_polluted.csv',
+             col_types = cols(hs2 = col_character()) 
+            )%>%
+            rename(cic2 = hs2)
+) %>%
+mutate_at(c('polluted', 'polluted_int'), ~replace(., is.na(.), FALSE))%>% left_join(
     read_csv('rd_vs_no_rd.csv',
              col_types = cols(
-                 hs2 = col_double(),
-                 hs4 = col_double()
+                 cic2 = col_character()
              ))
 ) %>%
 mutate_at(c('rd_asset','rd_output'), ~replace(., is.na(.), FALSE))
+dim(df_final_rd_pol)
 ```
 
 ```sos kernel="R"
-table(df_final_rd$rd_output)
+dim(df_final_rd_pol %>% filter(rd_output == TRUE))
 ```
 
 ```sos kernel="R"
-table(df_final_rd$rd_asset)
+summary(felm(kandhelwal_quality ~
+            rebate* regime + 
+             regime * c_lag_stock_ntm_w + 
+             ln_lag_import_tax * regime+
+             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd_pol %>% filter(rd_output == TRUE),
+            exactDOF = TRUE))
 ```
-
-<!-- #region kernel="R" -->
-### Dummy
-<!-- #endregion -->
 
 ```sos kernel="R"
-%get path table
-t_1 <- felm(kandhelwal_quality ~
-            rebate* regime* polluted +
+summary(felm(kandhelwal_quality ~
+            rebate* regime + 
              regime * c_lag_stock_ntm_w + 
              ln_lag_import_tax * regime+
              lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_polluted,
-            exactDOF = TRUE)
-t_1 <- change_target(t_1)
-
-print('table 1 done')
-t_2 <- felm(kandhelwal_quality ~
-            rebate* regime * dummy_tech_2+
-             regime * c_lag_stock_ntm_w + 
-             ln_lag_import_tax * regime+
-             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_1,
-            exactDOF = TRUE)
-t_2 <- change_target(t_2)
-print('table 2 done')
-
-t_3 <- felm(kandhelwal_quality ~
-            rebate* regime * rd_output +
-             regime * c_lag_stock_ntm_w + 
-             ln_lag_import_tax * regime+
-             lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd,
-            exactDOF = TRUE)
-t_3 <- change_target(t_3)
-print('table 4 done')
-dep <- "Dependent variable: Product quality"
-fe1 <- list(
-    c("City-product-regime","Yes", "Yes", "Yes"),
-    
-    c("Product-year","Yes", "Yes", "Yes", "Yes","Yes"),
-    
-    c("Destination-year", "Yes", "Yes", "Yes")
-             )
-
-table_1 <- go_latex(list(
-    t_1, t_2, t_3
-),
-    title="VAT export tax and firm’s quality upgrading, characteristics of sensible sectors",
-    dep_var = dep,
-    addFE=fe1,
-    save=TRUE,
-    note = FALSE,
-    name=path
-) 
-```
-
-```sos kernel="SoS"
-tbe1  = """
-This table estimates eq(3). 
-Note that 'Eligible' refers to the regime entitle to VAT refund, our treatment group.
-Our control group is processing trade with supplied input, 'Non-Eligible' to VAT refund.
-Sectors are defined following the Chinese 4-digit GB/T industry
-classification and regroup several products.
-Heteroskedasticity-robust standard errors
-clustered at the product level appear inparentheses.
-\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\%."""
-
-multicolumn ={
-    'Rare-earth': 2,
-    'Polluted intensive': 2,
-    'High tech': 2,
-    'RD oriented': 2,
-    'High skilled oriented': 2
-}
-reorder = {
-    2:0,
-    3:1
-}
-multi_lines_dep = '(city/product/trade regime/year)'
-new_r = ['& No', 'Yes', 'No', 'Yes', 'No', 'Yes', 'No', 'Yes', 'No', 'Yes']
-lb.beautify(table_number = table_nb,
-            #multi_lines_dep = None,
-            #reorder_var = reorder,
-            #multi_lines_dep = multi_lines_dep,
-            #new_row= new_r,
-            #multicolumn = multicolumn,
-            table_nte = tbe1,
-            jupyter_preview = True,
-            resolution = 180,
-            folder = folder)
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd_pol %>% filter(rd_output != TRUE),
+            exactDOF = TRUE))
 ```
 
 <!-- #region kernel="SoS" -->
@@ -2971,23 +2977,24 @@ path = os.path.join(folder, table + '.txt')
 #t_1 <- change_target(t_1)
 #print('table 0 done')
 
-#### NO LARGE POLLUTED INDUSTRY
+#### LARGE POLLUTED INDUSTRY
 t_1 <- felm(kandhelwal_quality ~
              rebate* regime + 
              regime * c_lag_stock_ntm_w + 
              ln_lag_import_tax * regime+
              lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_polluted %>% filter(polluted == TRUE),
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_polluted %>%filter(cic2 %in% list_polluting),
             exactDOF = TRUE)
 t_1 <- change_target(t_1)
 print('table 1 done')
 
+#### NO LARGE POLLUTED INDUSTRY
 t_2 <- felm(kandhelwal_quality ~
-            rebate* regime + 
+             rebate* regime + 
              regime * c_lag_stock_ntm_w + 
              ln_lag_import_tax * regime+
              lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_polluted %>% filter(polluted == FALSE),
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_polluted %>%filter(!cic2 %in% list_polluting),
             exactDOF = TRUE)
 t_2 <- change_target(t_2)
 print('table 1 done')
@@ -3032,7 +3039,7 @@ t_5 <- felm(kandhelwal_quality ~
              regime * c_lag_stock_ntm_w + 
              ln_lag_import_tax * regime+
              lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd %>% filter(rd_output == TRUE),
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd_pol %>% filter(rd_output == TRUE),
             exactDOF = TRUE)
 t_5 <- change_target(t_5)
 print('table 3 done')
@@ -3042,7 +3049,7 @@ t_6 <- felm(kandhelwal_quality ~
              regime * c_lag_stock_ntm_w + 
              ln_lag_import_tax * regime+
              lag_foreign_export_share_ckr + lag_soe_export_share_ckr
-            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd %>% filter(rd_output == FALSE),
+            | fe_ckr  + fe_kt + fe_jtr|0 | hs6, df_final_rd_pol %>% filter(rd_output == FALSE),
             exactDOF = TRUE)
 t_6 <- change_target(t_6)
 print('table 3 done')
@@ -3130,6 +3137,20 @@ pd.read_csv(jarreau,
 
 ```sos kernel="SoS"
 #df_final[['ext_finance_m','ext_finance_j','rd_intensity_j', 'liquidity_needs_m', 'asset_tangibility_m', "trade_credit_intensity_m"]].describe()
+```
+
+```sos kernel="R"
+summary(felm(kandhelwal_quality ~
+    d_credit_needs+ 
+    
+    #regime * c_lag_stock_ntm_w + 
+    #ln_lag_import_tax * regime+
+            lag_foreign_export_share_ckr + lag_soe_export_share_ckr
+            | fe_kt + fe_jt|0 , df_final %>%
+     mutate(d_credit_needs = ifelse(ext_finance_j >0.220000, FALSE, TRUE)),
+            exactDOF = TRUE)
+       )
+
 ```
 
 ```sos kernel="R"
