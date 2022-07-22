@@ -1819,6 +1819,12 @@ Create the following fixed effect for the baseline regression:
 
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
+
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
+
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
 <!-- #endregion -->
 <!-- #endregion -->
 
@@ -2348,10 +2354,10 @@ group_by(geocode4_corr) %>%
 mutate(
     national_avg_q = mean(sum_quantity),
     national_m_q = median(sum_quantity),
-    national_d_q =quantile(sum_quantity,probs = .75),
+    national_d_q =quantile(sum_quantity,probs = .5),
     national_avg_v = mean(sum_value),
     national_m_v = median(sum_value),
-    national_d_v =quantile(sum_value,probs = .75),
+    national_d_v =quantile(sum_value,probs = .5),
     size_q_a = ifelse(sum_quantity > national_avg_q, 'LARGE', 'SMALL'),
     size_q_md = ifelse(sum_quantity > national_m_q, 'LARGE', 'SMALL'),
     size_q_d = ifelse(sum_quantity > national_d_q, 'LARGE', 'SMALL'),
@@ -2373,14 +2379,6 @@ mutate(
     size_v_md = replace_na(size_v_md, "SMALL"),
     size_v_d = replace_na(size_v_d, "SMALL")
 )
-```
-
-```sos kernel="R"
-dim(df_final 
-    %>% filter(is.na(homogeneous) | homogeneous == 'HOMOGENEOUS')%>% 
-     filter(kandhelwal_quality > -15)%>%
-     filter(kandhelwal_quality <15)
-   )
 ```
 
 ```sos kernel="R"
