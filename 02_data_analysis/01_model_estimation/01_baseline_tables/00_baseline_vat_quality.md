@@ -1169,6 +1169,50 @@ df_quality_stat = (
 )
 ```
 
+```sos kernel="SoS"
+df_final['geocode4_corr'].nunique()
+```
+
+```sos kernel="SoS"
+df_final['country_en'].nunique()
+```
+
+```sos kernel="SoS"
+df_final['hs6'].nunique()
+```
+
+```sos kernel="SoS"
+(
+    df_final
+    .groupby(['year', 'hs6'])
+    .agg({'hs6':'nunique'})
+    .rename(columns = {'hs6':'count'})
+    .groupby('hs6')
+    .agg({'count':'sum'})
+    ['count']
+    .value_counts()
+    .reset_index()
+    .sort_values(by = ['index'])
+    .assign(pct = lambda x: x['count']/np.sum(x['count']))
+)
+```
+
+```sos kernel="SoS"
+(
+    df_final
+    .groupby(['year', 'country_en'])
+    .agg({'country_en':'nunique'})
+    .rename(columns = {'country_en':'count'})
+    .groupby('country_en')
+    .agg({'count':'sum'})
+    ['count']
+    .value_counts()
+    .reset_index()
+    .sort_values(by = ['index'])
+    .assign(pct = lambda x: x['count']/np.sum(x['count']))
+)
+```
+
 <!-- #region kernel="SoS" -->
 - Average quality
 - Average quality per dvp/dvpg
@@ -1811,6 +1855,9 @@ Create the following fixed effect for the baseline regression:
 * Product-year: `FE_kt`
 * Product-destination: `FE_pj`
 * Destination-year: `FE_jt`
+<!-- #endregion -->
+<!-- #region kernel="SoS" -->
+
 <!-- #endregion -->
 <!-- #region kernel="SoS" -->
 
